@@ -76,7 +76,10 @@ public sealed class AppServices
             new HtmlReportExporter(),
             new JsonReportExporter(),
             new CsvReportExporter(),
-            new MarkdownReportExporter()
+            new MarkdownReportExporter(),
+            new PdfReportExporter(),
+            new DocxReportExporter(),
+            new XlsxReportExporter()
         };
 
         var settings = new SqliteStore(dataDirectory);

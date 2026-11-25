@@ -9,8 +9,9 @@
                     <TextBlock Text="Organisation" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="0,0,8,0" />
                     <TextBox Width="260" Text="{Binding Organization}" Margin="0,0,16,0" />
                     <Button Content="Export HTML" Command="{Binding ExportHtmlCommand}" Margin="0,0,8,0" />
-                    <Button Content="Export PDF-ready" Command="{Binding ExportHtmlCommand}" Margin="0,0,8,0"
-                            ToolTip="Print-ready HTML; use browser Print to PDF." />
+                    <Button Content="Export PDF" Command="{Binding ExportPdfCommand}" Margin="0,0,8,0" />
+                    <Button Content="Export DOCX" Command="{Binding ExportDocxCommand}" Margin="0,0,8,0" />
+                    <Button Content="Export XLSX" Command="{Binding ExportXlsxCommand}" Margin="0,0,8,0" />
                     <Button Content="Export JSON" Command="{Binding ExportJsonCommand}" Margin="0,0,8,0" />
                     <Button Content="Export CSV" Command="{Binding ExportCsvCommand}" Margin="0,0,8,0" />
                     <Button Content="Export Markdown" Command="{Binding ExportMarkdownCommand}" />

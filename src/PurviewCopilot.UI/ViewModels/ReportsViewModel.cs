@@ -21,6 +21,9 @@ public sealed class ReportsViewModel : PageViewModel
         ExportJsonCommand = new AsyncRelayCommand(() => ExportAsync(ReportFormat.Json, ".json"));
         ExportCsvCommand = new AsyncRelayCommand(() => ExportAsync(ReportFormat.Csv, ".csv"));
         ExportMarkdownCommand = new AsyncRelayCommand(() => ExportAsync(ReportFormat.Markdown, ".md"));
+        ExportPdfCommand = new AsyncRelayCommand(() => ExportAsync(ReportFormat.Pdf, ".pdf"));
+        ExportDocxCommand = new AsyncRelayCommand(() => ExportAsync(ReportFormat.Docx, ".docx"));
+        ExportXlsxCommand = new AsyncRelayCommand(() => ExportAsync(ReportFormat.Xlsx, ".xlsx"));
     }
 
     public override string Title => "Reports";
@@ -40,6 +43,9 @@ public sealed class ReportsViewModel : PageViewModel
     public ICommand ExportJsonCommand { get; }
     public ICommand ExportCsvCommand { get; }
     public ICommand ExportMarkdownCommand { get; }
+    public ICommand ExportPdfCommand { get; }
+    public ICommand ExportDocxCommand { get; }
+    public ICommand ExportXlsxCommand { get; }
 
     public override Task RefreshAsync()
     {

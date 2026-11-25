@@ -18,7 +18,7 @@ Verified against commit `353bde2` on 25 November 2026 by reading the source, cou
 
 | Code | Meaning |
 | --- | --- |
-| **T** | Covered by an automated test (51 tests, all passing at audit time). |
+| **T** | Covered by an automated test (56 tests, all passing at audit time). |
 | **B** | Builds and is reachable from the composition root; behaviour not exercised end to end. |
 | **C** | Code exists but is unexercised here (no tenant, certificate, API key or admin rights). |
 | **D** | Documentation or project/manifest artifact only; nothing executes it here. |
@@ -187,8 +187,8 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 
 | ID | Requirement | Status | Proof | Evidence / gap |
 | --- | --- | --- | --- | --- |
-| REP-01 | PDF export | **Not delivered** | — | No PDF exporter and no PDF library. |
-| REP-02 | DOCX and XLSX export | **Not delivered** | — | No OOXML exporters. |
+| REP-01 | PDF export | **Delivered** | T | `PdfReportExporter` writes a paginated PDF 1.4 document with Helvetica/Courier base fonts, escaped text, page footers and a valid xref. Tests: `Pdf_ProducesAWellFormedDocumentWithTheReportText`, `Pdf_EscapesParenthesesInContent`. |
+| REP-02 | DOCX and XLSX export | **Delivered** | T | `DocxReportExporter` and `XlsxReportExporter` build OOXML packages directly with `ZipArchive` (no package dependency); XLSX has Scores, Findings and Frameworks sheets. Tests validate the zip entries and cell content. |
 | REP-03 | HTML and JSON export | **Delivered** | T | Self-contained HTML (escaped, no external assets) and structured JSON; CSV and Markdown also ship. |
 | REP-04 | Executive, governance, security, compliance and remediation report types | **Partial** | B | One layout contains all sections; there is no per-audience template or report-type selector. |
 | REP-05 | Framework readiness for ISO 27001, NIST CSF, CIS, SOC 2, HIPAA, GDPR and PCI-DSS | **Delivered** | B | `FrameworkMapper` also covers ISO 42001 and NIST AI RMF; coverage and gap lists per framework. |
@@ -267,9 +267,9 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 
 | Status | Count | Share |
 | --- | --- | --- |
-| **Delivered** | 84 | 63% |
+| **Delivered** | 86 | 64% |
 | **Partial** | 31 | 23% |
-| **Not delivered** | 19 | 14% |
+| **Not delivered** | 17 | 13% |
 | **Total tracked** | 134 | 100% |
 
 By section:
@@ -290,7 +290,7 @@ By section:
 | Offline and regulated | 2 | 0 | 1 |
 | Licence optimisation | 1 | 1 | 0 |
 | Continuous monitoring | 1 | 1 | 2 |
-| Reporting | 3 | 1 | 2 |
+| Reporting | 5 | 1 | 0 |
 | Security engineering | 10 | 3 | 3 |
 | Architecture and technology | 7 | 1 | 2 |
 | User experience | 1 | 3 | 2 |
@@ -302,27 +302,26 @@ By section:
 Ranked by risk to the commercial claim, not by effort:
 
 1. **MSP multi-tenancy (MSP-01…03)** — an entire named mode is absent.
-2. **PDF/DOCX/XLSX reporting (REP-01, REP-02)** — mandated formats; only HTML/JSON/CSV/Markdown exist.
-3. **Encryption at rest (SEC-14)** — the client secret is DPAPI-protected and the audit log is hash-chained, but assessment, plan, backup and licence payloads still sit in plaintext SQLite.
-4. **Live deployment execution (DEP-05)** — by design, but the specification asks for apply and rollback; the reviewed script and reversal script exist, execution does not.
-5. **Security Copilot (AIA-02)** and **government clouds (OFF-03)**.
-6. **Config-as-code breadth (CAC-02)** — no ARM/Bicep/Terraform output, and existing tenant objects are not exported individually.
-7. **Scheduled monitoring and alerts (MON-02, MON-04)**.
-8. **Guided onboarding wizard (AUT-12)** and **Key Vault wiring (AUT-04)**.
-9. **Per-persona dashboards, heatmap and trends (UX-01…04)**.
-10. **Code signing and produced installer binaries (SEC-11, INS-07, INS-02)**.
-11. **SQL Server support (ARC-08)** and **WinUI 3 (ARC-02)**.
-12. **DSPM, Compliance Manager and Defender data collection (DSC-08, DSC-11)**.
+2. **Encryption at rest (SEC-14)** — the client secret is DPAPI-protected and the audit log is hash-chained, but assessment, plan, backup and licence payloads still sit in plaintext SQLite.
+3. **Live deployment execution (DEP-05)** — by design, but the specification asks for apply and rollback; the reviewed script and reversal script exist, execution does not.
+4. **Security Copilot (AIA-02)** and **government clouds (OFF-03)**.
+5. **Config-as-code breadth (CAC-02)** — no ARM/Bicep/Terraform output, and existing tenant objects are not exported individually.
+6. **Scheduled monitoring and alerts (MON-02, MON-04)**.
+7. **Guided onboarding wizard (AUT-12)** and **Key Vault wiring (AUT-04)**.
+8. **Per-persona dashboards, heatmap and trends (UX-01…04)**.
+9. **Code signing and produced installer binaries (SEC-11, INS-07, INS-02)**.
+10. **SQL Server support (ARC-08)** and **WinUI 3 (ARC-02)**.
+11. **DSPM, Compliance Manager and Defender data collection (DSC-08, DSC-11)**.
 
 ## Verification performed
 
 | Check | Result |
 | --- | --- |
 | `dotnet build PurviewGovernanceCopilot.sln -c Release` | Succeeded (local SDK 9.0.321) |
-| `dotnet test tests/PurviewCopilot.Tests -c Release` | 51 passed, 0 failed |
+| `dotnet test tests/PurviewCopilot.Tests -c Release` | 56 passed, 0 failed |
 | Catalog count (`grep -c 'Add("' ModuleCatalog.cs`) | 49 rules across 16 modules |
-| Exporter inventory | HTML, JSON, CSV, Markdown only |
-| `ReportFormat` enum | `Html, Json, Csv, Markdown` |
+| Exporter inventory | HTML, JSON, CSV, Markdown, PDF, DOCX, XLSX |
+| `ReportFormat` enum | `Html, Json, Csv, Markdown, Pdf, Docx, Xlsx` |
 | Artefact search (`*.bicep`, `*.tf`, `*arm*.json`, `*.docx`, `*.xlsx`) | None found |
 | MSP / SQL Server / Terraform references in `src` | None found |
 | Key Vault usage in `src/PurviewCopilot.UI` | Not constructed; class exists in Infrastructure |

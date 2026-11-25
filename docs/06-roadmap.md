@@ -25,10 +25,12 @@ Ordered by risk reduction and by what the current build deliberately leaves out.
 
 ## Phase 1.3 — Reporting and multi-tenant
 
-- **PDF, DOCX and XLSX** exporters (QuestPDF or a permissive PDF library; DocumentFormat.OpenXml for DOCX/XLSX).
-- **Risk heatmap** view (likelihood × impact) and trend lines across assessment history.
-- **Multi-tenant MSP mode**: tenant switcher, per-tenant isolation in the database, cross-tenant dashboard and per-customer role mapping.
-- **Scheduled monitoring**: background timer or Windows Task Scheduler integration for weekly assessment and drift alerts.
+**1 of 4 complete.** Updated 25 November 2026.
+
+- **PDF, DOCX and XLSX** — **Done**. Dependency-free writers: a paginated PDF 1.4 document with base-14 fonts, and OOXML packages built directly with `ZipArchive` for DOCX (single document part) and XLSX (Scores, Findings, Frameworks sheets). Exported from Reports; covered by five tests including escaping and package validity.
+- **Risk heatmap and trend lines** — **Open**. Requires a likelihood × impact view and history charted from stored assessments.
+- **Multi-tenant MSP mode** — **Open**. Needs a tenant switcher, explicit per-customer isolation, a cross-tenant dashboard and per-customer roles.
+- **Scheduled monitoring** — **Open**. Needs a scheduler and an alert channel; drift is currently on-demand.
 
 ## Phase 2 — AI and compliance depth
 

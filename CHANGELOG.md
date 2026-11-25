@@ -17,6 +17,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Configuration-as-code**: change plans export as a portable JSON package and as `.ps1`, and import back with a new plan id so simulation and approval cannot be bypassed. Deployment gained Export JSON / Export PowerShell / Export rollback / Import plan / Apply (gated) actions.
 - **Command state refresh**: plan-dependent buttons now enable and disable correctly after a plan is built or imported.
 
+### Added (Phase 1.3)
+
+- **PDF, DOCX and XLSX exports**: a paginated PDF 1.4 writer with base-14 fonts, plus OOXML DOCX and XLSX packages built directly with `ZipArchive` — no new dependencies. XLSX carries Scores, Findings and Frameworks sheets. All three are available from Reports.
+- **Binary report path**: `IReportExporter.RenderBytes` with a text default, and `GovernanceWorkspace.ExportReportAsync` now writes bytes so every format shares one audited export path.
+
 ### Changed
 
 - `AppSettings` is now a record so the settings document can be copied with a protected secret without mutating the live object.

@@ -164,19 +164,40 @@ public sealed class GovernanceWorkspace
 
     public string RenderReport(ReportFormat format, string organization, string generatedBy)
     {
-        if (Assessment is null || _lastCollected is null)
-            throw new InvalidOperationException("Run an assessment before generating a report.");
+        EnsureReportReady();
 
         var exporter = _exporters.FirstOrDefault(e => e.Format == format)
                        ?? throw new NotSupportedException($"No exporter registered for {format}.");
 
         return exporter.Render(new ReportContext(
-            _lastCollected,
-            Assessment,
+            _lastCollected!,
+            Assessment!,
             organization,
             generatedBy,
             _clock.UtcNow,
             Frameworks));
+    }
+
+    public byte[] RenderReportBytes(ReportFormat format, string organization, string generatedBy)
+    {
+        EnsureReportReady();
+
+        var exporter = _exporters.FirstOrDefault(e => e.Format == format)
+                       ?? throw new NotSupportedException($"No exporter registered for {format}.");
+
+        return exporter.RenderBytes(new ReportContext(
+            _lastCollected!,
+            Assessment!,
+            organization,
+            generatedBy,
+            _clock.UtcNow,
+            Frameworks));
+    }
+
+    private void EnsureReportReady()
+    {
+        if (Assessment is null || _lastCollected is null)
+            throw new InvalidOperationException("Run an assessment before generating a report.");
     }
 
     public async Task<string> ExportReportAsync(
@@ -186,12 +207,10 @@ public sealed class GovernanceWorkspace
         string generatedBy,
         CancellationToken cancellationToken = default)
     {
-        var exporter = _exporters.FirstOrDefault(e => e.Format == format)
-                       ?? throw new NotSupportedException($"No exporter registered for {format}.");
+        var bytes = RenderReportBytes(format, organization, generatedBy);
 
         Directory.CreateDirectory(Path.GetDirectoryName(path) ?? ".");
-        await File.WriteAllTextAsync(path, RenderReport(format, organization, generatedBy), cancellationToken)
-            .ConfigureAwait(false);
+        await File.WriteAllBytesAsync(path, bytes, cancellationToken).ConfigureAwait(false);
 
         await _audit.WriteAsync(new AuditEntry(
             Guid.NewGuid(), _clock.UtcNow, generatedBy, "ReportExported", path,

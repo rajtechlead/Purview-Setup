@@ -117,6 +117,9 @@ public interface IReportExporter
     ReportFormat Format { get; }
     string FileExtension { get; }
     string Render(ReportContext context);
+
+    /// <summary>Binary formats override this; text formats default to UTF-8 of <see cref="Render"/>.</summary>
+    byte[] RenderBytes(ReportContext context) => System.Text.Encoding.UTF8.GetBytes(Render(context));
 }
 
 public sealed record ReportContext(

@@ -130,7 +130,10 @@ public enum ReportFormat
     Html = 0,
     Json,
     Csv,
-    Markdown
+    Markdown,
+    Pdf,
+    Docx,
+    Xlsx
 }
 
 public enum DriftKind
