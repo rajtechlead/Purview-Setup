@@ -1,5 +1,7 @@
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Windows.Input;
+using Microsoft.Win32;
 using PurviewCopilot.Application.Abstractions;
 using PurviewCopilot.Application.Approvals;
 using PurviewCopilot.Application.Workspace;
@@ -59,6 +61,11 @@ public sealed class DeploymentViewModel : PageViewModel
         ApproveCommand = new AsyncRelayCommand(() => DecideAsync(ApprovalDecision.Approve), () => !Busy && Approval is not null);
         RejectCommand = new AsyncRelayCommand(() => DecideAsync(ApprovalDecision.Reject), () => !Busy && Approval is not null);
         RequestChangesCommand = new AsyncRelayCommand(() => DecideAsync(ApprovalDecision.RequestChanges), () => !Busy && Approval is not null);
+        ExportPackageCommand = new AsyncRelayCommand(ExportPackageAsync, () => !Busy && Plan is not null);
+        ExportScriptCommand = new AsyncRelayCommand(() => ExportTextAsync("PowerShell script (*.ps1)|*.ps1", ".ps1", _workspace.GeneratePlanScript), () => !Busy && Plan is not null);
+        ExportRollbackCommand = new AsyncRelayCommand(() => ExportTextAsync("PowerShell script (*.ps1)|*.ps1", ".ps1", _workspace.GenerateRollbackScript), () => !Busy && Plan is not null);
+        ImportPackageCommand = new AsyncRelayCommand(ImportPackageAsync, () => !Busy);
+        ApplyCommand = new AsyncRelayCommand(ApplyAsync, () => !Busy && Plan is not null);
     }
 
     public override string Title => "Deployment";
@@ -85,6 +92,11 @@ public sealed class DeploymentViewModel : PageViewModel
     public ICommand ApproveCommand { get; }
     public ICommand RejectCommand { get; }
     public ICommand RequestChangesCommand { get; }
+    public ICommand ExportPackageCommand { get; }
+    public ICommand ExportScriptCommand { get; }
+    public ICommand ExportRollbackCommand { get; }
+    public ICommand ImportPackageCommand { get; }
+    public ICommand ApplyCommand { get; }
 
     public override async Task RefreshAsync()
     {
@@ -119,26 +131,131 @@ public sealed class DeploymentViewModel : PageViewModel
         Busy = true;
         try
         {
-            Plan = await _workspace.CreatePlanAsync(selected, Mode, Actor).ConfigureAwait(true);
-
-            var impact = Plan.Impact;
-            PlanSummary =
-                $"{impact.ExecutiveSummary}\n\n" +
-                $"Technical: {impact.TechnicalSummary}\n\n" +
-                $"Business: {impact.BusinessImpact}\n\n" +
-                $"User: {impact.UserImpact}\n\n" +
-                $"Security: {impact.SecurityImpact}\n\n" +
-                $"Compliance: {impact.ComplianceImpact}\n\n" +
-                $"Licensing: {impact.LicensingImpact}\n\n" +
-                $"Rollback: {string.Join(" ", impact.RollbackSteps)}";
-
-            Approval = null;
-            ApprovalState = "Plan created. Simulation is required before approval.";
-            Status = $"Change plan {Plan.Id:N} created with {Plan.Operations.Count} operation(s) and a pre-change backup.";
+            var plan = await _workspace.CreatePlanAsync(selected, Mode, Actor).ConfigureAwait(true);
+            SetPlan(plan);
+            Status = $"Change plan {plan.Id:N} created with {plan.Operations.Count} operation(s) and a pre-change backup.";
         }
         catch (Exception ex)
         {
             Status = $"Plan creation failed: {ex.Message}";
+        }
+        finally
+        {
+            Busy = false;
+            RefreshPlanCommands();
+        }
+    }
+
+    private void SetPlan(ChangePlan plan)
+    {
+        Plan = plan;
+
+        var impact = plan.Impact;
+        PlanSummary =
+            $"{impact.ExecutiveSummary}\n\n" +
+            $"Technical: {impact.TechnicalSummary}\n\n" +
+            $"Business: {impact.BusinessImpact}\n\n" +
+            $"User: {impact.UserImpact}\n\n" +
+            $"Security: {impact.SecurityImpact}\n\n" +
+            $"Compliance: {impact.ComplianceImpact}\n\n" +
+            $"Licensing: {impact.LicensingImpact}\n\n" +
+            $"Rollback: {string.Join(" ", impact.RollbackSteps)}";
+
+        Approval = null;
+        ApprovalState = "Plan ready. Simulation and approval are required before apply.";
+    }
+
+    private void RefreshPlanCommands()
+    {
+        foreach (var command in new[] { SimulateCommand, SubmitCommand, ExportPackageCommand, ExportScriptCommand, ExportRollbackCommand, ApplyCommand })
+        {
+            (command as AsyncRelayCommand)?.RaiseCanExecuteChanged();
+        }
+    }
+
+    private async Task ExportPackageAsync()
+    {
+        if (Plan is null) return;
+
+        var dialog = new SaveFileDialog
+        {
+            Filter = "Configuration package (*.json)|*.json",
+            FileName = $"pgc-plan-{Plan.Id:N}.json"
+        };
+
+        if (dialog.ShowDialog() != true) return;
+
+        try
+        {
+            await File.WriteAllTextAsync(dialog.FileName, _workspace.ExportPlanJson(Plan)).ConfigureAwait(true);
+            Status = $"Configuration package exported to {dialog.FileName}.";
+        }
+        catch (Exception ex)
+        {
+            Status = $"Export failed: {ex.Message}";
+        }
+    }
+
+    private async Task ExportTextAsync(string filter, string extension, Func<ChangePlan, string> render)
+    {
+        if (Plan is null) return;
+
+        var dialog = new SaveFileDialog
+        {
+            Filter = filter,
+            FileName = $"pgc-plan-{Plan.Id:N}{extension}"
+        };
+
+        if (dialog.ShowDialog() != true) return;
+
+        try
+        {
+            await File.WriteAllTextAsync(dialog.FileName, render(Plan)).ConfigureAwait(true);
+            Status = $"Exported to {dialog.FileName}. Review it before execution.";
+        }
+        catch (Exception ex)
+        {
+            Status = $"Export failed: {ex.Message}";
+        }
+    }
+
+    private async Task ImportPackageAsync()
+    {
+        var dialog = new OpenFileDialog
+        {
+            Filter = "Configuration package (*.json)|*.json|All files|*.*"
+        };
+
+        if (dialog.ShowDialog() != true) return;
+
+        Busy = true;
+        try
+        {
+            var json = await File.ReadAllTextAsync(dialog.FileName).ConfigureAwait(true);
+            SetPlan(_workspace.ImportPlan(json));
+            Status = $"Imported plan with {Plan!.Operations.Count} operation(s). Simulation and approval are required again.";
+        }
+        catch (Exception ex)
+        {
+            Status = $"Import failed: {ex.Message}";
+        }
+        finally
+        {
+            Busy = false;
+            RefreshPlanCommands();
+        }
+    }
+
+    private async Task ApplyAsync()
+    {
+        if (Plan is null) return;
+
+        Busy = true;
+        try
+        {
+            var result = await _workspace.ApplyAsync(Plan).ConfigureAwait(true);
+            SimulationLog = string.Join(Environment.NewLine, result.Log);
+            Status = result.Summary;
         }
         finally
         {

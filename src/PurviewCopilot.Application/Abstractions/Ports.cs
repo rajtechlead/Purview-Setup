@@ -102,6 +102,12 @@ public interface IChangeExecutor
     Task<ExecutionResult> SimulateAsync(ChangePlan plan, CancellationToken cancellationToken = default);
     Task<ExecutionResult> ApplyAsync(ChangePlan plan, CancellationToken cancellationToken = default);
     Task<ExecutionResult> RollbackAsync(ConfigurationBackup backup, CancellationToken cancellationToken = default);
+
+    /// <summary>Configuration-as-code: the executable PowerShell for an approved plan.</summary>
+    string GenerateScript(ChangePlan plan);
+
+    /// <summary>Configuration-as-code: the reversal script, with destructive steps commented out.</summary>
+    string GenerateRollbackScript(ChangePlan plan);
 }
 
 public sealed record ExecutionResult(bool Succeeded, string Summary, IReadOnlyList<string> Log);

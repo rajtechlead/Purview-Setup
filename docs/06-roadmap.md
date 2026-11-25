@@ -16,10 +16,12 @@ Ordered by risk reduction and by what the current build deliberately leaves out.
 
 ## Phase 1.2 — Deployment depth
 
-- **Live executor profile**: separately installed, signed component with an explicit "execute" approval gate; writes a signed change record and verifies post-conditions.
-- **Real operation payloads**: per-module PowerShell templates for label, DLP, retention and audit policies, validated against the module's own `Get-*` output before apply.
-- **Rollback execution**: apply the backup package through the same executor, with post-rollback assessment comparison.
-- **Configuration-as-code**: export/import of labels, DLP, retention and audit retention as JSON and PowerShell; ARM/Bicep for the Azure-side Data Map; Terraform provider notes where one exists.
+**2 of 4 complete, 1 partial.** Updated 25 November 2026.
+
+- **Live executor profile** — **Open**. Needs a separately installed, signed executor component and a live tenant to verify post-conditions. Apply remains gated to script generation.
+- **Real operation payloads** — **Done**. `PurviewScriptLibrary` maps twelve controls to the cmdlets that actually configure them: `New-Label`, `New-LabelPolicy`, `New-AutoSensitivityLabelPolicy`/`Rule`, `New-DlpCompliancePolicy`/`Rule`, `Set-DlpCompliancePolicy`, `New-ComplianceTag`, `New-RetentionCompliancePolicy`/`Rule`, `Set-AdminAuditLogConfig` and `New-UnifiedAuditLogRetentionPolicy`. Every block is idempotent and checks current state first. Controls with no reliable cmdlet (DSPM, Endpoint DLP onboarding, Compliance Manager, AI governance, eDiscovery cases) are emitted as explicit `MANUAL` steps with the verification command instead of guessed syntax.
+- **Rollback execution** — **Partial**. A reversal script is generated in reverse operation order with destructive commands deliberately commented out and the pre-change backup named as the source of truth. Executing the restore and comparing post-rollback scores still requires the live executor.
+- **Configuration-as-code** — **Partial**. Change plans export as a portable JSON package and as PowerShell, and import back with a new plan id that forces simulation and approval again. Export of the tenant's existing label/DLP/retention objects and ARM/Bicep/Terraform coverage remain open.
 
 ## Phase 1.3 — Reporting and multi-tenant
 

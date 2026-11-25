@@ -150,6 +150,18 @@ public sealed class GovernanceWorkspace
     public Task<ExecutionResult> ApplyAsync(ChangePlan plan, CancellationToken cancellationToken = default) =>
         _executor.ApplyAsync(plan, cancellationToken);
 
+    /// <summary>Configuration-as-code export: a portable JSON package for the plan.</summary>
+    public string ExportPlanJson(ChangePlan plan) => ConfigurationPackage.Export(plan, _clock.UtcNow);
+
+    /// <summary>Configuration-as-code export: executable PowerShell for the plan.</summary>
+    public string GeneratePlanScript(ChangePlan plan) => _executor.GenerateScript(plan);
+
+    /// <summary>Configuration-as-code export: reversal script with destructive steps commented out.</summary>
+    public string GenerateRollbackScript(ChangePlan plan) => _executor.GenerateRollbackScript(plan);
+
+    /// <summary>Configuration-as-code import. Returns a new plan that must be simulated and approved again.</summary>
+    public ChangePlan ImportPlan(string json) => ConfigurationPackage.Import(json, _clock.UtcNow);
+
     public string RenderReport(ReportFormat format, string organization, string generatedBy)
     {
         if (Assessment is null || _lastCollected is null)

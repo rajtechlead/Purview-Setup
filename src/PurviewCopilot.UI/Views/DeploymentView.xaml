@@ -61,6 +61,13 @@
                             <Button Content="Reject" Command="{Binding RejectCommand}" Margin="0,0,8,0" />
                             <Button Content="Request changes" Command="{Binding RequestChangesCommand}" />
                         </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                            <Button Content="Export JSON" Command="{Binding ExportPackageCommand}" Margin="0,0,8,0" />
+                            <Button Content="Export PowerShell" Command="{Binding ExportScriptCommand}" Margin="0,0,8,0" />
+                            <Button Content="Export rollback" Command="{Binding ExportRollbackCommand}" Margin="0,0,8,0" />
+                            <Button Content="Import plan" Command="{Binding ImportPackageCommand}" Margin="0,0,8,0" />
+                            <Button Content="Apply (gated)" Command="{Binding ApplyCommand}" />
+                        </StackPanel>
                         <TextBox Text="{Binding ApproverComment, UpdateSourceTrigger=PropertyChanged}"
                                  Height="30" Margin="0,0,0,10" ToolTip="Approval comment" />
                         <TextBlock Text="{Binding ApprovalState}" FontSize="12" Foreground="{StaticResource AccentBrush}" Margin="0,0,0,8" />

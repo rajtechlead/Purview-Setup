@@ -59,7 +59,7 @@ src/
   PurviewCopilot.Infrastructure/  # Graph, PowerShell, SQLite, certificates, Key Vault, AI providers
   PurviewCopilot.UI/              # WPF shell, dashboards, pages (MVVM)
 tests/
-  PurviewCopilot.Tests/           # 41 automated tests
+  PurviewCopilot.Tests/           # 51 automated tests
 docs/                             # architecture, design, security, guides, traceability
 installer/                        # WiX MSI project + MSIX manifest
 .github/workflows/ci.yml          # build, test, publish
@@ -81,6 +81,6 @@ installer/                        # WiX MSI project + MSIX manifest
 
 ## Status
 
-Version **1.0.0** — buildable, tested and runnable. Assessment, scoring, planning, approval, backup, simulation, reporting, AI failover and privacy guard are implemented and covered by tests. The local audit log is hash-chained and verifiable from Settings, AI failover probes provider health and cools down failed providers, and the lab client secret is DPAPI-protected at rest. Live tenant mutation is deliberately gated off in this build: it generates a reviewed PowerShell script rather than executing it. See the trackers for the precise boundary.
+Version **1.0.0** — buildable, tested and runnable. Assessment, scoring, planning, approval, backup, simulation, reporting, AI failover and privacy guard are implemented and covered by tests. The local audit log is hash-chained and verifiable from Settings, AI failover probes provider health and cools down failed providers, and the lab client secret is DPAPI-protected at rest. Deployment exports a reviewed PowerShell script built from real Purview cmdlets, a reversal script and a portable JSON plan that can be imported on another workstation. Live tenant mutation is deliberately gated off in this build: it generates a reviewed PowerShell script rather than executing it. See the trackers for the precise boundary.
 
 The application is read-only by default and requires no administrator rights: certificates install per-user and data is stored in `%LOCALAPPDATA%\PurviewGovernanceCopilot`.

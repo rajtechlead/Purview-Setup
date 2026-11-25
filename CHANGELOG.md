@@ -10,11 +10,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Provider health circuit breaker**: the AI failover orchestrator now probes each candidate with a five-second timeout before dispatch, records `Unhealthy` attempts, and cools a failing provider down for two minutes so subsequent calls go straight to the fallback.
 - **DPAPI secret protection**: the lab Entra client secret is encrypted at rest with Windows DPAPI (`CurrentUser`) through `DpapiSecretProtector`, which uses crypt32 directly and adds no package. Legacy plaintext secrets are encrypted on the next save; a secret protected under another profile decrypts to empty rather than throwing.
 
+### Added (Phase 1.2)
+
+- **Real PowerShell payloads**: `PurviewScriptLibrary` generates idempotent cmdlets for labels, label policies, auto-labelling, DLP create/enforce, retention labels, retention policies, audit enablement and audit retention. Controls without a reliable cmdlet are emitted as explicit `MANUAL` steps with the verification command.
+- **Rollback script**: generated in reverse operation order, naming the pre-change backup and leaving destructive removals commented for approval.
+- **Configuration-as-code**: change plans export as a portable JSON package and as `.ps1`, and import back with a new plan id so simulation and approval cannot be bypassed. Deployment gained Export JSON / Export PowerShell / Export rollback / Import plan / Apply (gated) actions.
+- **Command state refresh**: plan-dependent buttons now enable and disable correctly after a plan is built or imported.
+
 ### Changed
 
 - `AppSettings` is now a record so the settings document can be copied with a protected secret without mutating the live object.
-- Test suite expanded from 36 to 41 tests (audit chain, tampering, DPAPI round trip, unhealthy provider, cooldown).
-- Roadmap Phase 1.1 is 3 of 5 complete; SQLCipher page encryption and a signed build/update channel remain open.
+- Test suite expanded from 36 to 51 tests (audit chain, tampering, DPAPI round trip, unhealthy provider, cooldown, real payloads, manual fallback, rollback order, config-package round trip).
+- Roadmap Phase 1.1 is 3 of 5 complete; Phase 1.2 is 2 of 4 complete with rollback and config-as-code partially done. SQLCipher page encryption, a signed build/update channel, a live executor, per-object config export and ARM/Bicep/Terraform remain open.
 
 ## [1.0.0] - 2026-11-25
 

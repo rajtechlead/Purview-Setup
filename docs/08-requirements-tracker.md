@@ -18,7 +18,7 @@ Verified against commit `353bde2` on 25 November 2026 by reading the source, cou
 
 | Code | Meaning |
 | --- | --- |
-| **T** | Covered by an automated test (41 tests, all passing at audit time). |
+| **T** | Covered by an automated test (51 tests, all passing at audit time). |
 | **B** | Builds and is reachable from the composition root; behaviour not exercised end to end. |
 | **C** | Code exists but is unexercised here (no tenant, certificate, API key or admin rights). |
 | **D** | Documentation or project/manifest artifact only; nothing executes it here. |
@@ -78,7 +78,7 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 | --- | --- | --- | --- | --- |
 | DEP-01 | Six deployment modes (assessment, guided, one-click, custom, expert, greenfield) | **Delivered** | B | `DeploymentMode` enum and the Deployment page mode selector expose all six. |
 | DEP-02 | Modes behave materially differently | **Partial** | T | All modes share one guarded pipeline; only recommendation preselection and baseline content differ. One-click and guided are not distinct workflows. |
-| DEP-03 | Review, modify, approve, apply and roll back | **Partial** | T | Review (findings), modify (selection), approve (three stages) and backup are real. Apply is gated to script generation, and rollback returns validated steps rather than executing a restore. |
+| DEP-03 | Review, modify, approve, apply and roll back | **Partial** | T | Review, modify, three-stage approval and backup are real. Apply is gated to script generation; a reversal script is generated in reverse order with destructive commands commented out, but no restore is executed. |
 | DEP-04 | One-click recommended deployment | **Partial** | B | A plan can be built from preselected high/critical recommendations in one action, but it still requires simulation and three approvals before a script is produced. |
 | DEP-05 | Apply changes automatically to the tenant | **Not delivered** | B | `ChangeExecutor(allowLiveExecution: false)` is hard-coded in `AppServices`; `ApplyAsync` returns "blocked by configuration". This is a deliberate safety decision, but the requirement as written is unmet. |
 
@@ -131,7 +131,7 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 | CHG-01 | Change pack: executive, technical, business, user, security, compliance, licensing impacts, risk, validation and rollback | **Delivered** | T | `ChangeImpact` carries all ten sections; `ChangePlan_DeduplicatesOperations_AndBuildsImpact`. |
 | CHG-02 | Risk analysis, validation plan and rollback plan per change | **Delivered** | T | Risks, validation steps and rollback steps are generated per plan. |
 | SAF-01 | Configuration, policy, label and rule backups | **Partial** | T | `BackupService` stores a tenant snapshot plus the operation payload. No per-object export of labels, DLP policies, rules or retention labels. |
-| SAF-02 | Full rollback packages | **Partial** | T | A rollback package is stored and validated (operation count) with restore steps; no automated restore is executed. |
+| SAF-02 | Full rollback packages | **Partial** | T | A rollback package is stored and validated, and a reversal script is generated from the plan; no automated restore is executed. |
 | SAF-03 | Policy simulation mode | **Delivered** | T | `SimulateAsync` validates every operation payload and returns the exact script that would run; empty payloads fail simulation. |
 | SAF-04 | What-if analysis | **Delivered** | B | Simulation reports per-operation validation and post-checks before approval. |
 | SAF-05 | Pre-deployment and post-deployment validation | **Partial** | B | Pre-flight payload validation is real. Post-deployment validation is a checklist in the plan, not an automated re-read of tenant state. |
@@ -148,9 +148,9 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 
 | ID | Requirement | Status | Proof | Evidence / gap |
 | --- | --- | --- | --- | --- |
-| CAC-01 | Export configuration as PowerShell | **Partial** | T | `ChangeExecutor.BuildScript` emits a real connect/apply skeleton, but operations are comments and payloads, not executable Purview cmdlets. |
+| CAC-01 | Export configuration as PowerShell | **Delivered** | T | `PurviewScriptLibrary` emits real, idempotent cmdlets for twelve controls and explicit `MANUAL` steps with verification commands for the rest. Exported from Deployment as `.ps1`. Tests: `Script_UsesTheRealCmdlet_ForMappedControls`, `Script_MarksUnmappedControlsAsManual_AndNeverGuesses`. |
 | CAC-02 | Export as ARM, Bicep and Terraform where applicable | **Not delivered** | — | No templates in the repository. Note: Purview policy is not ARM-deployable, so this should be scoped to the Entra/Graph subset before implementation. |
-| CAC-03 | JSON export and import | **Partial** | T | Assessment JSON export exists; there is no configuration import. |
+| CAC-03 | JSON export and import | **Delivered** | T | `ConfigurationPackage` exports a versioned plan envelope and imports it with validation, a fresh plan id and forced re-approval. Assessment JSON export is separate. Tests: `ConfigurationPackage_RoundTripsOperations`, `ConfigurationPackage_RejectsPlanWithoutOperations`. |
 
 ## K. Approval workflow
 
@@ -267,8 +267,8 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 
 | Status | Count | Share |
 | --- | --- | --- |
-| **Delivered** | 82 | 61% |
-| **Partial** | 33 | 25% |
+| **Delivered** | 84 | 63% |
+| **Partial** | 31 | 23% |
 | **Not delivered** | 19 | 14% |
 | **Total tracked** | 134 | 100% |
 
@@ -285,7 +285,7 @@ By section:
 | AI privacy guardrail | 11 | 1 | 0 |
 | Change management and safety | 4 | 3 | 0 |
 | Multi-tenant MSP | 0 | 0 | 3 |
-| Configuration-as-code | 0 | 2 | 1 |
+| Configuration-as-code | 2 | 0 | 1 |
 | Approval workflow | 2 | 0 | 0 |
 | Offline and regulated | 2 | 0 | 1 |
 | Licence optimisation | 1 | 1 | 0 |
@@ -304,9 +304,9 @@ Ranked by risk to the commercial claim, not by effort:
 1. **MSP multi-tenancy (MSP-01…03)** — an entire named mode is absent.
 2. **PDF/DOCX/XLSX reporting (REP-01, REP-02)** — mandated formats; only HTML/JSON/CSV/Markdown exist.
 3. **Encryption at rest (SEC-14)** — the client secret is DPAPI-protected and the audit log is hash-chained, but assessment, plan, backup and licence payloads still sit in plaintext SQLite.
-4. **Live deployment execution (DEP-05)** — by design, but the specification asks for apply and rollback.
+4. **Live deployment execution (DEP-05)** — by design, but the specification asks for apply and rollback; the reviewed script and reversal script exist, execution does not.
 5. **Security Copilot (AIA-02)** and **government clouds (OFF-03)**.
-6. **Config-as-code breadth (CAC-01…03)** — no ARM/Bicep/Terraform and no import path.
+6. **Config-as-code breadth (CAC-02)** — no ARM/Bicep/Terraform output, and existing tenant objects are not exported individually.
 7. **Scheduled monitoring and alerts (MON-02, MON-04)**.
 8. **Guided onboarding wizard (AUT-12)** and **Key Vault wiring (AUT-04)**.
 9. **Per-persona dashboards, heatmap and trends (UX-01…04)**.
@@ -319,7 +319,7 @@ Ranked by risk to the commercial claim, not by effort:
 | Check | Result |
 | --- | --- |
 | `dotnet build PurviewGovernanceCopilot.sln -c Release` | Succeeded (local SDK 9.0.321) |
-| `dotnet test tests/PurviewCopilot.Tests -c Release` | 41 passed, 0 failed |
+| `dotnet test tests/PurviewCopilot.Tests -c Release` | 51 passed, 0 failed |
 | Catalog count (`grep -c 'Add("' ModuleCatalog.cs`) | 49 rules across 16 modules |
 | Exporter inventory | HTML, JSON, CSV, Markdown only |
 | `ReportFormat` enum | `Html, Json, Csv, Markdown` |
