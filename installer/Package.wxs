@@ -5,8 +5,10 @@
   <!--
     Purview Governance Copilot — per-machine MSI.
     Build:
-      dotnet publish src/PurviewCopilot.UI -c Release -r win-x64 --self-contained true -o artifacts/publish
+      dotnet publish src/PurviewCopilot.UI -c Release -r win-x64 -o artifacts/publish
       dotnet build installer/PurviewGovernanceCopilot.wixproj -c Release -p:PublishDir=..\artifacts\publish\
+    Requires the .NET 9 Desktop Runtime on the target machine. Built with WiX 5 (MS-RL);
+    WiX 7 requires accepting the OSMF EULA.
     Silent install:  msiexec /i PurviewGovernanceCopilot.msi /qn
     Uninstall:       msiexec /x PurviewGovernanceCopilot.msi /qn
   -->
@@ -29,13 +31,12 @@
     <Feature Id="Main" Title="Purview Governance Copilot" Level="1" AllowAbsent="no">
       <ComponentGroupRef Id="ProductFiles" />
       <ComponentRef Id="ApplicationShortcut" />
+      <ComponentRef Id="DesktopShortcut" />
     </Feature>
 
     <!-- Per-machine install; per-user deployment is available by publishing the app directly. -->
     <StandardDirectory Id="ProgramFiles64Folder">
-      <Directory Id="INSTALLFOLDER" Name="Purview Governance Copilot">
-        <Files Include="$(var.PublishDir)**" />
-      </Directory>
+      <Directory Id="INSTALLFOLDER" Name="Purview Governance Copilot" />
     </StandardDirectory>
 
     <StandardDirectory Id="ProgramMenuFolder">
@@ -47,7 +48,7 @@
                     Target="[INSTALLFOLDER]PurviewGovernanceCopilot.exe"
                     WorkingDirectory="INSTALLFOLDER" />
           <RemoveFolder Id="RemoveApplicationProgramsFolder" On="uninstall" />
-          <RegistryValue Root="HKLM"
+          <RegistryValue Root="HKCU"
                          Key="Software\BelleRajaCorp\PurviewGovernanceCopilot"
                          Name="InstallDir"
                          Type="string"
@@ -74,4 +75,10 @@
     </StandardDirectory>
 
   </Package>
+
+  <Fragment>
+    <ComponentGroup Id="ProductFiles" Directory="INSTALLFOLDER">
+      <Files Include="$(var.PublishDir)**" />
+    </ComponentGroup>
+  </Fragment>
 </Wix>

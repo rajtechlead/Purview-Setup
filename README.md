@@ -63,6 +63,7 @@ tests/
   PurviewCopilot.Tests/           # 68 automated tests
 docs/                             # architecture, design, security, guides, traceability
 installer/                        # WiX MSI project + MSIX manifest
+dist/                             # built MSI + SHA-256 (framework-dependent, unsigned)
 .github/workflows/ci.yml          # build, test, publish
 ```
 

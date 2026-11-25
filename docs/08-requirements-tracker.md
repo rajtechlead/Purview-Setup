@@ -253,13 +253,13 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 
 | ID | Requirement | Status | Proof | Evidence / gap |
 | --- | --- | --- | --- | --- |
-| INS-01 | MSI/WiX project | **Delivered** | D | `installer/PurviewGovernanceCopilot.wixproj` + `Package.wxs` (per-machine, major upgrade, shortcuts, ARP registration). Not built here: WiX is not installed. |
+| INS-01 | MSI/WiX project | **Delivered** | B | `installer/PurviewGovernanceCopilot.wixproj` + `Package.wxs` harvest the publish output into a per-machine package with major upgrade, Start Menu and desktop shortcuts. Built here with WiX 5.0.2 (`dotnet build … -p:PublishDir=…`). |
 | INS-02 | MSIX package | **Partial** | D | `installer/msix/AppxManifest.xml` only; there is no packaging project, assets or build step producing an `.msix`. |
 | INS-03 | Silent install | **Delivered** | D | `msiexec /i ... /qn` documented and used by the WiX package properties; not executed in this environment. |
 | INS-04 | Intune deployment | **Delivered** | D | Documented Win32/MSI Intune commands in `docs/05` §4. |
 | INS-05 | MECM/SCCM deployment | **Delivered** | D | Documented application model steps in `docs/05` §4. |
 | INS-06 | Upgrade and rollback | **Partial** | D | `MajorUpgrade` handles forward upgrades. Rollback means reinstalling the previous MSI; there is no automatic downgrade path. |
-| INS-07 | Produced installer binaries | **Not delivered** | — | No `.msi` or `.msix` in the repository; the build needs the WiX toolset and a signing certificate. |
+| INS-07 | Produced installer binaries | **Delivered** | B | `dist/PurviewGovernanceCopilot-1.0.0.msi` (1.8 MB, framework-dependent, with a SHA-256 file) is committed and passes `wix msi validate` ICE checks. Unsigned; no MSIX binary. |
 
 ---
 
@@ -267,9 +267,9 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 
 | Status | Count | Share |
 | --- | --- | --- |
-| **Delivered** | 93 | 69% |
+| **Delivered** | 94 | 70% |
 | **Partial** | 31 | 23% |
-| **Not delivered** | 10 | 7% |
+| **Not delivered** | 9 | 7% |
 | **Total tracked** | 134 | 100% |
 
 By section:
@@ -295,7 +295,7 @@ By section:
 | Architecture and technology | 7 | 1 | 2 |
 | User experience | 5 | 1 | 0 |
 | Help and About | 3 | 0 | 0 |
-| Installer | 4 | 2 | 1 |
+| Installer | 5 | 2 | 0 |
 
 ## What is genuinely missing
 
@@ -308,7 +308,7 @@ Ranked by risk to the commercial claim, not by effort:
 5. **Unattended scheduling and external alerts (MON-02, MON-04)** — checks run only while the app is open and alerts stay in-app.
 6. **Guided onboarding wizard (AUT-12)** and **Key Vault wiring (AUT-04)**.
 7. **Action centre ownership (UX-06)** — findings have no owner, due date or status.
-8. **Code signing and produced installer binaries (SEC-11, INS-07, INS-02)**.
+8. **Code signing and MSIX packaging (SEC-11, INS-02)** — the MSI is produced but unsigned, and there is no `.msix` build.
 9. **SQL Server support (ARC-08)** and **WinUI 3 (ARC-02)**.
 10. **DSPM, Compliance Manager and Defender data collection (DSC-08, DSC-11)**.
 11. **SQLCipher page encryption and per-customer RBAC (SEC-14 metadata, MSP-03)** — sensitive payloads are now encrypted, but database pages and tenant metadata are not, and all saved tenants remain reachable by one Windows user.

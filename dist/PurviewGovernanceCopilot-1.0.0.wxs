@@ -1,0 +1,127 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package Codepage="1252" Manufacturer="Belle-RajaCorp" ProductCode="{25B02093-69B1-4657-B697-77C02F3EF224}" Language="1033" Name="Purview Governance Copilot" Version="1.0.0" UpgradeCode="{7F3C2A64-9D1B-4C58-9E0A-2B6F4D8C1E35}">
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" ShortName="exut_bo8" Name="Purview Governance Copilot">
+        <Component Id="flsFTnf1Ah0sqYp.M_xl2C8Bj89TO4" Guid="{70AF57E9-0D5C-5581-8A18-D309DB743E01}" Bitness="always64">
+          <File Id="flsFTnf1Ah0sqYp.M_xl2C8Bj89TO4" ShortName="6wamb5su.dll" Name="Azure.Core.dll" KeyPath="yes" Source="SourceDir\File\flsFTnf1Ah0sqYp.M_xl2C8Bj89TO4" />
+        </Component>
+        <Component Id="fls7wQ46stK5YU_8OPF80N4iK76ITA" Guid="{68653312-B3E1-5E69-B49D-D90F2958B506}" Bitness="always64">
+          <File Id="fls7wQ46stK5YU_8OPF80N4iK76ITA" ShortName="82dgjbq9.dll" Name="Azure.Identity.dll" KeyPath="yes" Source="SourceDir\File\fls7wQ46stK5YU_8OPF80N4iK76ITA" />
+        </Component>
+        <Component Id="flsiGMzUhNeKoR6C64X_j4DzsylB5Q" Guid="{2E2E7D1C-833B-52F4-8509-5E60C8B10AE9}" Bitness="always64">
+          <File Id="flsiGMzUhNeKoR6C64X_j4DzsylB5Q" ShortName="axzvyrhx.dll" Name="e_sqlite3.dll" KeyPath="yes" Source="SourceDir\File\flsiGMzUhNeKoR6C64X_j4DzsylB5Q" />
+        </Component>
+        <Component Id="fls8MJl7dyvGR.fe4oeUGunsd_Yf9g" Guid="{B93B19D3-8037-5F6C-AEE7-D91F696A86B7}" Bitness="always64">
+          <File Id="fls8MJl7dyvGR.fe4oeUGunsd_Yf9g" ShortName="-391syxp.dll" Name="Microsoft.Bcl.AsyncInterfaces.dll" KeyPath="yes" Source="SourceDir\File\fls8MJl7dyvGR.fe4oeUGunsd_Yf9g" />
+        </Component>
+        <Component Id="flskhobnXUJySmTawZ_QzYx_ODwgNk" Guid="{12AF2B65-B3D5-573E-A19F-3A4FFA100035}" Bitness="always64">
+          <File Id="flskhobnXUJySmTawZ_QzYx_ODwgNk" ShortName="xdlyv4x4.dll" Name="Microsoft.Data.Sqlite.dll" KeyPath="yes" Source="SourceDir\File\flskhobnXUJySmTawZ_QzYx_ODwgNk" />
+        </Component>
+        <Component Id="flsNWq1cmOIIai1CJr6tK3GTv7dJIs" Guid="{128A1E22-9C2C-577E-B74A-9DCB9111DFCC}" Bitness="always64">
+          <File Id="flsNWq1cmOIIai1CJr6tK3GTv7dJIs" ShortName="ryka8s7n.dll" Name="Microsoft.Identity.Client.dll" KeyPath="yes" Source="SourceDir\File\flsNWq1cmOIIai1CJr6tK3GTv7dJIs" />
+        </Component>
+        <Component Id="flsI8qLj7xW1ZMC6F6dkTEtPhRr5GE" Guid="{CC190F9C-D734-5E2C-8186-985BB7EEBF24}" Bitness="always64">
+          <File Id="flsI8qLj7xW1ZMC6F6dkTEtPhRr5GE" ShortName="qchwwvq8.dll" Name="Microsoft.Identity.Client.Extensions.Msal.dll" KeyPath="yes" Source="SourceDir\File\flsI8qLj7xW1ZMC6F6dkTEtPhRr5GE" />
+        </Component>
+        <Component Id="flsisvij.xvEzpcYtTffumVZ3tm1cY" Guid="{947AF55E-CF95-5870-86CA-1C456E03036D}" Bitness="always64">
+          <File Id="flsisvij.xvEzpcYtTffumVZ3tm1cY" ShortName="2s5hetbc.dll" Name="Microsoft.IdentityModel.Abstractions.dll" KeyPath="yes" Source="SourceDir\File\flsisvij.xvEzpcYtTffumVZ3tm1cY" />
+        </Component>
+        <Component Id="flstvXiCagaaGNqA2cy7KbhFa0yzLc" Guid="{FD3F68A3-7AA7-5767-BC2D-ED1DA1D910E3}" Bitness="always64">
+          <File Id="flstvXiCagaaGNqA2cy7KbhFa0yzLc" ShortName="x3ljq0mb.dll" Name="PurviewCopilot.Application.dll" KeyPath="yes" Source="SourceDir\File\flstvXiCagaaGNqA2cy7KbhFa0yzLc" />
+        </Component>
+        <Component Id="flskh7LTv77rRpc3N54wxsOkCJUyeo" Guid="{B39B6944-0433-5B53-9CC1-1C8EA9D0447B}" Bitness="always64">
+          <File Id="flskh7LTv77rRpc3N54wxsOkCJUyeo" ShortName="jzay0gkb.pdb" Name="PurviewCopilot.Application.pdb" KeyPath="yes" Source="SourceDir\File\flskh7LTv77rRpc3N54wxsOkCJUyeo" />
+        </Component>
+        <Component Id="flsfb7F9RJXQyxpzj5LG_cko77Xp5g" Guid="{137CFC3D-1B77-5829-B465-4904EB38AA4F}" Bitness="always64">
+          <File Id="flsfb7F9RJXQyxpzj5LG_cko77Xp5g" ShortName="y8im3fow.dll" Name="PurviewCopilot.Domain.dll" KeyPath="yes" Source="SourceDir\File\flsfb7F9RJXQyxpzj5LG_cko77Xp5g" />
+        </Component>
+        <Component Id="flsVyXn_A8IdUFgvWrvaDf1CjN83ek" Guid="{AB617E2F-44E6-5ABC-BD33-F4CC03A357BE}" Bitness="always64">
+          <File Id="flsVyXn_A8IdUFgvWrvaDf1CjN83ek" ShortName="jo88o73y.pdb" Name="PurviewCopilot.Domain.pdb" KeyPath="yes" Source="SourceDir\File\flsVyXn_A8IdUFgvWrvaDf1CjN83ek" />
+        </Component>
+        <Component Id="flslkRngTtKMg6ZLJxEcIO2jLyUhkQ" Guid="{BBEC36AE-0402-5FC0-9A2A-B2C352980004}" Bitness="always64">
+          <File Id="flslkRngTtKMg6ZLJxEcIO2jLyUhkQ" ShortName="zhjvx-sq.dll" Name="PurviewCopilot.Infrastructure.dll" KeyPath="yes" Source="SourceDir\File\flslkRngTtKMg6ZLJxEcIO2jLyUhkQ" />
+        </Component>
+        <Component Id="flsTv49b7XuWGe3kuuAUoIuxcjPaA4" Guid="{5177919E-498F-5D89-B9BC-124E2C3AAEF5}" Bitness="always64">
+          <File Id="flsTv49b7XuWGe3kuuAUoIuxcjPaA4" ShortName="_w1ewt3i.pdb" Name="PurviewCopilot.Infrastructure.pdb" KeyPath="yes" Source="SourceDir\File\flsTv49b7XuWGe3kuuAUoIuxcjPaA4" />
+        </Component>
+        <Component Id="flsKeqBXFXDJgLzXLCuaCV42Yhmn2I" Guid="{8ADA6B27-AE17-5DDF-B7C2-DD75D390EB1C}" Bitness="always64">
+          <File Id="flsKeqBXFXDJgLzXLCuaCV42Yhmn2I" ShortName="r-0xq1hv.jso" Name="PurviewGovernanceCopilot.deps.json" KeyPath="yes" Source="SourceDir\File\flsKeqBXFXDJgLzXLCuaCV42Yhmn2I" />
+        </Component>
+        <Component Id="flsNrW6UosMRb8Ins3P4GLEVJ5oiqo" Guid="{15D23F07-C261-5788-94B3-A396EAFD5506}" Bitness="always64">
+          <File Id="flsNrW6UosMRb8Ins3P4GLEVJ5oiqo" ShortName="8ua2pkpa.dll" Name="PurviewGovernanceCopilot.dll" KeyPath="yes" Source="SourceDir\File\flsNrW6UosMRb8Ins3P4GLEVJ5oiqo" />
+        </Component>
+        <Component Id="flsHSkjK4TJxDb3vdcB68ifw5GeDpg" Guid="{09753A0B-DEE0-5B5E-93ED-3FFACDCEC8A3}" Bitness="always64">
+          <File Id="flsHSkjK4TJxDb3vdcB68ifw5GeDpg" ShortName="c99xbfgr.exe" Name="PurviewGovernanceCopilot.exe" KeyPath="yes" Source="SourceDir\File\flsHSkjK4TJxDb3vdcB68ifw5GeDpg" />
+        </Component>
+        <Component Id="flsamGr36cZ7nCbtoxBqxy22jz8Sxo" Guid="{8059B80F-6941-56DF-9FC8-6E32381068C5}" Bitness="always64">
+          <File Id="flsamGr36cZ7nCbtoxBqxy22jz8Sxo" ShortName="petbbrj0.pdb" Name="PurviewGovernanceCopilot.pdb" KeyPath="yes" Source="SourceDir\File\flsamGr36cZ7nCbtoxBqxy22jz8Sxo" />
+        </Component>
+        <Component Id="flsVfrRI2UhPWJ8XiTOyfqzCB0GOFY" Guid="{AEC46187-8A36-5A79-8FC9-010F3F07EF30}" Bitness="always64">
+          <File Id="flsVfrRI2UhPWJ8XiTOyfqzCB0GOFY" ShortName="x7ezv8rh.jso" Name="PurviewGovernanceCopilot.runtimeconfig.json" KeyPath="yes" Source="SourceDir\File\flsVfrRI2UhPWJ8XiTOyfqzCB0GOFY" />
+        </Component>
+        <Component Id="fls.Pj0rjCQGVYjubB5ArY0jqe0Hng" Guid="{8A67C331-EDA7-5282-9F3D-D98F2A925256}" Bitness="always64">
+          <File Id="fls.Pj0rjCQGVYjubB5ArY0jqe0Hng" ShortName="lraq6abr.dll" Name="SQLitePCLRaw.batteries_v2.dll" KeyPath="yes" Source="SourceDir\File\fls.Pj0rjCQGVYjubB5ArY0jqe0Hng" />
+        </Component>
+        <Component Id="flsKhjEjwQjzbxmn9XNF8PdK_zYEQI" Guid="{9B2C3A6F-49E3-5593-90F2-10336C0AA65E}" Bitness="always64">
+          <File Id="flsKhjEjwQjzbxmn9XNF8PdK_zYEQI" ShortName="f7imhtcr.dll" Name="SQLitePCLRaw.core.dll" KeyPath="yes" Source="SourceDir\File\flsKhjEjwQjzbxmn9XNF8PdK_zYEQI" />
+        </Component>
+        <Component Id="flsJ6qv2.49C.vh29ijasqN1n4qZZ8" Guid="{9AA25768-A435-5D74-97AC-43B84AF5357E}" Bitness="always64">
+          <File Id="flsJ6qv2.49C.vh29ijasqN1n4qZZ8" ShortName="cntxtkm8.dll" Name="SQLitePCLRaw.provider.e_sqlite3.dll" KeyPath="yes" Source="SourceDir\File\flsJ6qv2.49C.vh29ijasqN1n4qZZ8" />
+        </Component>
+        <Component Id="flsi4ttX2oddthiaZE13DozcZhT7Yc" Guid="{D4C5EB30-5360-5CC2-B740-1A81B78DD1CF}" Bitness="always64">
+          <File Id="flsi4ttX2oddthiaZE13DozcZhT7Yc" ShortName="-vlsisfx.dll" Name="System.ClientModel.dll" KeyPath="yes" Source="SourceDir\File\flsi4ttX2oddthiaZE13DozcZhT7Yc" />
+        </Component>
+        <Component Id="flsOmvX0tZ_xJ9QijWe3pFQuz.nOFU" Guid="{0E9FA643-EF9B-5E8D-8F4C-08A86177D396}" Bitness="always64">
+          <File Id="flsOmvX0tZ_xJ9QijWe3pFQuz.nOFU" ShortName="b00dt-zz.dll" Name="System.Memory.Data.dll" KeyPath="yes" Source="SourceDir\File\flsOmvX0tZ_xJ9QijWe3pFQuz.nOFU" />
+        </Component>
+      </Directory>
+    </StandardDirectory>
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="ApplicationProgramsFolder" ShortName="5j4uieht" Name="Purview Governance Copilot">
+        <Component Id="ApplicationShortcut" Guid="{B1F0C6D2-5C4A-4F1E-9D3B-0A7E2C8F6B14}" Bitness="always64">
+          <Shortcut Id="StartMenuShortcut" Directory="ApplicationProgramsFolder" Description="Purview assessment, governance and AI privacy workspace" WorkingDirectory="INSTALLFOLDER" ShortName="c-z6os-6" Name="Purview Governance Copilot" Target="[INSTALLFOLDER]PurviewGovernanceCopilot.exe" />
+          <RemoveFolder Id="RemoveApplicationProgramsFolder" On="uninstall" Directory="ApplicationProgramsFolder" />
+          <RegistryValue Id="regkolZesEIJlt8NmDWZN5BZnLcPKU" Key="Software\BelleRajaCorp\PurviewGovernanceCopilot" Name="InstallDir" Root="HKCU" Type="string" Value="[INSTALLFOLDER]" KeyPath="yes" />
+        </Component>
+      </Directory>
+    </StandardDirectory>
+    <StandardDirectory Id="DesktopFolder">
+      <Component Id="DesktopShortcut" Guid="{C2A1D7E3-6D5B-4A2F-8E4C-1B8F3D9A7C25}" Bitness="always64">
+        <Shortcut Id="DesktopShortcutLink" Directory="DesktopFolder" WorkingDirectory="INSTALLFOLDER" ShortName="upmso_dh" Name="Purview Governance Copilot" Target="[INSTALLFOLDER]PurviewGovernanceCopilot.exe" />
+        <RegistryValue Id="regERuyd.cZjBJfYMERATWOBy_RlXk" Key="Software\BelleRajaCorp\PurviewGovernanceCopilot" Name="DesktopShortcut" Root="HKCU" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </StandardDirectory>
+    <Feature Id="Main" Title="Purview Governance Copilot" Level="1" Absent="disallow">
+      <ComponentRef Id="ApplicationShortcut" />
+      <ComponentRef Id="DesktopShortcut" />
+      <ComponentRef Id="flsFTnf1Ah0sqYp.M_xl2C8Bj89TO4" />
+      <ComponentRef Id="fls7wQ46stK5YU_8OPF80N4iK76ITA" />
+      <ComponentRef Id="flsiGMzUhNeKoR6C64X_j4DzsylB5Q" />
+      <ComponentRef Id="fls8MJl7dyvGR.fe4oeUGunsd_Yf9g" />
+      <ComponentRef Id="flskhobnXUJySmTawZ_QzYx_ODwgNk" />
+      <ComponentRef Id="flsNWq1cmOIIai1CJr6tK3GTv7dJIs" />
+      <ComponentRef Id="flsI8qLj7xW1ZMC6F6dkTEtPhRr5GE" />
+      <ComponentRef Id="flsisvij.xvEzpcYtTffumVZ3tm1cY" />
+      <ComponentRef Id="flstvXiCagaaGNqA2cy7KbhFa0yzLc" />
+      <ComponentRef Id="flskh7LTv77rRpc3N54wxsOkCJUyeo" />
+      <ComponentRef Id="flsfb7F9RJXQyxpzj5LG_cko77Xp5g" />
+      <ComponentRef Id="flsVyXn_A8IdUFgvWrvaDf1CjN83ek" />
+      <ComponentRef Id="flslkRngTtKMg6ZLJxEcIO2jLyUhkQ" />
+      <ComponentRef Id="flsTv49b7XuWGe3kuuAUoIuxcjPaA4" />
+      <ComponentRef Id="flsKeqBXFXDJgLzXLCuaCV42Yhmn2I" />
+      <ComponentRef Id="flsNrW6UosMRb8Ins3P4GLEVJ5oiqo" />
+      <ComponentRef Id="flsHSkjK4TJxDb3vdcB68ifw5GeDpg" />
+      <ComponentRef Id="flsamGr36cZ7nCbtoxBqxy22jz8Sxo" />
+      <ComponentRef Id="flsVfrRI2UhPWJ8XiTOyfqzCB0GOFY" />
+      <ComponentRef Id="fls.Pj0rjCQGVYjubB5ArY0jqe0Hng" />
+      <ComponentRef Id="flsKhjEjwQjzbxmn9XNF8PdK_zYEQI" />
+      <ComponentRef Id="flsJ6qv2.49C.vh29ijasqN1n4qZZ8" />
+      <ComponentRef Id="flsi4ttX2oddthiaZE13DozcZhT7Yc" />
+      <ComponentRef Id="flsOmvX0tZ_xJ9QijWe3pFQuz.nOFU" />
+    </Feature>
+    <Media Id="1" EmbedCab="yes" Cabinet="cab1.cab" />
+    <SummaryInformation Description="Purview Governance Copilot — Purview assessment, governance and AI privacy workspace" />
+    <MajorUpgrade DowngradeErrorMessage="A newer version of Purview Governance Copilot is already installed." Schedule="afterInstallFinalize" />
+  </Package>
+</Wix>

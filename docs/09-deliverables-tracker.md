@@ -17,7 +17,7 @@ The specification names 22 deliverables. This tracker records where each one liv
 | 9 | AI Privacy Architecture | **Delivered** | `docs/03` §3, `Domain/Privacy/*` | Detector, four treatment modes, review gate, audit, cloud disable and offline mode. |
 | 10 | Module Architecture | **Delivered** | `docs/01` §5, `StandardModule.cs` | 16 modules over 49 rules, weights, descriptors, `IModule` extension seam. |
 | 11 | Source Code | **Delivered** | `src/` | 5 projects, 122 C# files, 12 XAML files; Release build succeeds. |
-| 12 | Installer Project | **Delivered** | `installer/` | WiX v4 project + `Package.wxs`, MSIX manifest, `build.ps1` with optional signing. Binaries not produced here (WiX and certificate absent — INS-07). |
+| 12 | Installer Project | **Delivered** | `installer/`, `dist/` | WiX 5 project + `Package.wxs`, MSIX manifest, `build.ps1` with optional signing. `dist/PurviewGovernanceCopilot-1.0.0.msi` is built and ICE-validated; it is framework-dependent (needs the .NET 9 Desktop Runtime) and unsigned. |
 | 13 | CI/CD Pipeline | **Delivered** | `.github/workflows/ci.yml` | Restore, Release build, tests with TRX upload, vulnerability scan, self-contained single-file publish, artifact upload, commented signing step. |
 | 14 | Threat Model | **Delivered** | `docs/03` §5 | STRIDE across trust boundaries with mitigations. |
 | 15 | Security Review | **Delivered** | `docs/03` §6–7 | OWASP Top 10/ASVS, CIS, NIST SSDF mapping; findings S-01…S-08 with severity. |

@@ -3,7 +3,8 @@
     Builds the publish output and the MSI for Purview Governance Copilot.
 
 .DESCRIPTION
-    Requires the .NET 9 SDK and the WiX toolset (`dotnet tool install --global wix`).
+    Requires the .NET 9 SDK and WiX 5.0.2 (`dotnet tool install --global wix --version 5.0.2`).
+    The install is framework-dependent, so targets need the .NET 9 Desktop Runtime.
     The MSIX path is optional and requires a code-signing certificate.
 
 .PARAMETER Configuration
@@ -27,8 +28,7 @@ $publishDir = Join-Path $root 'artifacts\publish'
 
 Write-Host 'Publishing application...' -ForegroundColor Cyan
 dotnet publish (Join-Path $root 'src\PurviewCopilot.UI') `
-    -c $Configuration -r win-x64 --self-contained true `
-    -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true `
+    -c $Configuration -r win-x64 --self-contained false `
     -o $publishDir
 
 if ($LASTEXITCODE -ne 0) { throw 'dotnet publish failed.' }
@@ -48,7 +48,7 @@ if ($SigningCertificate) {
         /tr http://timestamp.digicert.com /td SHA256 `
         (Join-Path $publishDir 'PurviewGovernanceCopilot.exe')
 
-    Get-ChildItem -Path (Join-Path $root 'artifacts') -Filter *.msi | ForEach-Object {
+    Get-ChildItem -Path (Join-Path $PSScriptRoot 'bin') -Filter *.msi -Recurse | ForEach-Object {
         & $signtool.Source sign /fd SHA256 /f $SigningCertificate `
             /tr http://timestamp.digicert.com /td SHA256 $_.FullName
     }

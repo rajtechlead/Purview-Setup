@@ -96,7 +96,7 @@ Status values: **Implemented** · **Partial** · **Planned** · **Not implemente
 
 | Requirement | Status | Evidence / gap |
 | --- | --- | --- |
-| MSI (WiX), MSIX, silent install, enterprise deployment | Partial | Projects and manifests authored; not built in this environment (WiX not installed). Intune/MECM commands documented |
+| MSI (WiX), MSIX, silent install, enterprise deployment | Partial | MSI built with WiX 5 and ICE-validated (`dist/PurviewGovernanceCopilot-1.0.0.msi`), unsigned and framework-dependent; MSIX is manifest-only. Intune/MECM commands documented |
 | Upgrade and rollback | Partial | MSI major-upgrade configured; rollback = reinstall previous package; documented |
 | CI/CD pipeline | Implemented | `.github/workflows/ci.yml` (build, test, publish, vulnerability scan, artifact) |
 | Automated test framework | Implemented | 36 tests: scoring, catalog, privacy, approvals, planning, licensing, drift, failover, SQLite, reports |
