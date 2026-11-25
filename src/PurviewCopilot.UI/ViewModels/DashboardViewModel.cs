@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Windows.Input;
 using PurviewCopilot.Application.Abstractions;
+using PurviewCopilot.Application.Monitoring;
 using PurviewCopilot.Application.Workspace;
 using PurviewCopilot.Domain;
 using PurviewCopilot.UI.Mvvm;
@@ -9,15 +10,42 @@ namespace PurviewCopilot.UI.ViewModels;
 
 public sealed record ScoreCard(string Label, double Value, string Display, string Note);
 
+public sealed record HeatmapCellView(string Module, string Severity, int Count, double Opacity);
+
+public sealed record TrendBar(string Label, double Height, string Value);
+
 public sealed class DashboardViewModel : PageViewModel
 {
+    private static readonly ModuleKey[] SecurityKeys =
+    {
+        ModuleKey.Audit, ModuleKey.DataLossPrevention, ModuleKey.EndpointDlp, ModuleKey.InsiderRisk,
+        ModuleKey.InformationProtection, ModuleKey.SensitivityLabels, ModuleKey.AutoLabeling, ModuleKey.DataClassification
+    };
+
+    private static readonly ModuleKey[] GovernanceKeys =
+    {
+        ModuleKey.DataLifecycle, ModuleKey.RecordsManagement, ModuleKey.Dspm,
+        ModuleKey.AiGovernance, ModuleKey.CopilotGovernance, ModuleKey.ComplianceManager
+    };
+
+    private static readonly ModuleKey[] ComplianceKeys =
+    {
+        ModuleKey.Audit, ModuleKey.DataLossPrevention, ModuleKey.RecordsManagement, ModuleKey.DataLifecycle,
+        ModuleKey.CommunicationCompliance, ModuleKey.EDIscovery, ModuleKey.ComplianceManager, ModuleKey.SensitivityLabels
+    };
+
     private readonly GovernanceWorkspace _workspace;
     private readonly IAssessmentStore _store;
     private readonly ISettingsStore _settings;
     private string _tenantName = "No tenant connected";
     private string _collected = "Run a discovery to populate the dashboard.";
     private string _band = "Not assessed";
+    private string _maturityTrail = "No history yet.";
+    private string _overallDelta = "No previous assessment.";
     private string _warningText = string.Empty;
+    private string _securitySummary = "No assessment.";
+    private string _governanceSummary = "No assessment.";
+    private string _complianceSummary = "No assessment.";
     private bool _hasData;
 
     public DashboardViewModel(GovernanceWorkspace workspace, IAssessmentStore store, ISettingsStore settings)
@@ -33,12 +61,23 @@ public sealed class DashboardViewModel : PageViewModel
 
     public ObservableCollection<ScoreCard> Scores { get; } = new();
     public ObservableCollection<ModuleScore> Modules { get; } = new();
+    public ObservableCollection<ModuleScore> SecurityModules { get; } = new();
+    public ObservableCollection<ModuleScore> GovernanceModules { get; } = new();
+    public ObservableCollection<ModuleScore> ComplianceModules { get; } = new();
     public ObservableCollection<Finding> PrioritisedFindings { get; } = new();
+    public ObservableCollection<HeatmapCellView> Heatmap { get; } = new();
+    public ObservableCollection<TrendBar> Trend { get; } = new();
+    public ObservableCollection<FrameworkCoverage> Frameworks { get; } = new();
 
     public string TenantName { get => _tenantName; private set => SetProperty(ref _tenantName, value); }
     public string Collected { get => _collected; private set => SetProperty(ref _collected, value); }
     public string Band { get => _band; private set => SetProperty(ref _band, value); }
+    public string MaturityTrail { get => _maturityTrail; private set => SetProperty(ref _maturityTrail, value); }
+    public string OverallDelta { get => _overallDelta; private set => SetProperty(ref _overallDelta, value); }
     public string WarningText { get => _warningText; private set => SetProperty(ref _warningText, value); }
+    public string SecuritySummary { get => _securitySummary; private set => SetProperty(ref _securitySummary, value); }
+    public string GovernanceSummary { get => _governanceSummary; private set => SetProperty(ref _governanceSummary, value); }
+    public string ComplianceSummary { get => _complianceSummary; private set => SetProperty(ref _complianceSummary, value); }
     public bool HasData { get => _hasData; private set => SetProperty(ref _hasData, value); }
 
     public string FailCount => _workspace.Assessment?.Findings.Count(f => f.Status == FindingStatus.Fail).ToString() ?? "0";
@@ -63,8 +102,11 @@ public sealed class DashboardViewModel : PageViewModel
             TenantName = "No tenant connected";
             Collected = "Run Assessment → Discover tenant to populate the dashboard.";
             Band = "Not assessed";
+            MaturityTrail = "No history yet.";
+            OverallDelta = "No previous assessment.";
             Scores.Clear();
             Modules.Clear();
+            ClearPersonaViews();
             return;
         }
 
@@ -92,6 +134,10 @@ public sealed class DashboardViewModel : PageViewModel
             Modules.Add(module);
         }
 
+        Fill(SecurityModules, SecurityKeys);
+        Fill(GovernanceModules, GovernanceKeys);
+        Fill(ComplianceModules, ComplianceKeys);
+
         PrioritisedFindings.Clear();
         foreach (var finding in assessment.Findings
                      .Where(f => f.Status is FindingStatus.Fail or FindingStatus.Warning)
@@ -102,8 +148,85 @@ public sealed class DashboardViewModel : PageViewModel
             PrioritisedFindings.Add(finding);
         }
 
+        Heatmap.Clear();
+        foreach (var cell in RiskHeatmap.Build(assessment.Findings))
+        {
+            Heatmap.Add(new HeatmapCellView(
+                cell.Module.ToString(),
+                cell.Severity.ToString(),
+                cell.Count,
+                Math.Min(1, 0.25 + cell.Count * 0.18)));
+        }
+
+        Frameworks.Clear();
+        foreach (var framework in _workspace.Frameworks)
+        {
+            Frameworks.Add(framework);
+        }
+
+        SecuritySummary = Summary(assessment.Scores.Security, SecurityKeys, assessment.Findings);
+        GovernanceSummary = Summary(assessment.Scores.Governance, GovernanceKeys, assessment.Findings);
+        ComplianceSummary = Summary(assessment.Scores.Compliance, ComplianceKeys, assessment.Findings);
+
+        var history = await _workspace.RefreshHistoryAsync(assessment.TenantId).ConfigureAwait(true);
+
+        Trend.Clear();
+        var points = TrendSeries.Build(history, 12);
+        foreach (var point in points)
+        {
+            Trend.Add(new TrendBar(
+                point.RunUtc.ToLocalTime().ToString("MM-dd"),
+                8 + Math.Round(point.Overall * 0.72, 1),
+                $"{point.Overall:0}"));
+        }
+
+        if (history.Count > 1)
+        {
+            var older = history[1].Scores;
+            MaturityTrail = $"{older.MaturityLevel} → {assessment.Scores.MaturityLevel} over {history.Count} assessments";
+            var delta = assessment.Scores.Overall - older.Overall;
+            OverallDelta = $"{delta:+0.#;-0.#;0} points vs previous assessment";
+        }
+        else
+        {
+            MaturityTrail = $"{assessment.Scores.MaturityLevel} · baseline assessment";
+            OverallDelta = "Baseline assessment — no comparison yet.";
+        }
+
         Raise(nameof(FailCount));
         Raise(nameof(WarningCount));
         Raise(nameof(RecommendationCount));
+    }
+
+    private void Fill(ObservableCollection<ModuleScore> target, IReadOnlyCollection<ModuleKey> keys)
+    {
+        target.Clear();
+        foreach (var module in Modules.Where(m => keys.Contains(m.Module)))
+        {
+            target.Add(module);
+        }
+    }
+
+    private void ClearPersonaViews()
+    {
+        SecurityModules.Clear();
+        GovernanceModules.Clear();
+        ComplianceModules.Clear();
+        Heatmap.Clear();
+        Trend.Clear();
+        Frameworks.Clear();
+        SecuritySummary = "No assessment.";
+        GovernanceSummary = "No assessment.";
+        ComplianceSummary = "No assessment.";
+    }
+
+    private static string Summary(double score, IReadOnlyCollection<ModuleKey> keys, IReadOnlyList<Finding> findings)
+    {
+        var open = findings.Count(f =>
+            keys.Contains(f.Module) && f.Status is FindingStatus.Fail or FindingStatus.Warning);
+        var critical = findings.Count(f =>
+            keys.Contains(f.Module) && f.Severity >= Severity.High && f.Status is FindingStatus.Fail or FindingStatus.Warning);
+
+        return $"{score:0.#}/100 · {open} open finding(s) · {critical} high or critical";
     }
 }

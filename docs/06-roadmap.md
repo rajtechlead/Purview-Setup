@@ -25,10 +25,10 @@ Ordered by risk reduction and by what the current build deliberately leaves out.
 
 ## Phase 1.3 — Reporting and multi-tenant
 
-**1 of 4 complete.** Updated 25 November 2026.
+**2 of 4 complete.** Updated 25 November 2026.
 
 - **PDF, DOCX and XLSX** — **Done**. Dependency-free writers: a paginated PDF 1.4 document with base-14 fonts, and OOXML packages built directly with `ZipArchive` for DOCX (single document part) and XLSX (Scores, Findings, Frameworks sheets). Exported from Reports; covered by five tests including escaping and package validity.
-- **Risk heatmap and trend lines** — **Open**. Requires a likelihood × impact view and history charted from stored assessments.
+- **Risk heatmap, trends and persona dashboards** — **Done**. The dashboard has Executive, Security, Governance and Compliance tabs; the Security tab carries a module × severity heatmap of open findings; Executive charts the last twelve overall scores from stored assessments and shows the maturity trail and delta.
 - **Multi-tenant MSP mode** — **Open**. Needs a tenant switcher, explicit per-customer isolation, a cross-tenant dashboard and per-customer roles.
 - **Scheduled monitoring** — **Open**. Needs a scheduler and an alert channel; drift is currently on-demand.
 

@@ -20,6 +20,7 @@ public sealed class GovernanceWorkspace
     private readonly AssessmentService _assessmentService;
     private readonly ChangePlanBuilder _planBuilder;
     private readonly BackupService _backups;
+    private readonly IAssessmentStore _assessmentStore;
     private readonly IChangePlanStore _planStore;
     private readonly IApprovalStore _approvalStore;
     private readonly IReportExporter[] _exporters;
@@ -36,6 +37,7 @@ public sealed class GovernanceWorkspace
         AssessmentService assessmentService,
         ChangePlanBuilder planBuilder,
         BackupService backups,
+        IAssessmentStore assessmentStore,
         IChangePlanStore planStore,
         IApprovalStore approvalStore,
         IEnumerable<IReportExporter> exporters,
@@ -48,6 +50,7 @@ public sealed class GovernanceWorkspace
         _assessmentService = assessmentService;
         _planBuilder = planBuilder;
         _backups = backups;
+        _assessmentStore = assessmentStore;
         _planStore = planStore;
         _approvalStore = approvalStore;
         _exporters = exporters.ToArray();
@@ -70,6 +73,18 @@ public sealed class GovernanceWorkspace
             ? Array.Empty<DriftItem>()
             : DriftDetector.Compare(_baseline, _lastCollected);
 
+    /// <summary>Most recent stored assessments for the current tenant, newest first.</summary>
+    public IReadOnlyList<AssessmentResult> History { get; private set; } = Array.Empty<AssessmentResult>();
+
+    public async Task<IReadOnlyList<AssessmentResult>> RefreshHistoryAsync(
+        string tenantId,
+        int take = 20,
+        CancellationToken cancellationToken = default)
+    {
+        History = await _assessmentStore.ListAsync(tenantId, take, cancellationToken).ConfigureAwait(false);
+        return History;
+    }
+
     public async Task<AssessmentResult> AssessAsync(
         AuthConfiguration auth,
         DeploymentMode mode,
@@ -84,6 +99,7 @@ public sealed class GovernanceWorkspace
 
         _lastCollected = snapshot;
         Assessment = await _assessmentService.RunAsync(snapshot, mode, cancellationToken).ConfigureAwait(false);
+        await RefreshHistoryAsync(snapshot.TenantId, cancellationToken: cancellationToken).ConfigureAwait(false);
         return Assessment;
     }
 
@@ -93,6 +109,7 @@ public sealed class GovernanceWorkspace
         _lastCollected = snapshot;
         Assessment = await _assessmentService.RunAsync(snapshot, DeploymentMode.AssessmentOnly, cancellationToken)
             .ConfigureAwait(false);
+        await RefreshHistoryAsync(snapshot.TenantId, cancellationToken: cancellationToken).ConfigureAwait(false);
         return Assessment;
     }
 

@@ -18,7 +18,7 @@ Verified against commit `353bde2` on 25 November 2026 by reading the source, cou
 
 | Code | Meaning |
 | --- | --- |
-| **T** | Covered by an automated test (56 tests, all passing at audit time). |
+| **T** | Covered by an automated test (58 tests, all passing at audit time). |
 | **B** | Builds and is reachable from the composition root; behaviour not exercised end to end. |
 | **C** | Code exists but is unexercised here (no tenant, certificate, API key or admin rights). |
 | **D** | Documentation or project/manifest artifact only; nothing executes it here. |
@@ -234,10 +234,10 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 
 | ID | Requirement | Status | Proof | Evidence / gap |
 | --- | --- | --- | --- | --- |
-| UX-01 | Separate executive, security, governance and compliance dashboards | **Partial** | B | One dashboard shows all seven scores, module coverage and priority findings; there are no per-persona pages. |
-| UX-02 | Risk heatmaps | **Not delivered** | — | Severity is shown per finding; no heatmap grid. |
-| UX-03 | Maturity tracking | **Partial** | B | Current maturity band and score are shown; history is stored but not charted as a trajectory. |
-| UX-04 | Trends | **Not delivered** | — | No trend visualisation. |
+| UX-01 | Separate executive, security, governance and compliance dashboards | **Delivered** | B | The dashboard now has Executive, Security, Governance and Compliance tabs with persona-specific summaries, module filters and framework coverage. |
+| UX-02 | Risk heatmaps | **Delivered** | T | `RiskHeatmap` groups open findings by module × severity and the Security tab renders it as intensity-scaled cells. Test: `Heatmap_GroupsOpenFindingsAndIgnoresPassingControls`. |
+| UX-03 | Maturity tracking | **Delivered** | T | History is loaded per tenant and the dashboard shows the maturity trail (previous → current over N assessments) plus the overall delta. Tests cover the history series. |
+| UX-04 | Trends | **Delivered** | T | Executive tab charts the last twelve overall scores from stored assessments, oldest to newest. Test: `Trend_IsAscending_AndKeepsTheNewestPoints`. |
 | UX-05 | Recommendations | **Delivered** | T | Prioritised, licence-aware recommendations with effort and change risk. |
 | UX-06 | Action center | **Partial** | B | Priority findings are listed; no owner, due date, status or assignment workflow. |
 
@@ -267,9 +267,9 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 
 | Status | Count | Share |
 | --- | --- | --- |
-| **Delivered** | 86 | 64% |
-| **Partial** | 31 | 23% |
-| **Not delivered** | 17 | 13% |
+| **Delivered** | 90 | 67% |
+| **Partial** | 28 | 21% |
+| **Not delivered** | 15 | 12% |
 | **Total tracked** | 134 | 100% |
 
 By section:
@@ -293,7 +293,7 @@ By section:
 | Reporting | 5 | 1 | 0 |
 | Security engineering | 10 | 3 | 3 |
 | Architecture and technology | 7 | 1 | 2 |
-| User experience | 1 | 3 | 2 |
+| User experience | 5 | 1 | 0 |
 | Help and About | 3 | 0 | 0 |
 | Installer | 4 | 2 | 1 |
 
@@ -308,7 +308,7 @@ Ranked by risk to the commercial claim, not by effort:
 5. **Config-as-code breadth (CAC-02)** — no ARM/Bicep/Terraform output, and existing tenant objects are not exported individually.
 6. **Scheduled monitoring and alerts (MON-02, MON-04)**.
 7. **Guided onboarding wizard (AUT-12)** and **Key Vault wiring (AUT-04)**.
-8. **Per-persona dashboards, heatmap and trends (UX-01…04)**.
+8. **Action centre ownership (UX-06)** — findings have no owner, due date or status.
 9. **Code signing and produced installer binaries (SEC-11, INS-07, INS-02)**.
 10. **SQL Server support (ARC-08)** and **WinUI 3 (ARC-02)**.
 11. **DSPM, Compliance Manager and Defender data collection (DSC-08, DSC-11)**.
@@ -318,7 +318,7 @@ Ranked by risk to the commercial claim, not by effort:
 | Check | Result |
 | --- | --- |
 | `dotnet build PurviewGovernanceCopilot.sln -c Release` | Succeeded (local SDK 9.0.321) |
-| `dotnet test tests/PurviewCopilot.Tests -c Release` | 56 passed, 0 failed |
+| `dotnet test tests/PurviewCopilot.Tests -c Release` | 58 passed, 0 failed |
 | Catalog count (`grep -c 'Add("' ModuleCatalog.cs`) | 49 rules across 16 modules |
 | Exporter inventory | HTML, JSON, CSV, Markdown, PDF, DOCX, XLSX |
 | `ReportFormat` enum | `Html, Json, Csv, Markdown, Pdf, Docx, Xlsx` |

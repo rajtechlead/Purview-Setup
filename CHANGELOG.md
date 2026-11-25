@@ -21,6 +21,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - **PDF, DOCX and XLSX exports**: a paginated PDF 1.4 writer with base-14 fonts, plus OOXML DOCX and XLSX packages built directly with `ZipArchive` — no new dependencies. XLSX carries Scores, Findings and Frameworks sheets. All three are available from Reports.
 - **Binary report path**: `IReportExporter.RenderBytes` with a text default, and `GovernanceWorkspace.ExportReportAsync` now writes bytes so every format shares one audited export path.
+- **Persona dashboards, risk heatmap and trends**: Executive, Security, Governance and Compliance tabs; module × severity heatmap of open findings; the last twelve overall scores charted from stored assessments with maturity trail and delta.
 
 ### Changed
 
