@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Windows.Input;
 using System.Windows.Threading;
 using PurviewCopilot.Application.Abstractions;
+using PurviewCopilot.Application.Ai;
 using PurviewCopilot.Application.Licensing;
 using PurviewCopilot.Application.Monitoring;
 using PurviewCopilot.Application.Workspace;
@@ -14,16 +15,20 @@ public sealed class MonitoringViewModel : PageViewModel
 {
     private readonly GovernanceWorkspace _workspace;
     private readonly ISettingsStore _settings;
+    private readonly IAiUsageStore _aiUsage;
     private readonly DispatcherTimer _timer;
     private string _status = "Run an assessment to establish a baseline.";
     private string _scheduleText = "Automatic checks are off.";
+    private string _aiUsageText = "No AI requests recorded.";
+    private string _aiCostText = string.Empty;
     private int _intervalMinutes;
     private bool _checking;
 
-    public MonitoringViewModel(GovernanceWorkspace workspace, ISettingsStore settings)
+    public MonitoringViewModel(GovernanceWorkspace workspace, ISettingsStore settings, IAiUsageStore aiUsage)
     {
         _workspace = workspace;
         _settings = settings;
+        _aiUsage = aiUsage;
 
         RefreshCommand = new AsyncRelayCommand(RefreshAsync);
         CheckNowCommand = new AsyncRelayCommand(CheckNowAsync, () => !_checking);
@@ -43,6 +48,8 @@ public sealed class MonitoringViewModel : PageViewModel
 
     public string Status { get => _status; private set => SetProperty(ref _status, value); }
     public string ScheduleText { get => _scheduleText; private set => SetProperty(ref _scheduleText, value); }
+    public string AiUsageText { get => _aiUsageText; private set => SetProperty(ref _aiUsageText, value); }
+    public string AiCostText { get => _aiCostText; private set => SetProperty(ref _aiCostText, value); }
     public int IntervalMinutes { get => _intervalMinutes; set => SetProperty(ref _intervalMinutes, value); }
 
     public ICommand RefreshCommand { get; }
@@ -91,6 +98,18 @@ public sealed class MonitoringViewModel : PageViewModel
         var settings = await _settings.LoadAsync().ConfigureAwait(true);
         IntervalMinutes = settings.MonitoringIntervalMinutes;
         ConfigureSchedule(settings.MonitoringIntervalMinutes);
+
+        var summary = AiUsageSummary.From(await _aiUsage.ListAsync(null, 1000).ConfigureAwait(true));
+        if (summary.Requests == 0)
+        {
+            AiUsageText = "No AI requests recorded yet.";
+            AiCostText = "Provider keys resolve from environment variables and are never persisted.";
+        }
+        else
+        {
+            AiUsageText = $"{summary.Requests} request(s) · {summary.TotalTokens:N0} tokens · {summary.SuccessRatePercent:0.#}% success · {summary.FailedRequests} failed";
+            AiCostText = $"Estimated spend ${summary.CostUsd:0.0000} across {summary.Providers} provider(s). Figures come from the local ledger, not a provider invoice.";
+        }
 
         Status = Drift.Count == 0
             ? "No drift detected against the previous collection."

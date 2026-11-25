@@ -61,6 +61,14 @@
 
         <Border Style="{StaticResource Card}" Margin="0,0,0,16">
             <StackPanel>
+                <TextBlock Text="AI usage ledger" Style="{StaticResource SectionHeader}" />
+                <TextBlock Text="{Binding AiUsageText}" FontSize="13" />
+                <TextBlock Text="{Binding AiCostText}" Style="{StaticResource Muted}" TextWrapping="Wrap" />
+            </StackPanel>
+        </Border>
+
+        <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+            <StackPanel>
                 <TextBlock Text="Drift since previous collection" Style="{StaticResource SectionHeader}" />
                 <ItemsControl ItemsSource="{Binding Drift}">
                     <ItemsControl.ItemTemplate>

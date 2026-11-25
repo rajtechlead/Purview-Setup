@@ -23,6 +23,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Binary report path**: `IReportExporter.RenderBytes` with a text default, and `GovernanceWorkspace.ExportReportAsync` now writes bytes so every format shares one audited export path.
 - **Persona dashboards, risk heatmap and trends**: Executive, Security, Governance and Compliance tabs; module × severity heatmap of open findings; the last twelve overall scores charted from stored assessments with maturity trail and delta.
 - **MSP tenancy**: a `tenant_profiles` registry with DPAPI-protected credentials, save/activate from Settings, in-session evidence cleared on activation, and a cross-tenant Portfolio tab built from each tenant's latest assessment.
+- **Encrypted evidence**: assessment, change-plan, approval and backup payloads are DPAPI-encrypted before they reach SQLite and decrypted on read, with legacy plaintext rows still loading.
+- **AI usage ledger**: Monitoring reports request count, tokens, success rate and estimated spend from the local ledger.
 - **Continuous monitoring**: an optional in-app check interval (minimum 15 minutes) that re-runs the read-only assessment and refreshes drift and licence signals, plus locally generated alerts for drift, score regressions and critical failures.
 
 ### Changed

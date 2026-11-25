@@ -18,7 +18,7 @@ Verified against commit `353bde2` on 25 November 2026 by reading the source, cou
 
 | Code | Meaning |
 | --- | --- |
-| **T** | Covered by an automated test (65 tests, all passing at audit time). |
+| **T** | Covered by an automated test (68 tests, all passing at audit time). |
 | **B** | Builds and is reachable from the composition root; behaviour not exercised end to end. |
 | **C** | Code exists but is unexercised here (no tenant, certificate, API key or admin rights). |
 | **D** | Documentation or project/manifest artifact only; nothing executes it here. |
@@ -50,7 +50,7 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 | AUT-08 | Automated validation | **Partial** | C | Thumbprint validation and an organisation/Graph connection test exist. No automated validation that the app registration, permissions or admin consent are correct. |
 | AUT-09 | Managed identity (secondary) | **Delivered** | B | `AuthMode.ManagedIdentity`, system- or user-assigned client id. |
 | AUT-10 | Interactive sign-in (secondary) | **Delivered** | B | `InteractiveBrowserCredential` with the loopback redirect. |
-| AUT-11 | Client secret, lab/testing only (secondary) | **Delivered** | B | `AuthMode.ClientSecret`. The secret is persisted in the settings JSON in plaintext — see SEC-12. |
+| AUT-11 | Client secret, lab/testing only (secondary) | **Delivered** | B | `AuthMode.ClientSecret`; the secret is DPAPI-protected in the settings document and in tenant profiles, and resolves from memory at call time. |
 | AUT-12 | Guided wizard: app registration → permissions → consent → certificate → service principal → connectivity → security validation | **Partial** | D | Settings provides certificate and connection actions; `docs/05` §3 is a manual checklist. There is no stepped wizard, no app-registration creation, no consent automation, no service-principal creation and no security-validation step. |
 
 ## C. Discovery and assessment
@@ -105,7 +105,7 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 | AIA-09 | Token tracking | **Delivered** | T | Prompt/completion tokens recorded per attempt, including failures. |
 | AIA-10 | Automatic switch to the next approved provider and continue | **Delivered** | T | Priority-ordered loop with failure classification and usage records. |
 | AIA-11 | Provider configuration in the UI | **Delivered** | B | Settings lists providers with enable flags, endpoints, models and priority. |
-| AIA-12 | Quota, spend and usage visibility | **Partial** | B | Usage rows are stored, but no page reports spend, token totals or provider health over time. |
+| AIA-12 | Quota, spend and usage visibility | **Delivered** | T | Monitoring's AI usage ledger reports request count, prompt/completion tokens, success rate, failures, distinct providers and estimated spend from the local ledger (explicitly not a provider invoice). Tests: `AiUsageSummary_AggregatesTokensCostsAndFailures`, `AiUsageSummary_EmptyLedger_IsZeroed`. |
 
 ## G. AI privacy guardrail (mandatory)
 
@@ -211,7 +211,7 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 | SEC-11 | Code signing | **Not delivered** | D | Build script and CI support signing when a certificate is supplied; no certificate exists, so nothing is signed. |
 | SEC-12 | Secrets management | **Delivered** | T | Provider keys resolve from environment variables and are never persisted. The lab Entra client secret is DPAPI-protected (`CurrentUser`) in the settings document and decrypted transparently on load; legacy plaintext is encrypted on next save. Test: `Settings_ProtectsClientSecretAtRest`. |
 | SEC-13 | Tamper detection | **Delivered** | T | SHA-256 chain over insertion order with legacy backfill, `IAuditLog.VerifyAsync`, and a Settings verification button. Detects edited or deleted rows at the first affected entry. Tests: `AuditChain_VerifiesInOrder`, `AuditChain_DetectsTampering`. |
-| SEC-14 | Encryption at rest | **Not delivered** | — | SQLite database and backups are unencrypted. Certificates are protected by the OS key store, but assessment and audit data are not. |
+| SEC-14 | Encryption at rest | **Delivered** | T | Assessment, change-plan, approval and backup payloads are DPAPI-encrypted (`dpapi:v1:`) before they are written and decrypted on read; legacy rows still load. Tenant ids, timestamps, scores and SQLite pages remain plaintext, so database page encryption (SQLCipher) is still a hardening step. Test: `AssessmentEvidence_IsEncryptedAtRest_AndStillLoads`. |
 | SEC-15 | Encryption in transit | **Delivered** | B | HTTPS only for Graph, Key Vault and AI providers; TLS validated by the platform handler. |
 | SEC-16 | Secure auto-update | **Not delivered** | — | No updater; upgrades are MSI major-upgrade installs. |
 
@@ -267,9 +267,9 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 
 | Status | Count | Share |
 | --- | --- | --- |
-| **Delivered** | 91 | 68% |
-| **Partial** | 32 | 24% |
-| **Not delivered** | 11 | 8% |
+| **Delivered** | 93 | 69% |
+| **Partial** | 31 | 23% |
+| **Not delivered** | 10 | 7% |
 | **Total tracked** | 134 | 100% |
 
 By section:
@@ -281,7 +281,7 @@ By section:
 | Discovery and assessment | 10 | 4 | 0 |
 | Deployment and change control | 1 | 3 | 1 |
 | Modular architecture | 1 | 2 | 0 |
-| AI assistant and failover | 10 | 1 | 1 |
+| AI assistant and failover | 11 | 0 | 1 |
 | AI privacy guardrail | 11 | 1 | 0 |
 | Change management and safety | 4 | 3 | 0 |
 | Multi-tenant MSP | 1 | 1 | 1 |
@@ -291,7 +291,7 @@ By section:
 | Licence optimisation | 1 | 1 | 0 |
 | Continuous monitoring | 1 | 3 | 0 |
 | Reporting | 5 | 1 | 0 |
-| Security engineering | 10 | 3 | 3 |
+| Security engineering | 11 | 3 | 2 |
 | Architecture and technology | 7 | 1 | 2 |
 | User experience | 5 | 1 | 0 |
 | Help and About | 3 | 0 | 0 |
@@ -302,23 +302,23 @@ By section:
 Ranked by risk to the commercial claim, not by effort:
 
 1. **Per-customer RBAC and cross-tenant export (MSP-02, MSP-03)** — tenant switching, isolation and the portfolio view exist, but there are no user roles and no combined report.
-2. **Encryption at rest (SEC-14)** — the client secret is DPAPI-protected and the audit log is hash-chained, but assessment, plan, backup and licence payloads still sit in plaintext SQLite.
-3. **Live deployment execution (DEP-05)** — by design, but the specification asks for apply and rollback; the reviewed script and reversal script exist, execution does not.
-4. **Security Copilot (AIA-02)** and **government clouds (OFF-03)**.
-5. **Config-as-code breadth (CAC-02)** — no ARM/Bicep/Terraform output, and existing tenant objects are not exported individually.
-6. **Unattended scheduling and external alerts (MON-02, MON-04)** — checks run only while the app is open and alerts stay in-app.
-7. **Guided onboarding wizard (AUT-12)** and **Key Vault wiring (AUT-04)**.
-8. **Action centre ownership (UX-06)** — findings have no owner, due date or status.
-9. **Code signing and produced installer binaries (SEC-11, INS-07, INS-02)**.
-10. **SQL Server support (ARC-08)** and **WinUI 3 (ARC-02)**.
-11. **DSPM, Compliance Manager and Defender data collection (DSC-08, DSC-11)**.
+2. **Live deployment execution (DEP-05)** — by design, but the specification asks for apply and rollback; the reviewed script and reversal script exist, execution does not.
+3. **Security Copilot (AIA-02)** and **government clouds (OFF-03)**.
+4. **Config-as-code breadth (CAC-02)** — no ARM/Bicep/Terraform output, and existing tenant objects are not exported individually.
+5. **Unattended scheduling and external alerts (MON-02, MON-04)** — checks run only while the app is open and alerts stay in-app.
+6. **Guided onboarding wizard (AUT-12)** and **Key Vault wiring (AUT-04)**.
+7. **Action centre ownership (UX-06)** — findings have no owner, due date or status.
+8. **Code signing and produced installer binaries (SEC-11, INS-07, INS-02)**.
+9. **SQL Server support (ARC-08)** and **WinUI 3 (ARC-02)**.
+10. **DSPM, Compliance Manager and Defender data collection (DSC-08, DSC-11)**.
+11. **SQLCipher page encryption and per-customer RBAC (SEC-14 metadata, MSP-03)** — sensitive payloads are now encrypted, but database pages and tenant metadata are not, and all saved tenants remain reachable by one Windows user.
 
 ## Verification performed
 
 | Check | Result |
 | --- | --- |
 | `dotnet build PurviewGovernanceCopilot.sln -c Release` | Succeeded (local SDK 9.0.321) |
-| `dotnet test tests/PurviewCopilot.Tests -c Release` | 65 passed, 0 failed |
+| `dotnet test tests/PurviewCopilot.Tests -c Release` | 68 passed, 0 failed |
 | Catalog count (`grep -c 'Add("' ModuleCatalog.cs`) | 49 rules across 16 modules |
 | Exporter inventory | HTML, JSON, CSV, Markdown, PDF, DOCX, XLSX |
 | `ReportFormat` enum | `Html, Json, Csv, Markdown, Pdf, Docx, Xlsx` |

@@ -60,7 +60,7 @@ src/
   PurviewCopilot.Infrastructure/  # Graph, PowerShell, SQLite, certificates, Key Vault, AI providers
   PurviewCopilot.UI/              # WPF shell, dashboards, pages (MVVM)
 tests/
-  PurviewCopilot.Tests/           # 65 automated tests
+  PurviewCopilot.Tests/           # 68 automated tests
 docs/                             # architecture, design, security, guides, traceability
 installer/                        # WiX MSI project + MSIX manifest
 .github/workflows/ci.yml          # build, test, publish

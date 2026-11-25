@@ -138,7 +138,7 @@ CIS 3.13 (data protection), 4.1 (secure configuration), 5.4 (restrict admin priv
 | ID | Severity | Finding | Recommendation |
 | --- | --- | --- | --- |
 | S-01 | High | Live tenant execution is disabled, which is safe but incomplete for "one-click deployment" | Implement a signed, separately-installed executor profile with its own approval gate |
-| S-02 | Medium | SQLite database and audit log are unencrypted | Add SQLCipher/DPAPI-wrapped key or store evidence in a protected location |
+| S-02 | Low | Assessment, plan, approval and backup payloads are DPAPI-encrypted at rest; SQLite pages, tenant ids, timestamps, scores and the audit log remain plaintext | Add SQLCipher page encryption (or move evidence to a protected location) and encrypt the audit detail column without breaking the hash chain |
 | S-03 | Medium | Gemini requires the API key in the query string | Prefer header-based auth if Google adds it; redact URLs in logs |
 | S-04 | Medium | Client-secret mode stores the secret in the local DB | Restrict to lab builds or move to DPAPI-protected storage |
 | S-05 | Medium | No signed binaries or signed update channel | Configure Authenticode in CI and publish checksums |

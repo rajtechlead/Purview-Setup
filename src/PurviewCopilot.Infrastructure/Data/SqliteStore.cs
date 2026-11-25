@@ -231,16 +231,16 @@ public sealed class SqliteStore :
             ("$run", Iso(result.RunUtc)),
             ("$mode", result.Mode),
             ("$overall", result.Scores.Overall),
-            ("$payload", JsonSerializer.Serialize(result, Json)));
+            ("$payload", ProtectPayload(JsonSerializer.Serialize(result, Json))));
 
         return Task.CompletedTask;
     }
 
     private Task<AssessmentResult?> GetLatestAssessmentAsync(string tenantId, CancellationToken cancellationToken = default)
     {
-        var payload = Scalar(
+        var payload = UnprotectPayload(Scalar(
             "SELECT payload FROM assessments WHERE tenant_id=$tenant ORDER BY run_utc DESC LIMIT 1",
-            ("$tenant", tenantId));
+            ("$tenant", tenantId)));
 
         return Task.FromResult(Deserialize<AssessmentResult>(payload));
     }
@@ -257,7 +257,7 @@ public sealed class SqliteStore :
         using var reader = command.ExecuteReader();
         while (reader.Read())
         {
-            var item = Deserialize<AssessmentResult>(reader.GetString(0));
+            var item = Deserialize<AssessmentResult>(UnprotectPayload(reader.GetString(0)));
             if (item is not null) results.Add(item);
         }
 
@@ -274,13 +274,14 @@ public sealed class SqliteStore :
             ("$tenant", plan.TenantId),
             ("$created", Iso(plan.CreatedUtc)),
             ("$state", "Planned"),
-            ("$payload", JsonSerializer.Serialize(plan, Json)));
+            ("$payload", ProtectPayload(JsonSerializer.Serialize(plan, Json))));
 
         return Task.CompletedTask;
     }
 
     public Task<ChangePlan?> GetAsync(Guid id, CancellationToken cancellationToken = default) =>
-        Task.FromResult(Deserialize<ChangePlan>(Scalar("SELECT payload FROM change_plans WHERE id=$id", ("$id", id.ToString()))));
+        Task.FromResult(Deserialize<ChangePlan>(UnprotectPayload(
+            Scalar("SELECT payload FROM change_plans WHERE id=$id", ("$id", id.ToString())))));
 
     private Task<IReadOnlyList<ChangePlan>> ListPlansAsync(string tenantId, int take = 50, CancellationToken cancellationToken = default)
     {
@@ -294,7 +295,7 @@ public sealed class SqliteStore :
         using var reader = command.ExecuteReader();
         while (reader.Read())
         {
-            var plan = Deserialize<ChangePlan>(reader.GetString(0));
+            var plan = Deserialize<ChangePlan>(UnprotectPayload(reader.GetString(0)));
             if (plan is not null) plans.Add(plan);
         }
 
@@ -317,14 +318,14 @@ public sealed class SqliteStore :
             ("$plan", request.PlanId.ToString()),
             ("$state", request.State.ToString()),
             ("$updated", Iso(request.UpdatedUtc)),
-            ("$payload", JsonSerializer.Serialize(request, Json)));
+            ("$payload", ProtectPayload(JsonSerializer.Serialize(request, Json))));
 
         return Task.CompletedTask;
     }
 
     public Task<ApprovalRequest?> GetByPlanAsync(Guid planId, CancellationToken cancellationToken = default) =>
-        Task.FromResult(Deserialize<ApprovalRequest>(Scalar(
-            "SELECT payload FROM approvals WHERE plan_id=$plan", ("$plan", planId.ToString()))));
+        Task.FromResult(Deserialize<ApprovalRequest>(UnprotectPayload(Scalar(
+            "SELECT payload FROM approvals WHERE plan_id=$plan", ("$plan", planId.ToString())))));
 
     // ---------------- Backups ----------------
 
@@ -336,15 +337,15 @@ public sealed class SqliteStore :
             ("$tenant", backup.TenantId),
             ("$created", Iso(backup.CreatedUtc)),
             ("$label", backup.Label),
-            ("$payload", JsonSerializer.Serialize(backup, Json)));
+            ("$payload", ProtectPayload(JsonSerializer.Serialize(backup, Json))));
 
         return Task.CompletedTask;
     }
 
     private Task<ConfigurationBackup?> GetLatestBackupAsync(string tenantId, CancellationToken cancellationToken = default) =>
-        Task.FromResult(Deserialize<ConfigurationBackup>(Scalar(
+        Task.FromResult(Deserialize<ConfigurationBackup>(UnprotectPayload(Scalar(
             "SELECT payload FROM backups WHERE tenant_id=$tenant ORDER BY created_utc DESC LIMIT 1",
-            ("$tenant", tenantId))));
+            ("$tenant", tenantId)))));
 
     private Task<IReadOnlyList<ConfigurationBackup>> ListBackupsAsync(string tenantId, int take = 20, CancellationToken cancellationToken = default)
     {
@@ -358,7 +359,7 @@ public sealed class SqliteStore :
         using var reader = command.ExecuteReader();
         while (reader.Read())
         {
-            var item = Deserialize<ConfigurationBackup>(reader.GetString(0));
+            var item = Deserialize<ConfigurationBackup>(UnprotectPayload(reader.GetString(0)));
             if (item is not null) items.Add(item);
         }
 
@@ -664,6 +665,17 @@ public sealed class SqliteStore :
         var result = command.ExecuteScalar();
         return result is null or DBNull ? null : Convert.ToString(result, CultureInfo.InvariantCulture);
     }
+
+    /// <summary>
+    /// Evidence, plans, approvals and backups are encrypted with DPAPI before they reach the file.
+    /// Rows written by earlier versions have no prefix and are read unchanged; the next save
+    /// encrypts them. Tenant ids, timestamps and scores stay in columns for indexed queries.
+    /// </summary>
+    private static string ProtectPayload(string json) =>
+        DpapiSecretProtector.IsProtected(json) ? json : DpapiSecretProtector.Protect(json);
+
+    private static string? UnprotectPayload(string? value) =>
+        DpapiSecretProtector.UnprotectIfNeeded(value);
 
     private static T? Deserialize<T>(string? payload) where T : class =>
         string.IsNullOrWhiteSpace(payload) ? null : JsonSerializer.Deserialize<T>(payload, Json);
