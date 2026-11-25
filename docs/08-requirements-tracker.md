@@ -18,7 +18,7 @@ Verified against commit `353bde2` on 25 November 2026 by reading the source, cou
 
 | Code | Meaning |
 | --- | --- |
-| **T** | Covered by an automated test (60 tests, all passing at audit time). |
+| **T** | Covered by an automated test (65 tests, all passing at audit time). |
 | **B** | Builds and is reachable from the composition root; behaviour not exercised end to end. |
 | **C** | Code exists but is unexercised here (no tenant, certificate, API key or admin rights). |
 | **D** | Documentation or project/manifest artifact only; nothing executes it here. |
@@ -179,9 +179,9 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 | ID | Requirement | Status | Proof | Evidence / gap |
 | --- | --- | --- | --- | --- |
 | MON-01 | Monitor governance, security, compliance and configuration drift | **Delivered** | T | `DriftDetector` compares a stored baseline with a fresh collection across all four kinds (11 rules). |
-| MON-02 | Generate alerts | **Not delivered** | — | Drift produces in-app rows only; no email, Teams, webhook or toast notification. |
+| MON-02 | Generate alerts | **Partial** | T | `AlertBuilder` generates local alerts from drift, score regressions (≤ −5 points) and critical failures; Monitoring lists them with severity. No external channel (email, Teams, webhook, toast). Test: `MonitoringAlertTests`. |
 | MON-03 | Trend reports | **Partial** | T | Assessment history is stored per tenant; no trend chart, delta view or time-series report. |
-| MON-04 | Continuous (scheduled) monitoring | **Not delivered** | B | Comparison is on-demand only; no scheduler, service or background worker. |
+| MON-04 | Continuous (scheduled) monitoring | **Partial** | B | In-app `DispatcherTimer` re-runs the read-only assessment every N minutes (minimum 15, off by default) and refreshes drift, alerts and licence signals; only runs while the window is open. No Windows service or Task Scheduler job. |
 
 ## O. Reporting
 
@@ -268,8 +268,8 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 | Status | Count | Share |
 | --- | --- | --- |
 | **Delivered** | 91 | 68% |
-| **Partial** | 30 | 22% |
-| **Not delivered** | 13 | 10% |
+| **Partial** | 32 | 24% |
+| **Not delivered** | 11 | 8% |
 | **Total tracked** | 134 | 100% |
 
 By section:
@@ -289,7 +289,7 @@ By section:
 | Approval workflow | 2 | 0 | 0 |
 | Offline and regulated | 2 | 0 | 1 |
 | Licence optimisation | 1 | 1 | 0 |
-| Continuous monitoring | 1 | 1 | 2 |
+| Continuous monitoring | 1 | 3 | 0 |
 | Reporting | 5 | 1 | 0 |
 | Security engineering | 10 | 3 | 3 |
 | Architecture and technology | 7 | 1 | 2 |
@@ -306,7 +306,7 @@ Ranked by risk to the commercial claim, not by effort:
 3. **Live deployment execution (DEP-05)** — by design, but the specification asks for apply and rollback; the reviewed script and reversal script exist, execution does not.
 4. **Security Copilot (AIA-02)** and **government clouds (OFF-03)**.
 5. **Config-as-code breadth (CAC-02)** — no ARM/Bicep/Terraform output, and existing tenant objects are not exported individually.
-6. **Scheduled monitoring and alerts (MON-02, MON-04)**.
+6. **Unattended scheduling and external alerts (MON-02, MON-04)** — checks run only while the app is open and alerts stay in-app.
 7. **Guided onboarding wizard (AUT-12)** and **Key Vault wiring (AUT-04)**.
 8. **Action centre ownership (UX-06)** — findings have no owner, due date or status.
 9. **Code signing and produced installer binaries (SEC-11, INS-07, INS-02)**.
@@ -318,7 +318,7 @@ Ranked by risk to the commercial claim, not by effort:
 | Check | Result |
 | --- | --- |
 | `dotnet build PurviewGovernanceCopilot.sln -c Release` | Succeeded (local SDK 9.0.321) |
-| `dotnet test tests/PurviewCopilot.Tests -c Release` | 60 passed, 0 failed |
+| `dotnet test tests/PurviewCopilot.Tests -c Release` | 65 passed, 0 failed |
 | Catalog count (`grep -c 'Add("' ModuleCatalog.cs`) | 49 rules across 16 modules |
 | Exporter inventory | HTML, JSON, CSV, Markdown, PDF, DOCX, XLSX |
 | `ReportFormat` enum | `Html, Json, Csv, Markdown, Pdf, Docx, Xlsx` |

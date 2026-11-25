@@ -154,6 +154,10 @@ public sealed record AppSettings
     public string DataDirectory { get; set; } = "%LOCALAPPDATA%\\PurviewGovernanceCopilot";
     public string? ReportOutputDirectory { get; set; }
     public DeploymentMode DefaultMode { get; set; } = DeploymentMode.AssessmentOnly;
+
+    /// <summary>Minutes between automatic checks while the app is open; 0 disables them.</summary>
+    public int MonitoringIntervalMinutes { get; set; }
+
     public bool DemoDataEnabled { get; set; }
     public List<AiProviderDescriptor> Providers { get; set; } = new();
 

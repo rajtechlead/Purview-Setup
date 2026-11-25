@@ -15,7 +15,7 @@ Designed and built by **Raj Raja** · Owned by **Belle-RajaCorp** · contact@bel
 | Scoring | Security, Governance, Compliance, Maturity, Risk, AI Governance, Copilot Readiness |
 | Planning | Recommended, guided, custom, expert and greenfield change plans with full change-management packs |
 | Safety | Pre-change backups, simulation (what-if), 3-stage approval (Security → Compliance → CAB), rollback packages |
-| Monitoring | Drift detection against the previous collection, licence utilisation and optimisation insights, score trends and a module × severity risk heatmap |
+| Monitoring | Drift detection, local alerts, an optional in-app check schedule, licence utilisation and optimisation insights, score trends and a module × severity risk heatmap |
 | Multi-tenant | Customer tenant registry with per-tenant credentials, tenant activation and a cross-tenant portfolio of latest scores |
 | Reporting | PDF, DOCX, XLSX, HTML, JSON, CSV and Markdown executive/framework reports (ISO 27001, NIST CSF, CIS v8, SOC 2, HIPAA, GDPR, PCI-DSS, ISO 42001, NIST AI RMF), generated with no external report library |
 | AI | OpenAI, Azure OpenAI, Anthropic, Gemini, DeepSeek, Grok, OpenRouter, Ollama, LM Studio, Open WebUI, custom endpoints — with quota-aware failover, token/cost tracking and offline mode |
@@ -60,7 +60,7 @@ src/
   PurviewCopilot.Infrastructure/  # Graph, PowerShell, SQLite, certificates, Key Vault, AI providers
   PurviewCopilot.UI/              # WPF shell, dashboards, pages (MVVM)
 tests/
-  PurviewCopilot.Tests/           # 60 automated tests
+  PurviewCopilot.Tests/           # 65 automated tests
 docs/                             # architecture, design, security, guides, traceability
 installer/                        # WiX MSI project + MSIX manifest
 .github/workflows/ci.yml          # build, test, publish

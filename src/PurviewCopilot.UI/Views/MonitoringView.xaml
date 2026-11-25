@@ -12,6 +12,55 @@
 
         <Border Style="{StaticResource Card}" Margin="0,0,0,16">
             <StackPanel>
+                <TextBlock Text="Continuous monitoring" Style="{StaticResource SectionHeader}" />
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                    <TextBlock Text="Check every (minutes, 0 = off)" Style="{StaticResource Muted}"
+                               VerticalAlignment="Center" Margin="0,0,8,0" />
+                    <TextBox Width="60" Text="{Binding IntervalMinutes}" Margin="0,0,10,0" />
+                    <Button Content="Save schedule" Command="{Binding SaveScheduleCommand}" Margin="0,0,8,0" />
+                    <Button Content="Check now" Command="{Binding CheckNowCommand}" />
+                </StackPanel>
+                <TextBlock Text="{Binding ScheduleText}" Style="{StaticResource Muted}" TextWrapping="Wrap" />
+                <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,4,0,0"
+                           Text="Checks reuse the configured certificate and are read-only. The schedule runs while this window is open; use Windows Task Scheduler for unattended runs." />
+            </StackPanel>
+        </Border>
+
+        <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+            <StackPanel>
+                <TextBlock Text="Alerts" Style="{StaticResource SectionHeader}" />
+                <ItemsControl ItemsSource="{Binding Alerts}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Background="{StaticResource SurfaceAltBrush}" CornerRadius="6" Padding="10" Margin="0,0,0,6">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="4" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" Width="3" CornerRadius="2" Margin="0,2,8,2"
+                                            Background="{Binding Severity, Converter={StaticResource SeverityBrush}}" />
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="{Binding Title}" FontSize="13" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                        <TextBlock Text="{Binding Detail}" Style="{StaticResource Muted}" TextWrapping="Wrap" />
+                                        <TextBlock FontSize="11" Foreground="{StaticResource MutedBrush}" Margin="0,2,0,0">
+                                            <Run Text="{Binding Severity}" />
+                                            <Run Text=" · " />
+                                            <Run Text="{Binding AtUtc, StringFormat=yyyy-MM-dd HH:mm}" />
+                                        </TextBlock>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <TextBlock Text="Alerts are generated locally from drift, score movement and critical failures. No external notification channel is configured."
+                           Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,4,0,0" />
+            </StackPanel>
+        </Border>
+
+        <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+            <StackPanel>
                 <TextBlock Text="Drift since previous collection" Style="{StaticResource SectionHeader}" />
                 <ItemsControl ItemsSource="{Binding Drift}">
                     <ItemsControl.ItemTemplate>

@@ -25,12 +25,12 @@ Ordered by risk reduction and by what the current build deliberately leaves out.
 
 ## Phase 1.3 — Reporting and multi-tenant
 
-**2 of 4 complete, 1 partial.** Updated 25 November 2026.
+**2 of 4 complete, 2 partial.** Updated 25 November 2026.
 
 - **PDF, DOCX and XLSX** — **Done**. Dependency-free writers: a paginated PDF 1.4 document with base-14 fonts, and OOXML packages built directly with `ZipArchive` for DOCX (single document part) and XLSX (Scores, Findings, Frameworks sheets). Exported from Reports; covered by five tests including escaping and package validity.
 - **Risk heatmap, trends and persona dashboards** — **Done**. The dashboard has Executive, Security, Governance and Compliance tabs; the Security tab carries a module × severity heatmap of open findings; Executive charts the last twelve overall scores from stored assessments and shows the maturity trail and delta.
 - **Multi-tenant MSP mode** — **Partial**. Customer tenants persist in a `tenant_profiles` table with DPAPI-protected credentials; Settings saves the current connection as a named tenant and activates one, which writes its credentials into settings and clears the in-session assessment so evidence cannot cross tenants. The Dashboard has a Portfolio tab built from each tenant's newest stored assessment. Per-customer RBAC and a combined cross-tenant export remain open.
-- **Scheduled monitoring** — **Open**. Needs a scheduler and an alert channel; drift is currently on-demand.
+- **Scheduled monitoring** — **Partial**. Monitoring has an in-app schedule (`MonitoringIntervalMinutes`, minimum 15 minutes, off by default) that re-runs the read-only assessment and rebuilds drift, alerts and licence signals; **Check now** runs the same path. Alerts are generated locally from drift, score drops and critical failures and listed on the Monitoring page. There is no Windows service, Task Scheduler integration or external notification channel (email, Teams, webhook) yet.
 
 ## Phase 2 — AI and compliance depth
 
