@@ -113,6 +113,25 @@
                     </StackPanel>
                 </Border>
 
+                <Border Style="{StaticResource Card}" Margin="0,0,0,14">
+                    <StackPanel>
+                        <TextBlock Text="Azure Key Vault (optional)" Style="{StaticResource SectionHeader}" />
+                        <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,8"
+                                   Text="Store the app certificate PFX as a vault secret for portability and central rotation. Uses the connection credentials above and the PFX password field; the app needs Key Vault secret get/set permission." />
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                            <TextBox Width="280" Text="{Binding KeyVaultUri}" Margin="0,0,8,0"
+                                     ToolTip="https://name.vault.azure.net" />
+                            <TextBox Width="220" Text="{Binding KeyVaultSecretName}"
+                                     ToolTip="Secret name, e.g. purview-copilot-cert" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                            <Button Content="Upload current certificate" Command="{Binding UploadKeyVaultCommand}" Margin="0,0,8,0" />
+                            <Button Content="Import from Key Vault" Command="{Binding DownloadKeyVaultCommand}" />
+                        </StackPanel>
+                        <TextBlock Text="{Binding KeyVaultStatus}" Style="{StaticResource Muted}" TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+
                 <Border Style="{StaticResource Card}">
                     <StackPanel>
                         <TextBlock Text="AI providers" Style="{StaticResource SectionHeader}" />

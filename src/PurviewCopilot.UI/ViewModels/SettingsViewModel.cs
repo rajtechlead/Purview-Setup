@@ -51,6 +51,7 @@ public sealed class SettingsViewModel : PageViewModel
     private readonly ConnectionVerifier _verifier;
     private readonly IAuditLog _auditLog;
     private readonly UpdateChecker _updates;
+    private readonly Func<string, AuthConfiguration, IKeyVaultCertificateStore> _keyVaultFactory;
     private AppSettings _settings = AppSettings.CreateDefault();
     private UpdateManifest? _updateManifest;
 
@@ -71,6 +72,9 @@ public sealed class SettingsViewModel : PageViewModel
     private string _tenantDisplayName = string.Empty;
     private string _updateManifestUrl = string.Empty;
     private string _updateStatus = "No update check has run.";
+    private string _keyVaultUri = string.Empty;
+    private string _keyVaultSecretName = "purview-copilot-cert";
+    private string _keyVaultStatus = "Key Vault is optional; the Windows store remains the default.";
     private TenantProfile? _selectedTenant;
     private bool _busy;
 
@@ -80,7 +84,8 @@ public sealed class SettingsViewModel : PageViewModel
         ICertificateService certificates,
         ConnectionVerifier verifier,
         IAuditLog auditLog,
-        UpdateChecker updates)
+        UpdateChecker updates,
+        Func<string, AuthConfiguration, IKeyVaultCertificateStore> keyVaultFactory)
     {
         _workspace = workspace;
         _settingsStore = settingsStore;
@@ -88,6 +93,7 @@ public sealed class SettingsViewModel : PageViewModel
         _verifier = verifier;
         _auditLog = auditLog;
         _updates = updates;
+        _keyVaultFactory = keyVaultFactory;
 
         SaveCommand = new AsyncRelayCommand(SaveAsync, () => !Busy);
         CreateCertificateCommand = new RelayCommand(CreateCertificate);
@@ -104,6 +110,8 @@ public sealed class SettingsViewModel : PageViewModel
         MoveProviderDownCommand = new RelayCommand(p => MoveProvider(p as AiProviderRow, 1));
         CheckUpdatesCommand = new AsyncRelayCommand(CheckUpdatesAsync, () => !Busy);
         DownloadUpdateCommand = new AsyncRelayCommand(DownloadUpdateAsync, () => !Busy && _updateManifest is not null);
+        UploadKeyVaultCommand = new AsyncRelayCommand(UploadKeyVaultAsync, () => !Busy);
+        DownloadKeyVaultCommand = new AsyncRelayCommand(DownloadKeyVaultAsync, () => !Busy);
     }
 
     public override string Title => "Settings";
@@ -133,6 +141,9 @@ public sealed class SettingsViewModel : PageViewModel
     public string TenantDisplayName { get => _tenantDisplayName; set => SetProperty(ref _tenantDisplayName, value); }
     public string UpdateManifestUrl { get => _updateManifestUrl; set => SetProperty(ref _updateManifestUrl, value); }
     public string UpdateStatus { get => _updateStatus; private set => SetProperty(ref _updateStatus, value); }
+    public string KeyVaultUri { get => _keyVaultUri; set => SetProperty(ref _keyVaultUri, value); }
+    public string KeyVaultSecretName { get => _keyVaultSecretName; set => SetProperty(ref _keyVaultSecretName, value); }
+    public string KeyVaultStatus { get => _keyVaultStatus; private set => SetProperty(ref _keyVaultStatus, value); }
     public bool Busy { get => _busy; private set => SetProperty(ref _busy, value); }
 
     public TenantProfile? SelectedTenant
@@ -173,6 +184,8 @@ public sealed class SettingsViewModel : PageViewModel
     public ICommand MoveProviderDownCommand { get; }
     public ICommand CheckUpdatesCommand { get; }
     public ICommand DownloadUpdateCommand { get; }
+    public ICommand UploadKeyVaultCommand { get; }
+    public ICommand DownloadKeyVaultCommand { get; }
 
     public override async Task RefreshAsync()
     {
@@ -187,6 +200,8 @@ public sealed class SettingsViewModel : PageViewModel
         OfflineMode = _settings.OfflineMode;
         RequirePromptReview = _settings.RequirePromptReview;
         UpdateManifestUrl = _settings.UpdateManifestUrl ?? string.Empty;
+        KeyVaultUri = _settings.KeyVaultUri ?? string.Empty;
+        KeyVaultSecretName = string.IsNullOrWhiteSpace(_settings.KeyVaultSecretName) ? "purview-copilot-cert" : _settings.KeyVaultSecretName;
 
         Providers.Clear();
         foreach (var provider in AiProviderSequence.Normalize(_settings.Providers))
@@ -229,6 +244,8 @@ public sealed class SettingsViewModel : PageViewModel
             _settings.OfflineMode = OfflineMode;
             _settings.RequirePromptReview = RequirePromptReview;
             _settings.UpdateManifestUrl = string.IsNullOrWhiteSpace(UpdateManifestUrl) ? null : UpdateManifestUrl.Trim();
+            _settings.KeyVaultUri = string.IsNullOrWhiteSpace(KeyVaultUri) ? null : KeyVaultUri.Trim();
+            _settings.KeyVaultSecretName = string.IsNullOrWhiteSpace(KeyVaultSecretName) ? null : KeyVaultSecretName.Trim();
 
             _settings.Providers = AiProviderSequence
                 .Normalize(Providers.Select(p => p.Descriptor with { Enabled = p.Enabled }))
@@ -330,6 +347,74 @@ public sealed class SettingsViewModel : PageViewModel
         catch (Exception ex)
         {
             Status = $"Rotation failed: {ex.Message}";
+        }
+    }
+
+    private async Task UploadKeyVaultAsync()
+    {
+        if (string.IsNullOrWhiteSpace(Thumbprint))
+        {
+            KeyVaultStatus = "Select or create a certificate first.";
+            return;
+        }
+
+        Busy = true;
+        var temp = Path.Combine(Path.GetTempPath(), $"pgc-vault-{Guid.NewGuid():N}.pfx");
+
+        try
+        {
+            var store = _keyVaultFactory(KeyVaultUri.Trim(), BuildAuth());
+            var password = string.IsNullOrEmpty(PfxPassword) ? null : PfxPassword;
+
+            _certificates.ExportToPfx(Thumbprint, temp, password);
+            var bytes = await File.ReadAllBytesAsync(temp).ConfigureAwait(true);
+            await store.UploadPfxBase64Async(KeyVaultSecretName.Trim(), Convert.ToBase64String(bytes)).ConfigureAwait(true);
+
+            KeyVaultStatus = $"Uploaded {Thumbprint} to {KeyVaultUri.Trim()} secret '{KeyVaultSecretName.Trim()}'. The vault must grant this app secret get/set permission.";
+        }
+        catch (Exception ex)
+        {
+            KeyVaultStatus = $"Key Vault upload failed: {ex.Message}";
+        }
+        finally
+        {
+            if (File.Exists(temp)) File.Delete(temp);
+            Busy = false;
+        }
+    }
+
+    private async Task DownloadKeyVaultAsync()
+    {
+        Busy = true;
+        var temp = Path.Combine(Path.GetTempPath(), $"pgc-vault-{Guid.NewGuid():N}.pfx");
+
+        try
+        {
+            var store = _keyVaultFactory(KeyVaultUri.Trim(), BuildAuth());
+            var base64 = await store.DownloadPfxBase64Async(KeyVaultSecretName.Trim()).ConfigureAwait(true);
+
+            if (string.IsNullOrWhiteSpace(base64))
+            {
+                KeyVaultStatus = $"Secret '{KeyVaultSecretName.Trim()}' was not found in {KeyVaultUri.Trim()}.";
+                return;
+            }
+
+            await File.WriteAllBytesAsync(temp, Convert.FromBase64String(base64)).ConfigureAwait(true);
+            var password = string.IsNullOrEmpty(PfxPassword) ? null : PfxPassword;
+            var info = _certificates.ImportFromPfx(temp, password, installToStore: true);
+
+            Thumbprint = info.Thumbprint;
+            LoadCertificates();
+            KeyVaultStatus = $"Imported {info.Thumbprint} from {KeyVaultUri.Trim()}. Register it on the app registration before testing the connection.";
+        }
+        catch (Exception ex)
+        {
+            KeyVaultStatus = $"Key Vault import failed: {ex.Message}";
+        }
+        finally
+        {
+            if (File.Exists(temp)) File.Delete(temp);
+            Busy = false;
         }
     }
 

@@ -43,7 +43,7 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 | AUT-01 | Entra app registration with certificate authentication as the default | **Delivered** | C | `EntraTokenProvider` builds `ClientCertificateCredential`; certificate is the default `AuthMode`. App registration itself is a documented manual step (`docs/05` §3). |
 | AUT-02 | Certificate auto-generation | **Delivered** | C | `WindowsCertificateService.CreateSelfSigned` (4096-bit RSA, CurrentUser\My), invoked from Settings. |
 | AUT-03 | Certificate import and export (PFX) | **Delivered** | C | `ImportFromPfx` / `ExportToPfx` plus Settings commands. |
-| AUT-04 | Azure Key Vault integration | **Partial** | C | `KeyVaultCertificateStore` (secret REST upload/download) exists but is not constructed in `AppServices.Create`, has no UI, and is untested. Action: wire it behind the certificate panel and add a round-trip test. |
+| AUT-04 | Azure Key Vault integration | **Delivered** | C | `AppServices.KeyVaultFactory` builds `KeyVaultCertificateStore` with the signed-in auth credential; Settings has vault URI/secret fields plus **Upload current certificate** and **Import from Key Vault** (temporary PFX written, imported, deleted). Uses the PFX password field. Not exercised here: no vault or Key Vault permission. |
 | AUT-05 | Windows Certificate Store integration | **Delivered** | C | Install, remove, list and `FindByThumbprint` against CurrentUser\My. |
 | AUT-06 | Certificate rotation | **Delivered** | C | `Rotate` creates a replacement and returns the new thumbprint; the operator must update the app registration, as prompted in the UI. |
 | AUT-07 | Expiration monitoring | **Delivered** | B | Settings surfaces certificates expiring inside 30 days (`CertificateExpiryWarningDays`). Warning-only; no scheduled notification. |
@@ -267,8 +267,8 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 
 | Status | Count | Share |
 | --- | --- | --- |
-| **Delivered** | 95 | 71% |
-| **Partial** | 31 | 23% |
+| **Delivered** | 96 | 72% |
+| **Partial** | 30 | 22% |
 | **Not delivered** | 8 | 6% |
 | **Total tracked** | 134 | 100% |
 
@@ -277,7 +277,7 @@ By section:
 | Section | Delivered | Partial | Not delivered |
 | --- | --- | --- | --- |
 | Platform and scope | 2 | 2 | 0 |
-| Authentication | 9 | 3 | 0 |
+| Authentication | 10 | 2 | 0 |
 | Discovery and assessment | 10 | 4 | 0 |
 | Deployment and change control | 1 | 3 | 1 |
 | Modular architecture | 1 | 2 | 0 |
@@ -306,7 +306,7 @@ Ranked by risk to the commercial claim, not by effort:
 3. **Security Copilot (AIA-02)** and **government clouds (OFF-03)**.
 4. **Config-as-code breadth (CAC-02)** — no ARM/Bicep/Terraform output, and existing tenant objects are not exported individually.
 5. **Unattended scheduling and external alerts (MON-02, MON-04)** — checks run only while the app is open and alerts stay in-app.
-6. **Guided onboarding wizard (AUT-12)** and **Key Vault wiring (AUT-04)**.
+6. **Guided onboarding wizard (AUT-12)** — certificate and connection actions exist, but there is no stepped app-registration/consent wizard.
 7. **Code signing, MSIX packaging and a hosted update manifest (SEC-11, SEC-16, INS-02)** — the MSI is produced but unsigned, the updater has no published manifest, and there is no `.msix` build.
 8. **SQL Server support (ARC-08)** and **WinUI 3 (ARC-02)**.
 9. **DSPM, Compliance Manager and Defender data collection (DSC-08, DSC-11)**.
@@ -323,7 +323,7 @@ Ranked by risk to the commercial claim, not by effort:
 | `ReportFormat` enum | `Html, Json, Csv, Markdown, Pdf, Docx, Xlsx` |
 | Artefact search (`*.bicep`, `*.tf`, `*arm*.json`, `*.docx`, `*.xlsx`) | None found |
 | MSP / SQL Server / Terraform references in `src` | None found |
-| Key Vault usage in `src/PurviewCopilot.UI` | Not constructed; class exists in Infrastructure |
+| Key Vault usage in `src/PurviewCopilot.UI` | Wired via `AppServices.KeyVaultFactory` and the Settings upload/import commands; not exercised (no vault) |
 | Release executable smoke launch | Started and stayed alive; UI not visually inspected |
 
 Claims that could not be verified here: anything requiring a tenant, Entra app registration, certificate in a real store, Key Vault, AI provider keys, WiX toolset or a code-signing certificate. Those are marked **C** or **D** above rather than asserted as working.

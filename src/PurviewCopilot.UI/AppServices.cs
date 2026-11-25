@@ -8,6 +8,7 @@ using PurviewCopilot.Application.Modules;
 using PurviewCopilot.Application.Reporting;
 using PurviewCopilot.Application.Updates;
 using PurviewCopilot.Application.Workspace;
+using PurviewCopilot.Domain;
 using PurviewCopilot.Infrastructure.Ai;
 using PurviewCopilot.Infrastructure.Auth;
 using PurviewCopilot.Infrastructure.Data;
@@ -30,6 +31,7 @@ public sealed class AppServices
         IAiUsageStore usage,
         ConnectionVerifier verifier,
         UpdateChecker updates,
+        Func<string, AuthConfiguration, IKeyVaultCertificateStore> keyVaultFactory,
         IClock clock)
     {
         Workspace = workspace;
@@ -39,6 +41,7 @@ public sealed class AppServices
         Usage = usage;
         Verifier = verifier;
         Updates = updates;
+        KeyVaultFactory = keyVaultFactory;
         Clock = clock;
     }
 
@@ -49,6 +52,7 @@ public sealed class AppServices
     public IAiUsageStore Usage { get; }
     public ConnectionVerifier Verifier { get; }
     public UpdateChecker Updates { get; }
+    public Func<string, AuthConfiguration, IKeyVaultCertificateStore> KeyVaultFactory { get; }
     public IClock Clock { get; }
 
     public static AppServices Create()
@@ -65,6 +69,8 @@ public sealed class AppServices
         var tokens = new EntraTokenProvider(certificates);
         var http = new HttpClient { Timeout = TimeSpan.FromSeconds(90) };
         var updates = new UpdateChecker(http);
+        Func<string, AuthConfiguration, IKeyVaultCertificateStore> keyVault = (uri, auth) =>
+            new KeyVaultCertificateStore(uri, http, tokens.CreateCredential(auth));
 
         var collector = new CompositeTenantCollector(
             new GraphTenantCollector(tokens, http),
@@ -101,6 +107,6 @@ public sealed class AppServices
 
         var verifier = new ConnectionVerifier(tokens, http);
 
-        return new AppServices(workspace, store, certificates, copilot, store, verifier, updates, clock);
+        return new AppServices(workspace, store, certificates, copilot, store, verifier, updates, keyVault, clock);
     }
 }

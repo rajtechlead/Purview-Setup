@@ -23,6 +23,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Binary report path**: `IReportExporter.RenderBytes` with a text default, and `GovernanceWorkspace.ExportReportAsync` now writes bytes so every format shares one audited export path.
 - **Persona dashboards, risk heatmap and trends**: Executive, Security, Governance and Compliance tabs; module × severity heatmap of open findings; the last twelve overall scores charted from stored assessments with maturity trail and delta.
 - **MSP tenancy**: a `tenant_profiles` registry with DPAPI-protected credentials, save/activate from Settings, in-session evidence cleared on activation, and a cross-tenant Portfolio tab built from each tenant's latest assessment.
+- **Key Vault**: certificate PFX upload/import from Settings, authenticated with the configured Entra credential; the Windows store remains the default.
 - **Action centre**: open findings carry an owner, due date, status and notes, persisted per tenant in `finding_actions` with DPAPI-encrypted notes.
 - **Update check**: Settings validates an https manifest, compares versions and downloads an MSI only when its SHA-256 matches; installation remains manual and unsigned.
 - **AI ledger totals**: Monitoring aggregates every stored usage row in SQL instead of the newest 1,000, so spend and token totals cannot silently truncate.
