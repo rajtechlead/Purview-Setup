@@ -234,6 +234,16 @@ public sealed record AiUsageRecord(
     string? ErrorCode,
     DateTimeOffset AtUtc);
 
+/// <summary>Operator-owned remediation record for one finding in one tenant.</summary>
+public sealed record FindingAction(
+    string FindingId,
+    string TenantId,
+    string Owner,
+    DateTimeOffset? DueUtc,
+    ActionStatus Status,
+    string Notes,
+    DateTimeOffset UpdatedUtc);
+
 /// <summary>Whole-ledger aggregate, computed over every stored usage row.</summary>
 public sealed record AiUsageTotals(
     int Requests,

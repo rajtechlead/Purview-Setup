@@ -20,6 +20,7 @@ public sealed class SqliteStore :
     IBackupStore,
     IAuditLog,
     IAiUsageStore,
+    IFindingActionStore,
     ISettingsStore,
     ITenantProfileStore,
     IDisposable
@@ -130,6 +131,17 @@ public sealed class SqliteStore :
                 display_name TEXT NOT NULL,
                 updated_utc TEXT NOT NULL,
                 payload TEXT NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS finding_actions (
+                finding_id TEXT NOT NULL,
+                tenant_id TEXT NOT NULL,
+                owner TEXT NOT NULL,
+                due_utc TEXT NULL,
+                status TEXT NOT NULL,
+                notes TEXT NOT NULL,
+                updated_utc TEXT NOT NULL,
+                PRIMARY KEY (finding_id, tenant_id)
             );
 
             CREATE TABLE IF NOT EXISTS baselines (
@@ -465,6 +477,55 @@ public sealed class SqliteStore :
         var canonical = string.Join('\u001f', id, at, actor, action, target, detail, correlation ?? string.Empty, previous);
         return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(canonical))).ToLowerInvariant();
     }
+
+    // ---------------- Finding actions ----------------
+
+    public Task SaveAsync(FindingAction action, CancellationToken cancellationToken = default)
+    {
+        Execute(
+            """
+            INSERT INTO finding_actions(finding_id, tenant_id, owner, due_utc, status, notes, updated_utc)
+            VALUES ($id,$tenant,$owner,$due,$status,$notes,$updated)
+            ON CONFLICT(finding_id, tenant_id) DO UPDATE SET
+                owner=$owner, due_utc=$due, status=$status, notes=$notes, updated_utc=$updated
+            """,
+            ("$id", action.FindingId),
+            ("$tenant", action.TenantId),
+            ("$owner", action.Owner),
+            ("$due", action.DueUtc is null ? null : Iso(action.DueUtc.Value)),
+            ("$status", action.Status.ToString()),
+            ("$notes", string.IsNullOrEmpty(action.Notes) ? string.Empty : DpapiSecretProtector.Protect(action.Notes)),
+            ("$updated", Iso(action.UpdatedUtc)));
+
+        return Task.CompletedTask;
+    }
+
+    private Task<IReadOnlyList<FindingAction>> ListFindingActionsAsync(string tenantId, CancellationToken cancellationToken = default)
+    {
+        var actions = new List<FindingAction>();
+        using var connection = Open();
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT finding_id, tenant_id, owner, due_utc, status, notes, updated_utc FROM finding_actions WHERE tenant_id=$tenant ORDER BY updated_utc DESC, finding_id";
+        command.Parameters.AddWithValue("$tenant", tenantId);
+
+        using var reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            actions.Add(new FindingAction(
+                reader.GetString(0),
+                reader.GetString(1),
+                reader.GetString(2),
+                reader.IsDBNull(3) ? null : DateTimeOffset.Parse(reader.GetString(3), CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind),
+                Enum.TryParse<ActionStatus>(reader.GetString(4), out var status) ? status : ActionStatus.Open,
+                DpapiSecretProtector.UnprotectIfNeeded(reader.GetString(5)) ?? string.Empty,
+                DateTimeOffset.Parse(reader.GetString(6), CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind)));
+        }
+
+        return Task.FromResult<IReadOnlyList<FindingAction>>(actions);
+    }
+
+    Task<IReadOnlyList<FindingAction>> IFindingActionStore.ListAsync(string tenantId, CancellationToken cancellationToken) =>
+        ListFindingActionsAsync(tenantId, cancellationToken);
 
     // ---------------- AI usage ----------------
 

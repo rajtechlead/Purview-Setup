@@ -43,6 +43,8 @@ Ordered by risk reduction and by what the current build deliberately leaves out.
 
 ## Phase 3 — Platform
 
+- **Action centre** — **Done**. Assessment assigns an owner, due date, status (Open/InProgress/Blocked/Done) and notes to every open finding; records persist per tenant in `finding_actions`, notes are DPAPI-encrypted at rest, and the list shows how many findings have an assignment. Tests: `FindingActionTests`.
+
 - **WinUI 3 shell** consuming the same Application layer, with Windows 11 visuals and notification toasts.
 - **Headless CLI** — **Done**. `src/PurviewCopilot.Cli` builds `pgc` and reuses `GovernanceWorkspace`, the same SQLite evidence store and exporters. Commands: `pgc assess` (certificate or lab secret, or `--demo` for the sample tenant) with `--format`, `--out`, `--mode`, `--org`, `--by`, `--data-dir`; and `pgc verify-audit`. It is read-only, exits non-zero on failure and was run end to end with the demo tenant (JSON report plus a valid audit chain).
 - **Optional SQL Server** store for teams that want central evidence, implemented as additional ports.

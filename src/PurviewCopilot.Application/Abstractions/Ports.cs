@@ -55,6 +55,12 @@ public interface IAuditLog
     Task<AuditChainStatus> VerifyAsync(CancellationToken cancellationToken = default);
 }
 
+public interface IFindingActionStore
+{
+    Task SaveAsync(FindingAction action, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<FindingAction>> ListAsync(string tenantId, CancellationToken cancellationToken = default);
+}
+
 public interface IAiUsageStore
 {
     Task RecordAsync(AiUsageRecord record, CancellationToken cancellationToken = default);

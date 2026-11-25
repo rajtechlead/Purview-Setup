@@ -136,6 +136,14 @@ public enum ReportFormat
     Xlsx
 }
 
+public enum ActionStatus
+{
+    Open = 0,
+    InProgress,
+    Blocked,
+    Done
+}
+
 public enum DriftKind
 {
     Configuration = 0,

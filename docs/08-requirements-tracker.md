@@ -18,7 +18,7 @@ Verified against commit `353bde2` on 25 November 2026 by reading the source, cou
 
 | Code | Meaning |
 | --- | --- |
-| **T** | Covered by an automated test (80 tests, all passing at audit time). |
+| **T** | Covered by an automated test (82 tests, all passing at audit time). |
 | **B** | Builds and is reachable from the composition root; behaviour not exercised end to end. |
 | **C** | Code exists but is unexercised here (no tenant, certificate, API key or admin rights). |
 | **D** | Documentation or project/manifest artifact only; nothing executes it here. |
@@ -239,7 +239,7 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 | UX-03 | Maturity tracking | **Delivered** | T | History is loaded per tenant and the dashboard shows the maturity trail (previous → current over N assessments) plus the overall delta. Tests cover the history series. |
 | UX-04 | Trends | **Delivered** | T | Executive tab charts the last twelve overall scores from stored assessments, oldest to newest. Test: `Trend_IsAscending_AndKeepsTheNewestPoints`. |
 | UX-05 | Recommendations | **Delivered** | T | Prioritised, licence-aware recommendations with effort and change risk. |
-| UX-06 | Action center | **Partial** | B | Priority findings are listed; no owner, due date, status or assignment workflow. |
+| UX-06 | Action center | **Delivered** | T | Assessment lists every open finding with its owner, due date and status, and edits persist per tenant in `finding_actions`; notes are DPAPI-encrypted at rest. Tests: `Actions_RoundTripPerTenant_AndEncryptNotes`, `SavingTheSameFindingTwice_UpdatesInsteadOfDuplicating`. |
 
 ## S. Help center and About
 
@@ -267,8 +267,8 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 
 | Status | Count | Share |
 | --- | --- | --- |
-| **Delivered** | 94 | 70% |
-| **Partial** | 32 | 24% |
+| **Delivered** | 95 | 71% |
+| **Partial** | 31 | 23% |
 | **Not delivered** | 8 | 6% |
 | **Total tracked** | 134 | 100% |
 
@@ -293,7 +293,7 @@ By section:
 | Reporting | 5 | 1 | 0 |
 | Security engineering | 11 | 4 | 1 |
 | Architecture and technology | 7 | 1 | 2 |
-| User experience | 5 | 1 | 0 |
+| User experience | 6 | 0 | 0 |
 | Help and About | 3 | 0 | 0 |
 | Installer | 5 | 2 | 0 |
 
@@ -307,18 +307,17 @@ Ranked by risk to the commercial claim, not by effort:
 4. **Config-as-code breadth (CAC-02)** — no ARM/Bicep/Terraform output, and existing tenant objects are not exported individually.
 5. **Unattended scheduling and external alerts (MON-02, MON-04)** — checks run only while the app is open and alerts stay in-app.
 6. **Guided onboarding wizard (AUT-12)** and **Key Vault wiring (AUT-04)**.
-7. **Action centre ownership (UX-06)** — findings have no owner, due date or status.
-8. **Code signing, MSIX packaging and a hosted update manifest (SEC-11, SEC-16, INS-02)** — the MSI is produced but unsigned, the updater has no published manifest, and there is no `.msix` build.
-9. **SQL Server support (ARC-08)** and **WinUI 3 (ARC-02)**.
-10. **DSPM, Compliance Manager and Defender data collection (DSC-08, DSC-11)**.
-11. **SQLCipher page encryption and per-customer RBAC (SEC-14 metadata, MSP-03)** — sensitive payloads are now encrypted, but database pages and tenant metadata are not, and all saved tenants remain reachable by one Windows user.
+7. **Code signing, MSIX packaging and a hosted update manifest (SEC-11, SEC-16, INS-02)** — the MSI is produced but unsigned, the updater has no published manifest, and there is no `.msix` build.
+8. **SQL Server support (ARC-08)** and **WinUI 3 (ARC-02)**.
+9. **DSPM, Compliance Manager and Defender data collection (DSC-08, DSC-11)**.
+10. **SQLCipher page encryption and per-customer RBAC (SEC-14 metadata, MSP-03)** — sensitive payloads are now encrypted, but database pages and tenant metadata are not, and all saved tenants remain reachable by one Windows user.
 
 ## Verification performed
 
 | Check | Result |
 | --- | --- |
 | `dotnet build PurviewGovernanceCopilot.sln -c Release` | Succeeded (local SDK 9.0.321) |
-| `dotnet test tests/PurviewCopilot.Tests -c Release` | 80 passed, 0 failed |
+| `dotnet test tests/PurviewCopilot.Tests -c Release` | 82 passed, 0 failed |
 | Catalog count (`grep -c 'Add("' ModuleCatalog.cs`) | 49 rules across 16 modules |
 | Exporter inventory | HTML, JSON, CSV, Markdown, PDF, DOCX, XLSX |
 | `ReportFormat` enum | `Html, Json, Csv, Markdown, Pdf, Docx, Xlsx` |

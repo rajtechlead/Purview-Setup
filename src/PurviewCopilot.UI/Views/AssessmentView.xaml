@@ -86,5 +86,69 @@
                 </StackPanel>
             </Border>
         </Grid>
+
+        <Border Style="{StaticResource Card}" Margin="0,16,0,0">
+            <StackPanel>
+                <TextBlock Text="Action centre" Style="{StaticResource SectionHeader}" />
+                <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,10"
+                           Text="Assign an owner, due date and remediation status to every open finding. Assignments are stored per tenant and survive restarts." />
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="320" />
+                    </Grid.ColumnDefinitions>
+
+                    <ListBox Grid.Column="0" ItemsSource="{Binding ActionRows}" SelectedItem="{Binding SelectedActionRow}"
+                             MaxHeight="320" Background="{StaticResource SurfaceAltBrush}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="64" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="70" />
+                                        <ColumnDefinition Width="90" />
+                                        <ColumnDefinition Width="82" />
+                                        <ColumnDefinition Width="84" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="{Binding FindingId}" FontSize="11" Foreground="{StaticResource AccentBrush}" />
+                                    <TextBlock Grid.Column="1" Text="{Binding Title}" FontSize="12" TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Grid.Column="2" Text="{Binding Severity}" FontSize="11" Foreground="{Binding Severity, Converter={StaticResource SeverityBrush}}" />
+                                    <TextBlock Grid.Column="3" Text="{Binding OwnerText}" FontSize="11" Foreground="{StaticResource MutedBrush}" TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Grid.Column="4" Text="{Binding StatusText}" FontSize="11" />
+                                    <TextBlock Grid.Column="5" Text="{Binding DueText}" FontSize="11" Foreground="{StaticResource MutedBrush}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <Border Grid.Column="1" Background="{StaticResource SurfaceAltBrush}" CornerRadius="6" Padding="12" Margin="12,0,0,0">
+                        <StackPanel>
+                            <TextBlock Text="Selected finding" Style="{StaticResource Muted}" />
+                            <TextBlock Text="{Binding SelectedActionRow.FindingId}" FontSize="12" FontWeight="SemiBold" />
+                            <TextBlock Text="{Binding SelectedActionRow.Title}" FontSize="12" TextWrapping="Wrap" />
+
+                            <TextBlock Text="Owner" Style="{StaticResource Muted}" Margin="0,8,0,2" />
+                            <TextBox Text="{Binding ActionOwner, UpdateSourceTrigger=PropertyChanged}" />
+
+                            <TextBlock Text="Due date (yyyy-MM-dd)" Style="{StaticResource Muted}" Margin="0,8,0,2" />
+                            <TextBox Text="{Binding ActionDueText, UpdateSourceTrigger=PropertyChanged}" />
+
+                            <TextBlock Text="Status" Style="{StaticResource Muted}" Margin="0,8,0,2" />
+                            <ComboBox ItemsSource="{Binding ActionStatuses}" SelectedItem="{Binding SelectedActionStatus}" />
+
+                            <TextBlock Text="Notes" Style="{StaticResource Muted}" Margin="0,8,0,2" />
+                            <TextBox Text="{Binding ActionNotes, UpdateSourceTrigger=PropertyChanged}" Height="60"
+                                     AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" />
+
+                            <Button Content="Save action" Style="{StaticResource PrimaryButton}"
+                                    Command="{Binding SaveActionCommand}" Margin="0,8,0,0" />
+                            <TextBlock Text="{Binding ActionStatusMessage}" Style="{StaticResource Muted}"
+                                       TextWrapping="Wrap" Margin="0,6,0,0" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </StackPanel>
+        </Border>
     </StackPanel>
 </UserControl>

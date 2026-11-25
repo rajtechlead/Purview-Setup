@@ -32,7 +32,7 @@ public partial class App : System.Windows.Application
             var pages = new PageViewModel[]
             {
                 new DashboardViewModel(services.Workspace, services.Store, services.Store),
-                new AssessmentViewModel(services.Workspace, services.Store, services.Clock),
+                new AssessmentViewModel(services.Workspace, services.Store, services.Store, services.Clock),
                 new DeploymentViewModel(services.Workspace, services.Store, services.Clock),
                 new MonitoringViewModel(services.Workspace, services.Store, services.Store),
                 new ReportsViewModel(services.Workspace),
