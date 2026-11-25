@@ -170,6 +170,9 @@ public sealed record AppSettings
     /// <summary>Minutes between automatic checks while the app is open; 0 disables them.</summary>
     public int MonitoringIntervalMinutes { get; set; }
 
+    /// <summary>Optional HTTPS webhook that receives monitoring alerts.</summary>
+    public string? AlertWebhookUrl { get; set; }
+
     public bool DemoDataEnabled { get; set; }
     public List<AiProviderDescriptor> Providers { get; set; } = new();
 

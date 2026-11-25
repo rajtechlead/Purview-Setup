@@ -3,6 +3,7 @@ using System.Net.Http;
 using PurviewCopilot.Application.Abstractions;
 using PurviewCopilot.Application.Ai;
 using PurviewCopilot.Application.Assessment;
+using PurviewCopilot.Application.Monitoring;
 using PurviewCopilot.Application.Deployment;
 using PurviewCopilot.Application.Modules;
 using PurviewCopilot.Application.Reporting;
@@ -32,6 +33,7 @@ public sealed class AppServices
         ConnectionVerifier verifier,
         UpdateChecker updates,
         Func<string, AuthConfiguration, IKeyVaultCertificateStore> keyVaultFactory,
+        AlertNotifier alerts,
         IClock clock)
     {
         Workspace = workspace;
@@ -42,6 +44,7 @@ public sealed class AppServices
         Verifier = verifier;
         Updates = updates;
         KeyVaultFactory = keyVaultFactory;
+        Alerts = alerts;
         Clock = clock;
     }
 
@@ -53,6 +56,7 @@ public sealed class AppServices
     public ConnectionVerifier Verifier { get; }
     public UpdateChecker Updates { get; }
     public Func<string, AuthConfiguration, IKeyVaultCertificateStore> KeyVaultFactory { get; }
+    public AlertNotifier Alerts { get; }
     public IClock Clock { get; }
 
     public static AppServices Create()
@@ -69,6 +73,7 @@ public sealed class AppServices
         var tokens = new EntraTokenProvider(certificates);
         var http = new HttpClient { Timeout = TimeSpan.FromSeconds(90) };
         var updates = new UpdateChecker(http);
+        var alerts = new AlertNotifier(http);
         Func<string, AuthConfiguration, IKeyVaultCertificateStore> keyVault = (uri, auth) =>
             new KeyVaultCertificateStore(uri, http, tokens.CreateCredential(auth));
 
@@ -107,6 +112,6 @@ public sealed class AppServices
 
         var verifier = new ConnectionVerifier(tokens, http);
 
-        return new AppServices(workspace, store, certificates, copilot, store, verifier, updates, keyVault, clock);
+        return new AppServices(workspace, store, certificates, copilot, store, verifier, updates, keyVault, alerts, clock);
     }
 }

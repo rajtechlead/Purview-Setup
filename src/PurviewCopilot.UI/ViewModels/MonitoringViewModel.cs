@@ -16,23 +16,32 @@ public sealed class MonitoringViewModel : PageViewModel
     private readonly GovernanceWorkspace _workspace;
     private readonly ISettingsStore _settings;
     private readonly IAiUsageStore _aiUsage;
+    private readonly AlertNotifier _notifier;
     private readonly DispatcherTimer _timer;
     private string _status = "Run an assessment to establish a baseline.";
     private string _scheduleText = "Automatic checks are off.";
     private string _aiUsageText = "No AI requests recorded.";
     private string _aiCostText = string.Empty;
+    private string _alertWebhookUrl = string.Empty;
+    private string _alertDeliveryStatus = "No webhook configured; alerts stay in-app.";
     private int _intervalMinutes;
     private bool _checking;
 
-    public MonitoringViewModel(GovernanceWorkspace workspace, ISettingsStore settings, IAiUsageStore aiUsage)
+    public MonitoringViewModel(
+        GovernanceWorkspace workspace,
+        ISettingsStore settings,
+        IAiUsageStore aiUsage,
+        AlertNotifier notifier)
     {
         _workspace = workspace;
         _settings = settings;
         _aiUsage = aiUsage;
+        _notifier = notifier;
 
         RefreshCommand = new AsyncRelayCommand(RefreshAsync);
         CheckNowCommand = new AsyncRelayCommand(CheckNowAsync, () => !_checking);
         SaveScheduleCommand = new AsyncRelayCommand(SaveScheduleAsync);
+        SendAlertsCommand = new AsyncRelayCommand(SendAlertsAsync);
 
         _timer = new DispatcherTimer();
         _timer.Tick += OnTimerTick;
@@ -48,6 +57,8 @@ public sealed class MonitoringViewModel : PageViewModel
 
     public string Status { get => _status; private set => SetProperty(ref _status, value); }
     public string ScheduleText { get => _scheduleText; private set => SetProperty(ref _scheduleText, value); }
+    public string AlertWebhookUrl { get => _alertWebhookUrl; set => SetProperty(ref _alertWebhookUrl, value); }
+    public string AlertDeliveryStatus { get => _alertDeliveryStatus; private set => SetProperty(ref _alertDeliveryStatus, value); }
     public string AiUsageText { get => _aiUsageText; private set => SetProperty(ref _aiUsageText, value); }
     public string AiCostText { get => _aiCostText; private set => SetProperty(ref _aiCostText, value); }
     public int IntervalMinutes { get => _intervalMinutes; set => SetProperty(ref _intervalMinutes, value); }
@@ -55,6 +66,7 @@ public sealed class MonitoringViewModel : PageViewModel
     public ICommand RefreshCommand { get; }
     public ICommand CheckNowCommand { get; }
     public ICommand SaveScheduleCommand { get; }
+    public ICommand SendAlertsCommand { get; }
 
     public override async Task RefreshAsync()
     {
@@ -97,6 +109,7 @@ public sealed class MonitoringViewModel : PageViewModel
 
         var settings = await _settings.LoadAsync().ConfigureAwait(true);
         IntervalMinutes = settings.MonitoringIntervalMinutes;
+        AlertWebhookUrl = settings.AlertWebhookUrl ?? string.Empty;
         ConfigureSchedule(settings.MonitoringIntervalMinutes);
 
         var summary = AiUsageSummary.From(await _aiUsage.GetTotalsAsync().ConfigureAwait(true));
@@ -138,16 +151,43 @@ public sealed class MonitoringViewModel : PageViewModel
         {
             var settings = await _settings.LoadAsync().ConfigureAwait(true);
             settings.MonitoringIntervalMinutes = Math.Max(0, IntervalMinutes);
+            settings.AlertWebhookUrl = string.IsNullOrWhiteSpace(AlertWebhookUrl) ? null : AlertWebhookUrl.Trim();
             await _settings.SaveAsync(settings).ConfigureAwait(true);
 
             ConfigureSchedule(settings.MonitoringIntervalMinutes);
             Status = settings.MonitoringIntervalMinutes <= 0
-                ? "Automatic checks disabled."
-                : $"Automatic checks enabled every {Math.Max(15, settings.MonitoringIntervalMinutes)} minutes.";
+                ? "Automatic checks disabled; the webhook setting was saved."
+                : $"Automatic checks enabled every {Math.Max(15, settings.MonitoringIntervalMinutes)} minutes; the webhook setting was saved.";
         }
         catch (Exception ex)
         {
             Status = $"Schedule save failed: {ex.Message}";
+        }
+    }
+
+    private async Task SendAlertsAsync()
+    {
+        var url = AlertWebhookUrl.Trim();
+
+        if (string.IsNullOrWhiteSpace(url))
+        {
+            AlertDeliveryStatus = "Set an https webhook URL first.";
+            return;
+        }
+
+        await DeliverAlertsAsync(url).ConfigureAwait(true);
+    }
+
+    private async Task DeliverAlertsAsync(string url)
+    {
+        try
+        {
+            var result = await _notifier.SendAsync(url, Alerts.ToList(), DateTimeOffset.Now).ConfigureAwait(true);
+            AlertDeliveryStatus = result.Message;
+        }
+        catch (Exception ex)
+        {
+            AlertDeliveryStatus = $"Alert delivery failed: {ex.Message}";
         }
     }
 
@@ -178,6 +218,11 @@ public sealed class MonitoringViewModel : PageViewModel
             await RefreshAsync().ConfigureAwait(true);
 
             Status = $"Check completed at {DateTimeOffset.Now:HH:mm}. {Alerts.Count} alert(s) active.";
+
+            if (!string.IsNullOrWhiteSpace(settings.AlertWebhookUrl) && Alerts.Count > 0)
+            {
+                await DeliverAlertsAsync(settings.AlertWebhookUrl).ConfigureAwait(true);
+            }
         }
         catch (Exception ex)
         {

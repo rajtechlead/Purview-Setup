@@ -18,7 +18,7 @@ Verified against commit `353bde2` on 25 November 2026 by reading the source, cou
 
 | Code | Meaning |
 | --- | --- |
-| **T** | Covered by an automated test (82 tests, all passing at audit time). |
+| **T** | Covered by an automated test (86 tests, all passing at audit time). |
 | **B** | Builds and is reachable from the composition root; behaviour not exercised end to end. |
 | **C** | Code exists but is unexercised here (no tenant, certificate, API key or admin rights). |
 | **D** | Documentation or project/manifest artifact only; nothing executes it here. |
@@ -179,7 +179,7 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 | ID | Requirement | Status | Proof | Evidence / gap |
 | --- | --- | --- | --- | --- |
 | MON-01 | Monitor governance, security, compliance and configuration drift | **Delivered** | T | `DriftDetector` compares a stored baseline with a fresh collection across all four kinds (11 rules). |
-| MON-02 | Generate alerts | **Partial** | T | `AlertBuilder` generates local alerts from drift, score regressions (≤ −5 points) and critical failures; Monitoring lists them with severity. No external channel (email, Teams, webhook, toast). Test: `MonitoringAlertTests`. |
+| MON-02 | Generate alerts | **Delivered** | T | `AlertBuilder` generates alerts from drift, score regressions (≤ −5 points) and critical failures; Monitoring lists them and can deliver them to an operator HTTPS webhook (suitable for Teams/Slack incoming webhooks) on **Send alerts now** or automatically after a scheduled check. Rejects non-https URLs; payload has id, title, detail, severity and timestamp. Tests: `MonitoringAlertTests`, `AlertNotifierTests`. |
 | MON-03 | Trend reports | **Partial** | T | Assessment history is stored per tenant; no trend chart, delta view or time-series report. |
 | MON-04 | Continuous (scheduled) monitoring | **Partial** | B | In-app `DispatcherTimer` re-runs the read-only assessment every N minutes (minimum 15, off by default) and refreshes drift, alerts and licence signals; only runs while the window is open. No Windows service or Task Scheduler job. |
 
@@ -267,8 +267,8 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 
 | Status | Count | Share |
 | --- | --- | --- |
-| **Delivered** | 96 | 72% |
-| **Partial** | 30 | 22% |
+| **Delivered** | 97 | 72% |
+| **Partial** | 29 | 22% |
 | **Not delivered** | 8 | 6% |
 | **Total tracked** | 134 | 100% |
 
@@ -289,7 +289,7 @@ By section:
 | Approval workflow | 2 | 0 | 0 |
 | Offline and regulated | 2 | 0 | 1 |
 | Licence optimisation | 1 | 1 | 0 |
-| Continuous monitoring | 1 | 3 | 0 |
+| Continuous monitoring | 2 | 2 | 0 |
 | Reporting | 5 | 1 | 0 |
 | Security engineering | 11 | 4 | 1 |
 | Architecture and technology | 7 | 1 | 2 |
@@ -305,7 +305,7 @@ Ranked by risk to the commercial claim, not by effort:
 2. **Live deployment execution (DEP-05)** — by design, but the specification asks for apply and rollback; the reviewed script and reversal script exist, execution does not.
 3. **Security Copilot (AIA-02)** and **government clouds (OFF-03)**.
 4. **Config-as-code breadth (CAC-02)** — no ARM/Bicep/Terraform output, and existing tenant objects are not exported individually.
-5. **Unattended scheduling and external alerts (MON-02, MON-04)** — checks run only while the app is open and alerts stay in-app.
+5. **Unattended scheduling (MON-04)** — checks run only while the app is open; there is no Windows service or Task Scheduler integration.
 6. **Guided onboarding wizard (AUT-12)** — certificate and connection actions exist, but there is no stepped app-registration/consent wizard.
 7. **Code signing, MSIX packaging and a hosted update manifest (SEC-11, SEC-16, INS-02)** — the MSI is produced but unsigned, the updater has no published manifest, and there is no `.msix` build.
 8. **SQL Server support (ARC-08)** and **WinUI 3 (ARC-02)**.
@@ -317,7 +317,7 @@ Ranked by risk to the commercial claim, not by effort:
 | Check | Result |
 | --- | --- |
 | `dotnet build PurviewGovernanceCopilot.sln -c Release` | Succeeded (local SDK 9.0.321) |
-| `dotnet test tests/PurviewCopilot.Tests -c Release` | 82 passed, 0 failed |
+| `dotnet test tests/PurviewCopilot.Tests -c Release` | 86 passed, 0 failed |
 | Catalog count (`grep -c 'Add("' ModuleCatalog.cs`) | 49 rules across 16 modules |
 | Exporter inventory | HTML, JSON, CSV, Markdown, PDF, DOCX, XLSX |
 | `ReportFormat` enum | `Html, Json, Csv, Markdown, Pdf, Docx, Xlsx` |
