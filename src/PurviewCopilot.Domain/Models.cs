@@ -273,6 +273,13 @@ public sealed record AuditEntry(
     string Detail,
     string? CorrelationId);
 
+/// <summary>Result of recomputing the local audit hash chain.</summary>
+public sealed record AuditChainStatus(
+    bool IsValid,
+    int Checked,
+    string? FirstInvalidId,
+    string Message);
+
 public sealed record DriftItem(
     string Id,
     DriftKind Kind,

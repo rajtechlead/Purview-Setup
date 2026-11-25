@@ -11,7 +11,7 @@ Designed and built by **Raj Raja** · Owned by **Belle-RajaCorp** · contact@bel
 | Area | Capability |
 | --- | --- |
 | Discovery | Microsoft Graph (identity, licensing, posture) + Security & Compliance PowerShell (labels, DLP, retention, audit, insider risk, eDiscovery) — **read-only** |
-| Assessment | 48 evidence-based controls across 16 Purview modules, deterministic scoring |
+| Assessment | 49 evidence-based controls across 16 Purview modules, deterministic scoring |
 | Scoring | Security, Governance, Compliance, Maturity, Risk, AI Governance, Copilot Readiness |
 | Planning | Recommended, guided, custom, expert and greenfield change plans with full change-management packs |
 | Safety | Pre-change backups, simulation (what-if), 3-stage approval (Security → Compliance → CAB), rollback packages |
@@ -59,7 +59,7 @@ src/
   PurviewCopilot.Infrastructure/  # Graph, PowerShell, SQLite, certificates, Key Vault, AI providers
   PurviewCopilot.UI/              # WPF shell, dashboards, pages (MVVM)
 tests/
-  PurviewCopilot.Tests/           # 36 automated tests
+  PurviewCopilot.Tests/           # 41 automated tests
 docs/                             # architecture, design, security, guides, traceability
 installer/                        # WiX MSI project + MSIX manifest
 .github/workflows/ci.yml          # build, test, publish
@@ -75,10 +75,12 @@ installer/                        # WiX MSI project + MSIX manifest
 | [04 User guide](docs/04-user-guide.md) | Every screen, end to end |
 | [05 Admin guide](docs/05-admin-guide.md) | Deployment, Intune/MECM, install, upgrade, operations, troubleshooting |
 | [06 Roadmap](docs/06-roadmap.md) | Phase 2 and beyond |
-| [07 Requirements traceability](docs/07-requirements-traceability.md) | Spec → implementation status, including known gaps |
+| [07 Requirements traceability](docs/07-requirements-traceability.md) | Spec → implementation status summary |
+| [08 Requirements tracker](docs/08-requirements-tracker.md) | Requirement-level tracker: 134 requirements with status, proof and gap |
+| [09 Deliverables tracker](docs/09-deliverables-tracker.md) | The 22 named deliverables, locations and limitations |
 
 ## Status
 
-Version **1.0.0** — buildable, tested and runnable. Assessment, scoring, planning, approval, backup, simulation, reporting, AI failover and privacy guard are implemented and covered by tests. Live tenant mutation is deliberately gated off in this build: it generates a reviewed PowerShell script rather than executing it. See the traceability document for the precise boundary.
+Version **1.0.0** — buildable, tested and runnable. Assessment, scoring, planning, approval, backup, simulation, reporting, AI failover and privacy guard are implemented and covered by tests. The local audit log is hash-chained and verifiable from Settings, AI failover probes provider health and cools down failed providers, and the lab client secret is DPAPI-protected at rest. Live tenant mutation is deliberately gated off in this build: it generates a reviewed PowerShell script rather than executing it. See the trackers for the precise boundary.
 
 The application is read-only by default and requires no administrator rights: certificates install per-user and data is stored in `%LOCALAPPDATA%\PurviewGovernanceCopilot`.

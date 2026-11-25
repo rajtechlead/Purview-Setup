@@ -37,6 +37,7 @@ public sealed class SettingsViewModel : PageViewModel
     private readonly ISettingsStore _settingsStore;
     private readonly ICertificateService _certificates;
     private readonly ConnectionVerifier _verifier;
+    private readonly IAuditLog _auditLog;
     private AppSettings _settings = AppSettings.CreateDefault();
 
     private string _tenantId = string.Empty;
@@ -52,16 +53,19 @@ public sealed class SettingsViewModel : PageViewModel
     private int _certMonths = 12;
     private string _pfxPassword = string.Empty;
     private string _status = "Settings loaded.";
+    private string _auditStatus = "Audit chain not verified in this session.";
     private bool _busy;
 
     public SettingsViewModel(
         ISettingsStore settingsStore,
         ICertificateService certificates,
-        ConnectionVerifier verifier)
+        ConnectionVerifier verifier,
+        IAuditLog auditLog)
     {
         _settingsStore = settingsStore;
         _certificates = certificates;
         _verifier = verifier;
+        _auditLog = auditLog;
 
         SaveCommand = new AsyncRelayCommand(SaveAsync, () => !Busy);
         CreateCertificateCommand = new RelayCommand(CreateCertificate);
@@ -71,6 +75,7 @@ public sealed class SettingsViewModel : PageViewModel
         RotateCertificateCommand = new RelayCommand(RotateCertificate);
         TestConnectionCommand = new AsyncRelayCommand(TestConnectionAsync, () => !Busy);
         RefreshCertificatesCommand = new RelayCommand(LoadCertificates);
+        VerifyAuditCommand = new AsyncRelayCommand(VerifyAuditAsync, () => !Busy);
     }
 
     public override string Title => "Settings";
@@ -95,6 +100,7 @@ public sealed class SettingsViewModel : PageViewModel
     public int CertificateMonths { get => _certMonths; set => SetProperty(ref _certMonths, value); }
     public string PfxPassword { get => _pfxPassword; set => SetProperty(ref _pfxPassword, value); }
     public string Status { get => _status; private set => SetProperty(ref _status, value); }
+    public string AuditStatus { get => _auditStatus; private set => SetProperty(ref _auditStatus, value); }
     public bool Busy { get => _busy; private set => SetProperty(ref _busy, value); }
 
     public string CertificateWarning
@@ -116,6 +122,7 @@ public sealed class SettingsViewModel : PageViewModel
     public ICommand RotateCertificateCommand { get; }
     public ICommand TestConnectionCommand { get; }
     public ICommand RefreshCertificatesCommand { get; }
+    public ICommand VerifyAuditCommand { get; }
 
     public override async Task RefreshAsync()
     {
@@ -171,7 +178,7 @@ public sealed class SettingsViewModel : PageViewModel
             _settings.Providers = Providers.Select(p => p.Descriptor with { Enabled = p.Enabled }).ToList();
 
             await _settingsStore.SaveAsync(_settings).ConfigureAwait(true);
-            Status = "Settings saved. Credentials are stored locally; secrets are read from environment variables only.";
+            Status = "Settings saved. The lab client secret is protected with Windows DPAPI; AI provider keys are read from environment variables only.";
         }
         catch (Exception ex)
         {
@@ -266,6 +273,24 @@ public sealed class SettingsViewModel : PageViewModel
         catch (Exception ex)
         {
             Status = $"Rotation failed: {ex.Message}";
+        }
+    }
+
+    private async Task VerifyAuditAsync()
+    {
+        Busy = true;
+        try
+        {
+            var status = await _auditLog.VerifyAsync().ConfigureAwait(true);
+            AuditStatus = status.Message;
+        }
+        catch (Exception ex)
+        {
+            AuditStatus = $"Audit verification failed: {ex.Message}";
+        }
+        finally
+        {
+            Busy = false;
         }
     }
 

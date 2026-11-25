@@ -2,15 +2,17 @@
 
 Ordered by risk reduction and by what the current build deliberately leaves out.
 
-## Phase 1.1 — Close the safety gaps (next)
+## Phase 1.1 — Close the safety gaps
 
-| Item | Why | Notes |
-| --- | --- | --- |
-| Encrypted local store | Assessment evidence currently sits in a plaintext SQLite file | SQLCipher or a DPAPI-protected key; migrate existing DB in place |
-| Signed builds and update channel | Enterprise deployment requires Authenticode | CI signing step, SHA-256 manifest, optional winget/Intune channel |
-| Hash-chained audit log | Local DB is user-writable | Each audit row stores the hash of the previous row; verification command |
-| Provider health pre-check | `IsHealthyAsync` exists but the failover loop does not consult it | Circuit breaker with cooldown per provider |
-| Per-user secret store for lab mode | Client secret currently lands in the settings document | DPAPI (`ProtectedData`) or Windows Credential Manager |
+**3 of 5 complete.** Updated 25 November 2026.
+
+| Item | Status | Why | Notes |
+| --- | --- | --- | --- |
+| Encrypted local store | **Open** | Assessment evidence currently sits in a plaintext SQLite file | Page-level encryption still needs SQLCipher (or a SQLite encryption build). The lab client secret is now DPAPI-protected, which reduces but does not remove the exposure of assessment, plan and backup payloads. |
+| Signed builds and update channel | **Open** | Enterprise deployment requires Authenticode | CI signing step is authored but commented out; needs a signing certificate and a published SHA-256 manifest. No auto-update channel exists. |
+| Hash-chained audit log | **Done** | Local DB is user-writable | Each row stores the SHA-256 of its canonical fields plus the previous hash, in insertion order. Legacy rows are backfilled on first open; `IAuditLog.VerifyAsync` recomputes the chain; Settings has a **Verify audit log integrity** button. Tamper detection is covered by tests. |
+| Provider health pre-check | **Done** | `IsHealthyAsync` existed but the failover loop did not consult it | Every candidate is probed with a 5-second timeout. Unhealthy providers are skipped and recorded as `Unhealthy`, and any failure puts that provider in a 2-minute cooldown so the next call goes straight to the fallback. |
+| Per-user secret store for lab mode | **Done** | Client secret landed in the settings document | `DpapiSecretProtector` uses crypt32 DPAPI with `CurrentUser` scope, so no key material sits beside the data and another profile cannot decrypt it. Values are transparently re-encrypted on save and decrypted on load; a profile change yields an empty secret rather than a crash. |
 
 ## Phase 1.2 — Deployment depth
 

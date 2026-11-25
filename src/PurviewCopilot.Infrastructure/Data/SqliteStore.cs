@@ -1,8 +1,11 @@
 using System.Globalization;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using Microsoft.Data.Sqlite;
 using PurviewCopilot.Application.Abstractions;
 using PurviewCopilot.Domain;
+using PurviewCopilot.Infrastructure.Security;
 
 namespace PurviewCopilot.Infrastructure.Data;
 
@@ -22,6 +25,7 @@ public sealed class SqliteStore :
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
     private readonly string _connectionString;
+    private readonly object _auditGate = new();
 
     public SqliteStore(string dataDirectory)
     {
@@ -127,6 +131,78 @@ public sealed class SqliteStore :
             );
             """;
         command.ExecuteNonQuery();
+
+        EnsureAuditChain();
+    }
+
+    private void EnsureAuditChain()
+    {
+        var columns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        using (var connection = Open())
+        using (var command = connection.CreateCommand())
+        {
+            command.CommandText = "PRAGMA table_info(audit_log)";
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                columns.Add(reader.GetString(1));
+            }
+        }
+
+        if (!columns.Contains("prev_hash"))
+        {
+            Execute("ALTER TABLE audit_log ADD COLUMN prev_hash TEXT NULL");
+        }
+
+        if (!columns.Contains("entry_hash"))
+        {
+            Execute("ALTER TABLE audit_log ADD COLUMN entry_hash TEXT NULL");
+        }
+
+        if (int.TryParse(Scalar("SELECT COUNT(*) FROM audit_log WHERE entry_hash IS NULL"), out var missing) && missing > 0)
+        {
+            BackfillAuditChain();
+        }
+    }
+
+    /// <summary>
+    /// Databases created before the chain existed are hashed in insertion order so the chain is
+    /// valid from the upgrade point forward. It cannot attest to edits made before that point.
+    /// </summary>
+    private void BackfillAuditChain()
+    {
+        var rows = new List<(long RowId, string Id, string At, string Actor, string Action, string Target, string Detail, string? Correlation)>();
+
+        using (var connection = Open())
+        using (var command = connection.CreateCommand())
+        {
+            command.CommandText = "SELECT rowid, id, at_utc, actor, action, target, detail, correlation_id FROM audit_log ORDER BY rowid ASC";
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                rows.Add((reader.GetInt64(0), reader.GetString(1), reader.GetString(2), reader.GetString(3),
+                    reader.GetString(4), reader.GetString(5), reader.GetString(6), reader.IsDBNull(7) ? null : reader.GetString(7)));
+            }
+        }
+
+        var previous = string.Empty;
+        using var writeConnection = Open();
+        using var transaction = writeConnection.BeginTransaction();
+
+        foreach (var row in rows)
+        {
+            var hash = AuditHash(row.Id, row.At, row.Actor, row.Action, row.Target, row.Detail, row.Correlation, previous);
+            using var command = writeConnection.CreateCommand();
+            command.Transaction = transaction;
+            command.CommandText = "UPDATE audit_log SET prev_hash=$prev, entry_hash=$hash WHERE rowid=$rowid";
+            command.Parameters.AddWithValue("$prev", previous);
+            command.Parameters.AddWithValue("$hash", hash);
+            command.Parameters.AddWithValue("$rowid", row.RowId);
+            command.ExecuteNonQuery();
+            previous = hash;
+        }
+
+        transaction.Commit();
     }
 
     private SqliteConnection Open()
@@ -285,15 +361,24 @@ public sealed class SqliteStore :
 
     public Task WriteAsync(AuditEntry entry, CancellationToken cancellationToken = default)
     {
-        Execute(
-            "INSERT INTO audit_log(id, at_utc, actor, action, target, detail, correlation_id) VALUES ($id,$at,$actor,$action,$target,$detail,$corr)",
-            ("$id", entry.Id.ToString()),
-            ("$at", Iso(entry.AtUtc)),
-            ("$actor", entry.Actor),
-            ("$action", entry.Action),
-            ("$target", entry.Target),
-            ("$detail", entry.Detail),
-            ("$corr", entry.CorrelationId));
+        lock (_auditGate)
+        {
+            var previous = Scalar("SELECT entry_hash FROM audit_log ORDER BY rowid DESC LIMIT 1") ?? string.Empty;
+            var hash = AuditHash(entry.Id.ToString(), Iso(entry.AtUtc), entry.Actor, entry.Action,
+                entry.Target, entry.Detail, entry.CorrelationId, previous);
+
+            Execute(
+                "INSERT INTO audit_log(id, at_utc, actor, action, target, detail, correlation_id, prev_hash, entry_hash) VALUES ($id,$at,$actor,$action,$target,$detail,$corr,$prev,$hash)",
+                ("$id", entry.Id.ToString()),
+                ("$at", Iso(entry.AtUtc)),
+                ("$actor", entry.Actor),
+                ("$action", entry.Action),
+                ("$target", entry.Target),
+                ("$detail", entry.Detail),
+                ("$corr", entry.CorrelationId),
+                ("$prev", previous),
+                ("$hash", hash));
+        }
 
         return Task.CompletedTask;
     }
@@ -320,6 +405,56 @@ public sealed class SqliteStore :
         }
 
         return Task.FromResult<IReadOnlyList<AuditEntry>>(entries);
+    }
+
+    /// <summary>
+    /// Recomputes the SHA-256 chain in insertion order. An edited row breaks the chain at that
+    /// entry; a deleted row breaks it at the next one. This is tamper evidence, not prevention.
+    /// </summary>
+    public Task<AuditChainStatus> VerifyAsync(CancellationToken cancellationToken = default)
+    {
+        var previous = string.Empty;
+        var verified = 0;
+
+        using var connection = Open();
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT id, at_utc, actor, action, target, detail, correlation_id, prev_hash, entry_hash FROM audit_log ORDER BY rowid ASC";
+
+        using var reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            var id = reader.GetString(0);
+            var storedPrevious = reader.IsDBNull(7) ? string.Empty : reader.GetString(7);
+            var storedHash = reader.IsDBNull(8) ? string.Empty : reader.GetString(8);
+
+            if (storedHash.Length == 0)
+            {
+                return Task.FromResult(new AuditChainStatus(false, verified, id,
+                    $"Entry {id} has no hash; the audit chain cannot be verified."));
+            }
+
+            var expected = AuditHash(id, reader.GetString(1), reader.GetString(2), reader.GetString(3),
+                reader.GetString(4), reader.GetString(5), reader.IsDBNull(6) ? null : reader.GetString(6), previous);
+
+            if (!string.Equals(storedPrevious, previous, StringComparison.Ordinal) ||
+                !string.Equals(storedHash, expected, StringComparison.Ordinal))
+            {
+                return Task.FromResult(new AuditChainStatus(false, verified, id,
+                    $"Audit chain broken at entry {id}; the row or its predecessor was modified."));
+            }
+
+            previous = storedHash;
+            verified++;
+        }
+
+        return Task.FromResult(new AuditChainStatus(true, verified, null,
+            verified == 0 ? "Audit log is empty." : $"Audit chain valid across {verified} entr{(verified == 1 ? "y" : "ies")}."));
+    }
+
+    private static string AuditHash(string id, string at, string actor, string action, string target, string detail, string? correlation, string previous)
+    {
+        var canonical = string.Join('\u001f', id, at, actor, action, target, detail, correlation ?? string.Empty, previous);
+        return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(canonical))).ToLowerInvariant();
     }
 
     // ---------------- AI usage ----------------
@@ -383,14 +518,32 @@ public sealed class SqliteStore :
             settings.Providers = AppSettings.CreateDefault().Providers;
         }
 
+        if (DpapiSecretProtector.IsProtected(settings.Auth.ClientSecret))
+        {
+            settings.Auth = settings.Auth with
+            {
+                ClientSecret = DpapiSecretProtector.UnprotectIfNeeded(settings.Auth.ClientSecret)
+            };
+        }
+
         return Task.FromResult(settings);
     }
 
     public Task SaveAsync(AppSettings settings, CancellationToken cancellationToken = default)
     {
+        // The lab client secret never reaches the settings JSON in clear text. Provider keys are
+        // not persisted at all; they resolve from environment variables at call time.
+        var persisted = DpapiSecretProtector.IsProtected(settings.Auth.ClientSecret) ||
+                        string.IsNullOrEmpty(settings.Auth.ClientSecret)
+            ? settings
+            : settings with
+            {
+                Auth = settings.Auth with { ClientSecret = DpapiSecretProtector.Protect(settings.Auth.ClientSecret!) }
+            };
+
         Execute(
             "INSERT OR REPLACE INTO settings(key, value) VALUES ('app',$value)",
-            ("$value", JsonSerializer.Serialize(settings, Json)));
+            ("$value", JsonSerializer.Serialize(persisted, Json)));
 
         return Task.CompletedTask;
     }

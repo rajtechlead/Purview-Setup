@@ -50,6 +50,9 @@ public interface IAuditLog
 {
     Task WriteAsync(AuditEntry entry, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<AuditEntry>> ReadAsync(int take = 200, CancellationToken cancellationToken = default);
+
+    /// <summary>Recomputes the tamper-evident chain over every stored entry, oldest first.</summary>
+    Task<AuditChainStatus> VerifyAsync(CancellationToken cancellationToken = default);
 }
 
 public interface IAiUsageStore
@@ -121,7 +124,7 @@ public sealed record ReportContext(
 public sealed record FrameworkCoverage(string Framework, double Percent, int TotalControls, int CoveredControls, IReadOnlyList<string> Gaps);
 
 /// <summary>Application settings persisted in SQLite as a single JSON document.</summary>
-public sealed class AppSettings
+public sealed record AppSettings
 {
     public AuthConfiguration Auth { get; set; } = AuthConfiguration.Empty;
     public AiRedactionMode RedactionMode { get; set; } = AiRedactionMode.Tokenize;

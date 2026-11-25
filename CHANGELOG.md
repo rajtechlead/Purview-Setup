@@ -2,6 +2,20 @@
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Added
+
+- **Tamper-evident audit log**: every entry stores the SHA-256 of its canonical fields plus the previous entry's hash. `IAuditLog.VerifyAsync` recomputes the chain in insertion order and names the first broken entry; existing databases are backfilled on first open. A **Verify audit log integrity** action is available in Settings.
+- **Provider health circuit breaker**: the AI failover orchestrator now probes each candidate with a five-second timeout before dispatch, records `Unhealthy` attempts, and cools a failing provider down for two minutes so subsequent calls go straight to the fallback.
+- **DPAPI secret protection**: the lab Entra client secret is encrypted at rest with Windows DPAPI (`CurrentUser`) through `DpapiSecretProtector`, which uses crypt32 directly and adds no package. Legacy plaintext secrets are encrypted on the next save; a secret protected under another profile decrypts to empty rather than throwing.
+
+### Changed
+
+- `AppSettings` is now a record so the settings document can be copied with a protected secret without mutating the live object.
+- Test suite expanded from 36 to 41 tests (audit chain, tampering, DPAPI round trip, unhealthy provider, cooldown).
+- Roadmap Phase 1.1 is 3 of 5 complete; SQLCipher page encryption and a signed build/update channel remain open.
+
 ## [1.0.0] - 2026-11-25
 
 ### Added

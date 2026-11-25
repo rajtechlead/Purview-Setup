@@ -33,13 +33,19 @@
 
                     <TextBlock Grid.Row="2" Grid.Column="0" Text="Client secret (lab only)" Style="{StaticResource Muted}" Margin="0,8" VerticalAlignment="Center" />
                     <TextBox Grid.Row="2" Grid.Column="1" Margin="0,4,16,4" Text="{Binding ClientSecret}"
-                             ToolTip="Stored in the local settings database. Use certificate authentication for production." />
+                             ToolTip="Protected at rest with Windows DPAPI for the current user. Use certificate authentication for production." />
 
                     <StackPanel Grid.Row="2" Grid.Column="2" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,4">
                         <Button Content="Test connection" Command="{Binding TestConnectionCommand}" Margin="0,0,8,0" />
                         <Button Content="Save settings" Style="{StaticResource PrimaryButton}" Command="{Binding SaveCommand}" />
                     </StackPanel>
                 </Grid>
+
+                <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                    <Button Content="Verify audit log integrity" Command="{Binding VerifyAuditCommand}" Margin="0,0,10,0" />
+                    <TextBlock Text="{Binding AuditStatus}" Style="{StaticResource Muted}" VerticalAlignment="Center"
+                               TextWrapping="Wrap" MaxWidth="720" />
+                </StackPanel>
             </StackPanel>
         </Border>
 

@@ -2,6 +2,8 @@
 
 Status values: **Implemented** · **Partial** · **Planned** · **Not implemented**. This table is the honest boundary of the build; nothing marked Partial or Planned should be described as delivered.
 
+> **Superseded for status tracking.** Requirement-level IDs, per-item proof and gap actions live in [08 — Requirements Tracker](08-requirements-tracker.md), and the 22 named artifacts in [09 — Deliverables Tracker](09-deliverables-tracker.md). Where this summary and those trackers disagree, the trackers are correct.
+
 ## Platform and shell
 
 | Requirement | Status | Evidence / gap |
@@ -27,7 +29,7 @@ Status values: **Implemented** · **Partial** · **Planned** · **Not implemente
 
 | Requirement | Status | Evidence / gap |
 | --- | --- | --- |
-| Purview: information protection, labels, auto-labelling, DLP/endpoint DLP, classification, lifecycle, records, audit, insider risk, comms compliance, eDiscovery | Implemented | 48 controls; PowerShell collector |
+| Purview: information protection, labels, auto-labelling, DLP/endpoint DLP, classification, lifecycle, records, audit, insider risk, comms compliance, eDiscovery | Implemented | 49 controls; PowerShell collector |
 | DSPM, AI governance, Copilot governance | Partial | Controls and scoring implemented; DSPM/AI facts are not collected from a tenant (no stable Graph surface used), so they report as gaps |
 | Microsoft 365: Exchange, SharePoint, OneDrive, Teams, users/groups | Partial | Users/groups exact; site/team counts via Graph; mailbox and OneDrive counts are proxies |
 | Entra: users, roles, applications, service principals, Conditional Access | Partial | Users, GA count, app secrets, CA count; no per-role inventory beyond GA |
@@ -74,7 +76,7 @@ Status values: **Implemented** · **Partial** · **Planned** · **Not implemente
 | Government clouds | Not implemented | Endpoints are commercial-cloud constants |
 | Licence optimisation | Implemented | `LicenseOptimizer` (unused, over-assigned, E5 gap, Copilot prerequisites, SKU sprawl) |
 | Continuous monitoring and drift alerts | Partial | On-demand drift comparison; no scheduler or notification channel |
-| Reports PDF/DOCX/XLSX/HTML/JSON | Partial | HTML/JSON/CSV/Markdown; PDF via browser print, DOCX/XLSX not implemented |
+| Reports PDF/DOCX/XLSX/HTML/JSON | Partial | HTML/JSON/CSV/Markdown only; PDF, DOCX and XLSX are not implemented |
 | Framework readiness: ISO 27001, NIST CSF, CIS, SOC 2, HIPAA, GDPR, PCI-DSS | Implemented | `FrameworkMapper`; also ISO 42001 and NIST AI RMF |
 | Executive/security/governance/compliance dashboards, heatmap, trends, action center | Partial | One dashboard with all scores, module bars, priority findings; no separate dashboards, heatmap grid, trend history or dedicated action-center page |
 | Help center (12 topics) | Implemented | Searchable `HelpViewModel` |
@@ -102,6 +104,6 @@ Status values: **Implemented** · **Partial** · **Planned** · **Not implemente
 
 ## Summary
 
-- Fully implemented and tested: assessment engine, 48-control catalog, scoring, privacy guard, AI failover, certificate lifecycle, approvals, backups, simulation, HTML/JSON/CSV/Markdown reporting, WPF workspace, 36 tests.
+- Fully implemented and tested: assessment engine, 49-control catalog, scoring, privacy guard, AI failover, certificate lifecycle, approvals, backups, simulation, HTML/JSON/CSV/Markdown reporting, WPF workspace, 36 tests.
 - Deliberately gated: live tenant mutation.
 - Largest honest gaps: MSP multi-tenancy, live/real deployment execution, PDF/DOCX/XLSX, config-as-code, scheduled monitoring, Security Copilot, DSPM/Compliance Manager data collection, UI wizard, code signing, encrypted local store.
