@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Windows.Input;
 using Microsoft.Win32;
 using PurviewCopilot.Application.Abstractions;
+using PurviewCopilot.Application.Workspace;
 using PurviewCopilot.Domain;
 using PurviewCopilot.Infrastructure.Auth;
 using PurviewCopilot.UI.Mvvm;
@@ -34,6 +35,7 @@ public sealed class AiProviderRow : ObservableObject
 
 public sealed class SettingsViewModel : PageViewModel
 {
+    private readonly GovernanceWorkspace _workspace;
     private readonly ISettingsStore _settingsStore;
     private readonly ICertificateService _certificates;
     private readonly ConnectionVerifier _verifier;
@@ -54,14 +56,18 @@ public sealed class SettingsViewModel : PageViewModel
     private string _pfxPassword = string.Empty;
     private string _status = "Settings loaded.";
     private string _auditStatus = "Audit chain not verified in this session.";
+    private string _tenantDisplayName = string.Empty;
+    private TenantProfile? _selectedTenant;
     private bool _busy;
 
     public SettingsViewModel(
+        GovernanceWorkspace workspace,
         ISettingsStore settingsStore,
         ICertificateService certificates,
         ConnectionVerifier verifier,
         IAuditLog auditLog)
     {
+        _workspace = workspace;
         _settingsStore = settingsStore;
         _certificates = certificates;
         _verifier = verifier;
@@ -76,6 +82,8 @@ public sealed class SettingsViewModel : PageViewModel
         TestConnectionCommand = new AsyncRelayCommand(TestConnectionAsync, () => !Busy);
         RefreshCertificatesCommand = new RelayCommand(LoadCertificates);
         VerifyAuditCommand = new AsyncRelayCommand(VerifyAuditAsync, () => !Busy);
+        SaveTenantCommand = new AsyncRelayCommand(SaveTenantAsync, () => !Busy);
+        ActivateTenantCommand = new AsyncRelayCommand(ActivateTenantAsync, () => !Busy && SelectedTenant is not null);
     }
 
     public override string Title => "Settings";
@@ -86,6 +94,7 @@ public sealed class SettingsViewModel : PageViewModel
 
     public ObservableCollection<CertificateInfo> Certificates { get; } = new();
     public ObservableCollection<AiProviderRow> Providers { get; } = new();
+    public ObservableCollection<TenantProfile> TenantProfiles { get; } = new();
 
     public string TenantId { get => _tenantId; set => SetProperty(ref _tenantId, value); }
     public string ClientId { get => _clientId; set => SetProperty(ref _clientId, value); }
@@ -101,7 +110,20 @@ public sealed class SettingsViewModel : PageViewModel
     public string PfxPassword { get => _pfxPassword; set => SetProperty(ref _pfxPassword, value); }
     public string Status { get => _status; private set => SetProperty(ref _status, value); }
     public string AuditStatus { get => _auditStatus; private set => SetProperty(ref _auditStatus, value); }
+    public string TenantDisplayName { get => _tenantDisplayName; set => SetProperty(ref _tenantDisplayName, value); }
     public bool Busy { get => _busy; private set => SetProperty(ref _busy, value); }
+
+    public TenantProfile? SelectedTenant
+    {
+        get => _selectedTenant;
+        set
+        {
+            if (SetProperty(ref _selectedTenant, value))
+            {
+                (ActivateTenantCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged();
+            }
+        }
+    }
 
     public string CertificateWarning
     {
@@ -123,6 +145,8 @@ public sealed class SettingsViewModel : PageViewModel
     public ICommand TestConnectionCommand { get; }
     public ICommand RefreshCertificatesCommand { get; }
     public ICommand VerifyAuditCommand { get; }
+    public ICommand SaveTenantCommand { get; }
+    public ICommand ActivateTenantCommand { get; }
 
     public override async Task RefreshAsync()
     {
@@ -144,6 +168,15 @@ public sealed class SettingsViewModel : PageViewModel
         }
 
         LoadCertificates();
+
+        var profiles = await _workspace.LoadTenantProfilesAsync().ConfigureAwait(true);
+        TenantProfiles.Clear();
+        foreach (var profile in profiles)
+        {
+            TenantProfiles.Add(profile);
+        }
+
+        SelectedTenant ??= TenantProfiles.FirstOrDefault();
     }
 
     private void LoadCertificates()
@@ -162,13 +195,7 @@ public sealed class SettingsViewModel : PageViewModel
         Busy = true;
         try
         {
-            _settings.Auth = new AuthConfiguration(
-                AuthMode,
-                TenantId.Trim(),
-                ClientId.Trim(),
-                string.IsNullOrWhiteSpace(Thumbprint) ? null : Thumbprint.Trim(),
-                string.IsNullOrWhiteSpace(ClientSecret) ? null : ClientSecret,
-                null);
+            _settings.Auth = BuildAuth();
 
             _settings.RedactionMode = RedactionMode;
             _settings.CloudAiEnabled = CloudAiEnabled;
@@ -276,6 +303,69 @@ public sealed class SettingsViewModel : PageViewModel
         }
     }
 
+    private AuthConfiguration BuildAuth() => new(
+        AuthMode,
+        TenantId.Trim(),
+        ClientId.Trim(),
+        string.IsNullOrWhiteSpace(Thumbprint) ? null : Thumbprint.Trim(),
+        string.IsNullOrWhiteSpace(ClientSecret) ? null : ClientSecret,
+        null);
+
+    private async Task SaveTenantAsync()
+    {
+        Busy = true;
+        try
+        {
+            var profile = await _workspace.SaveTenantAsync(TenantDisplayName, BuildAuth(), Environment.UserName)
+                .ConfigureAwait(true);
+
+            TenantDisplayName = profile.DisplayName;
+            TenantProfiles.Clear();
+            foreach (var item in await _workspace.LoadTenantProfilesAsync().ConfigureAwait(true))
+            {
+                TenantProfiles.Add(item);
+            }
+
+            SelectedTenant = TenantProfiles.FirstOrDefault(p => p.TenantId == profile.TenantId) ?? profile;
+            Status = $"Customer tenant {profile.DisplayName} saved. Activate it to target it in the next assessment.";
+        }
+        catch (Exception ex)
+        {
+            Status = $"Tenant save failed: {ex.Message}";
+        }
+        finally
+        {
+            Busy = false;
+        }
+    }
+
+    private async Task ActivateTenantAsync()
+    {
+        if (SelectedTenant is null) return;
+
+        Busy = true;
+        try
+        {
+            await _workspace.ActivateTenantAsync(SelectedTenant, Environment.UserName).ConfigureAwait(true);
+
+            TenantId = SelectedTenant.Auth.TenantId;
+            ClientId = SelectedTenant.Auth.ClientId;
+            Thumbprint = SelectedTenant.Auth.CertificateThumbprint ?? string.Empty;
+            AuthMode = SelectedTenant.Auth.Mode;
+            ClientSecret = SelectedTenant.Auth.ClientSecret ?? string.Empty;
+
+            Status = $"Activated {SelectedTenant.DisplayName}. The next assessment targets this tenant.";
+        }
+        catch (Exception ex)
+        {
+            Status = $"Activation failed: {ex.Message}";
+        }
+        finally
+        {
+            Busy = false;
+        }
+    }
+
     private async Task VerifyAuditAsync()
     {
         Busy = true;
@@ -299,11 +389,7 @@ public sealed class SettingsViewModel : PageViewModel
         Busy = true;
         try
         {
-            var auth = new AuthConfiguration(AuthMode, TenantId.Trim(), ClientId.Trim(),
-                string.IsNullOrWhiteSpace(Thumbprint) ? null : Thumbprint.Trim(),
-                string.IsNullOrWhiteSpace(ClientSecret) ? null : ClientSecret, null);
-
-            var (ok, message) = await _verifier.VerifyAsync(auth).ConfigureAwait(true);
+            var (ok, message) = await _verifier.VerifyAsync(BuildAuth()).ConfigureAwait(true);
             Status = message;
             if (!ok && AuthMode == AuthMode.ClientSecret)
             {

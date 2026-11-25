@@ -91,7 +91,7 @@ public sealed class AppServices
         var copilot = new CopilotService(orchestrator, settings, store, clock);
 
         var workspace = new GovernanceWorkspace(
-            collector, assessment, planBuilder, backups, store, store, store,
+            collector, assessment, planBuilder, backups, store, store, store, store,
             exporters, settings, executor, store, clock);
 
         var verifier = new ConnectionVerifier(tokens, http);

@@ -67,6 +67,14 @@ public interface ISettingsStore
     Task SaveAsync(AppSettings settings, CancellationToken cancellationToken = default);
 }
 
+/// <summary>Customer tenants managed by an MSP or consultant, isolated by tenant id.</summary>
+public interface ITenantProfileStore
+{
+    Task SaveAsync(TenantProfile profile, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<TenantProfile>> ListAsync(CancellationToken cancellationToken = default);
+    Task DeleteAsync(string tenantId, CancellationToken cancellationToken = default);
+}
+
 public interface ICertificateService
 {
     CertificateInfo CreateSelfSigned(string subject, int validMonths, bool installToStore);

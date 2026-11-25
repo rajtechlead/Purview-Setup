@@ -21,6 +21,7 @@ public sealed class SqliteStore :
     IAuditLog,
     IAiUsageStore,
     ISettingsStore,
+    ITenantProfileStore,
     IDisposable
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
@@ -122,6 +123,13 @@ public sealed class SqliteStore :
             CREATE TABLE IF NOT EXISTS settings (
                 key TEXT PRIMARY KEY,
                 value TEXT NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS tenant_profiles (
+                tenant_id TEXT PRIMARY KEY,
+                display_name TEXT NOT NULL,
+                updated_utc TEXT NOT NULL,
+                payload TEXT NOT NULL
             );
 
             CREATE TABLE IF NOT EXISTS baselines (
@@ -545,6 +553,65 @@ public sealed class SqliteStore :
             "INSERT OR REPLACE INTO settings(key, value) VALUES ('app',$value)",
             ("$value", JsonSerializer.Serialize(persisted, Json)));
 
+        return Task.CompletedTask;
+    }
+
+    // ---------------- Customer tenants (MSP) ----------------
+
+    public Task SaveAsync(TenantProfile profile, CancellationToken cancellationToken = default)
+    {
+        var persisted = DpapiSecretProtector.IsProtected(profile.Auth.ClientSecret) ||
+                        string.IsNullOrEmpty(profile.Auth.ClientSecret)
+            ? profile
+            : profile with
+            {
+                Auth = profile.Auth with { ClientSecret = DpapiSecretProtector.Protect(profile.Auth.ClientSecret!) }
+            };
+
+        Execute(
+            "INSERT OR REPLACE INTO tenant_profiles(tenant_id, display_name, updated_utc, payload) VALUES ($id,$name,$updated,$payload)",
+            ("$id", profile.TenantId),
+            ("$name", profile.DisplayName),
+            ("$updated", Iso(profile.UpdatedUtc)),
+            ("$payload", JsonSerializer.Serialize(persisted, Json)));
+
+        return Task.CompletedTask;
+    }
+
+    public Task<IReadOnlyList<TenantProfile>> ListAsync(CancellationToken cancellationToken = default)
+    {
+        var profiles = new List<TenantProfile>();
+
+        using var connection = Open();
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT payload FROM tenant_profiles ORDER BY display_name COLLATE NOCASE";
+
+        using var reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            var profile = Deserialize<TenantProfile>(reader.GetString(0));
+            if (profile is null) continue;
+
+            if (DpapiSecretProtector.IsProtected(profile.Auth.ClientSecret))
+            {
+                profile = profile with
+                {
+                    Auth = profile.Auth with
+                    {
+                        ClientSecret = DpapiSecretProtector.UnprotectIfNeeded(profile.Auth.ClientSecret)
+                    }
+                };
+            }
+
+            profiles.Add(profile);
+        }
+
+        return Task.FromResult<IReadOnlyList<TenantProfile>>(profiles);
+    }
+
+    public Task DeleteAsync(string tenantId, CancellationToken cancellationToken = default)
+    {
+        Execute("DELETE FROM tenant_profiles WHERE tenant_id=$id", ("$id", tenantId));
         return Task.CompletedTask;
     }
 

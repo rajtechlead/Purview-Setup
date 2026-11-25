@@ -280,6 +280,13 @@ public sealed record AuditChainStatus(
     string? FirstInvalidId,
     string Message);
 
+/// <summary>A customer tenant managed from this workstation (MSP mode).</summary>
+public sealed record TenantProfile(
+    string TenantId,
+    string DisplayName,
+    AuthConfiguration Auth,
+    DateTimeOffset UpdatedUtc);
+
 public sealed record DriftItem(
     string Id,
     DriftKind Kind,

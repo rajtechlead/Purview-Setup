@@ -266,6 +266,66 @@
                     </Grid>
                 </StackPanel>
             </TabItem>
+
+            <TabItem Header="Portfolio">
+                <StackPanel Margin="0,10,0,0">
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="Cross-tenant portfolio" Style="{StaticResource SectionHeader}" />
+                            <TextBlock Text="{Binding PortfolioHint}" Style="{StaticResource Muted}" Margin="0,0,0,10" />
+
+                            <Grid Margin="0,0,0,6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="220" />
+                                    <ColumnDefinition Width="70" />
+                                    <ColumnDefinition Width="70" />
+                                    <ColumnDefinition Width="90" />
+                                    <ColumnDefinition Width="60" />
+                                    <ColumnDefinition Width="110" />
+                                    <ColumnDefinition Width="140" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Customer" Style="{StaticResource Muted}" />
+                                <TextBlock Grid.Column="1" Text="Overall" Style="{StaticResource Muted}" />
+                                <TextBlock Grid.Column="2" Text="Security" Style="{StaticResource Muted}" />
+                                <TextBlock Grid.Column="3" Text="Compliance" Style="{StaticResource Muted}" />
+                                <TextBlock Grid.Column="4" Text="Risk" Style="{StaticResource Muted}" />
+                                <TextBlock Grid.Column="5" Text="Maturity" Style="{StaticResource Muted}" />
+                                <TextBlock Grid.Column="6" Text="Last assessed" Style="{StaticResource Muted}" />
+                            </Grid>
+
+                            <ItemsControl ItemsSource="{Binding Portfolio}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border BorderBrush="{StaticResource LineBrush}" BorderThickness="0,0,0,1" Padding="0,7">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="220" />
+                                                    <ColumnDefinition Width="70" />
+                                                    <ColumnDefinition Width="70" />
+                                                    <ColumnDefinition Width="90" />
+                                                    <ColumnDefinition Width="60" />
+                                                    <ColumnDefinition Width="110" />
+                                                    <ColumnDefinition Width="140" />
+                                                </Grid.ColumnDefinitions>
+                                                <StackPanel Grid.Column="0">
+                                                    <TextBlock Text="{Binding DisplayName}" FontSize="12" FontWeight="SemiBold" />
+                                                    <TextBlock Text="{Binding TenantId}" Style="{StaticResource Muted}" FontSize="10" />
+                                                </StackPanel>
+                                                <TextBlock Grid.Column="1" Text="{Binding OverallText}" FontSize="12" />
+                                                <TextBlock Grid.Column="2" Text="{Binding SecurityText}" FontSize="12" />
+                                                <TextBlock Grid.Column="3" Text="{Binding ComplianceText}" FontSize="12" />
+                                                <TextBlock Grid.Column="4" Text="{Binding RiskText}" FontSize="12" />
+                                                <TextBlock Grid.Column="5" Text="{Binding MaturityText}" FontSize="12" />
+                                                <TextBlock Grid.Column="6" Text="{Binding AssessedText}" FontSize="11" Foreground="{StaticResource MutedBrush}" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </TabItem>
         </TabControl>
     </StackPanel>
 </UserControl>

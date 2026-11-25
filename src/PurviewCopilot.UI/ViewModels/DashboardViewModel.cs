@@ -46,6 +46,7 @@ public sealed class DashboardViewModel : PageViewModel
     private string _securitySummary = "No assessment.";
     private string _governanceSummary = "No assessment.";
     private string _complianceSummary = "No assessment.";
+    private string _portfolioHint = "Loading customer tenants…";
     private bool _hasData;
 
     public DashboardViewModel(GovernanceWorkspace workspace, IAssessmentStore store, ISettingsStore settings)
@@ -68,6 +69,7 @@ public sealed class DashboardViewModel : PageViewModel
     public ObservableCollection<HeatmapCellView> Heatmap { get; } = new();
     public ObservableCollection<TrendBar> Trend { get; } = new();
     public ObservableCollection<FrameworkCoverage> Frameworks { get; } = new();
+    public ObservableCollection<PortfolioRow> Portfolio { get; } = new();
 
     public string TenantName { get => _tenantName; private set => SetProperty(ref _tenantName, value); }
     public string Collected { get => _collected; private set => SetProperty(ref _collected, value); }
@@ -78,6 +80,7 @@ public sealed class DashboardViewModel : PageViewModel
     public string SecuritySummary { get => _securitySummary; private set => SetProperty(ref _securitySummary, value); }
     public string GovernanceSummary { get => _governanceSummary; private set => SetProperty(ref _governanceSummary, value); }
     public string ComplianceSummary { get => _complianceSummary; private set => SetProperty(ref _complianceSummary, value); }
+    public string PortfolioHint { get => _portfolioHint; private set => SetProperty(ref _portfolioHint, value); }
     public bool HasData { get => _hasData; private set => SetProperty(ref _hasData, value); }
 
     public string FailCount => _workspace.Assessment?.Findings.Count(f => f.Status == FindingStatus.Fail).ToString() ?? "0";
@@ -88,6 +91,8 @@ public sealed class DashboardViewModel : PageViewModel
 
     public override async Task RefreshAsync()
     {
+        await LoadPortfolioAsync().ConfigureAwait(true);
+
         var assessment = _workspace.Assessment;
 
         if (assessment is null)
@@ -196,6 +201,28 @@ public sealed class DashboardViewModel : PageViewModel
         Raise(nameof(FailCount));
         Raise(nameof(WarningCount));
         Raise(nameof(RecommendationCount));
+    }
+
+    private async Task LoadPortfolioAsync()
+    {
+        try
+        {
+            var rows = await _workspace.BuildPortfolioAsync().ConfigureAwait(true);
+
+            Portfolio.Clear();
+            foreach (var row in rows)
+            {
+                Portfolio.Add(row);
+            }
+
+            PortfolioHint = rows.Count == 0
+                ? "No customer tenants saved. Save the current connection in Settings → Customer tenants."
+                : $"{rows.Count} customer tenant(s) · {rows.Count(r => r.Assessed)} assessed";
+        }
+        catch (Exception ex)
+        {
+            PortfolioHint = $"Portfolio unavailable: {ex.Message}";
+        }
     }
 
     private void Fill(ObservableCollection<ModuleScore> target, IReadOnlyCollection<ModuleKey> keys)

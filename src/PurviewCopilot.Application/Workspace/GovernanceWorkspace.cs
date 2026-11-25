@@ -21,6 +21,7 @@ public sealed class GovernanceWorkspace
     private readonly ChangePlanBuilder _planBuilder;
     private readonly BackupService _backups;
     private readonly IAssessmentStore _assessmentStore;
+    private readonly ITenantProfileStore _tenantProfileStore;
     private readonly IChangePlanStore _planStore;
     private readonly IApprovalStore _approvalStore;
     private readonly IReportExporter[] _exporters;
@@ -38,6 +39,7 @@ public sealed class GovernanceWorkspace
         ChangePlanBuilder planBuilder,
         BackupService backups,
         IAssessmentStore assessmentStore,
+        ITenantProfileStore tenantProfileStore,
         IChangePlanStore planStore,
         IApprovalStore approvalStore,
         IEnumerable<IReportExporter> exporters,
@@ -51,6 +53,7 @@ public sealed class GovernanceWorkspace
         _planBuilder = planBuilder;
         _backups = backups;
         _assessmentStore = assessmentStore;
+        _tenantProfileStore = tenantProfileStore;
         _planStore = planStore;
         _approvalStore = approvalStore;
         _exporters = exporters.ToArray();
@@ -75,6 +78,81 @@ public sealed class GovernanceWorkspace
 
     /// <summary>Most recent stored assessments for the current tenant, newest first.</summary>
     public IReadOnlyList<AssessmentResult> History { get; private set; } = Array.Empty<AssessmentResult>();
+
+    /// <summary>Customer tenants managed from this workstation, ordered by display name.</summary>
+    public IReadOnlyList<TenantProfile> TenantProfiles { get; private set; } = Array.Empty<TenantProfile>();
+
+    public TenantProfile? ActiveProfile { get; private set; }
+
+    public async Task<IReadOnlyList<TenantProfile>> LoadTenantProfilesAsync(CancellationToken cancellationToken = default)
+    {
+        TenantProfiles = await _tenantProfileStore.ListAsync(cancellationToken).ConfigureAwait(false);
+        return TenantProfiles;
+    }
+
+    /// <summary>Saves the current connection as a customer tenant; credentials stay tenant-scoped.</summary>
+    public async Task<TenantProfile> SaveTenantAsync(
+        string displayName,
+        AuthConfiguration auth,
+        string actor,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(auth.TenantId))
+            throw new InvalidOperationException("A tenant id is required before saving a customer tenant.");
+
+        if (string.IsNullOrWhiteSpace(auth.ClientId))
+            throw new InvalidOperationException("An application (client) id is required before saving a customer tenant.");
+
+        var profile = new TenantProfile(
+            auth.TenantId.Trim(),
+            string.IsNullOrWhiteSpace(displayName) ? auth.TenantId.Trim() : displayName.Trim(),
+            auth,
+            _clock.UtcNow);
+
+        await _tenantProfileStore.SaveAsync(profile, cancellationToken).ConfigureAwait(false);
+
+        await _audit.WriteAsync(new AuditEntry(
+            Guid.NewGuid(), _clock.UtcNow, actor, "TenantProfileSaved", profile.TenantId,
+            $"DisplayName={profile.DisplayName}; Mode={profile.Auth.Mode}", null), cancellationToken).ConfigureAwait(false);
+
+        await LoadTenantProfilesAsync(cancellationToken).ConfigureAwait(false);
+        return profile;
+    }
+
+    /// <summary>
+    /// Makes a customer tenant active by writing its credentials into settings, then clears the
+    /// in-memory assessment so one tenant's evidence can never be shown under another.
+    /// </summary>
+    public async Task ActivateTenantAsync(
+        TenantProfile profile,
+        string actor,
+        CancellationToken cancellationToken = default)
+    {
+        var settings = await _settings.LoadAsync(cancellationToken).ConfigureAwait(false);
+        settings.Auth = profile.Auth;
+        await _settings.SaveAsync(settings, cancellationToken).ConfigureAwait(false);
+
+        ActiveProfile = profile;
+        _lastCollected = null;
+        _baseline = null;
+        Assessment = null;
+        History = Array.Empty<AssessmentResult>();
+
+        await _audit.WriteAsync(new AuditEntry(
+            Guid.NewGuid(), _clock.UtcNow, actor, "TenantActivated", profile.TenantId,
+            $"DisplayName={profile.DisplayName}", null), cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<IReadOnlyList<PortfolioRow>> BuildPortfolioAsync(CancellationToken cancellationToken = default)
+    {
+        if (TenantProfiles.Count == 0)
+        {
+            await LoadTenantProfilesAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        return await TenantPortfolio.BuildAsync(TenantProfiles, _assessmentStore, cancellationToken)
+            .ConfigureAwait(false);
+    }
 
     public async Task<IReadOnlyList<AssessmentResult>> RefreshHistoryAsync(
         string tenantId,

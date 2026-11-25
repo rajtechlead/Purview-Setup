@@ -18,7 +18,7 @@ Verified against commit `353bde2` on 25 November 2026 by reading the source, cou
 
 | Code | Meaning |
 | --- | --- |
-| **T** | Covered by an automated test (58 tests, all passing at audit time). |
+| **T** | Covered by an automated test (60 tests, all passing at audit time). |
 | **B** | Builds and is reachable from the composition root; behaviour not exercised end to end. |
 | **C** | Code exists but is unexercised here (no tenant, certificate, API key or admin rights). |
 | **D** | Documentation or project/manifest artifact only; nothing executes it here. |
@@ -140,9 +140,9 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 
 | ID | Requirement | Status | Proof | Evidence / gap |
 | --- | --- | --- | --- | --- |
-| MSP-01 | Manage multiple customer tenants with isolation and a central dashboard | **Not delivered** | — | One configured tenant per installation; schema is tenant-keyed but there is no tenant switcher or isolation boundary. |
-| MSP-02 | Cross-tenant reporting | **Not delivered** | — | No aggregation across tenants. |
-| MSP-03 | Role-based administration and customer-level permissions | **Not delivered** | — | The app has no user model or roles; RBAC exists only as tenant guidance in CPM controls. |
+| MSP-01 | Manage multiple customer tenants with isolation and a central dashboard | **Delivered** | T | `tenant_profiles` stores each customer tenant with DPAPI-protected credentials; Settings saves and activates a tenant, activation clears in-session evidence, and the Dashboard Portfolio tab summarises each tenant's latest assessment. Test: `TenantProfiles_RoundTrip_WithProtectedSecrets`. |
+| MSP-02 | Cross-tenant reporting | **Partial** | T | Portfolio rows aggregate overall, security, compliance, risk, maturity and last-assessed date per tenant. No combined PDF/DOCX/XLSX export across tenants. Test: `Portfolio_UsesEachTenantsOwnLatestAssessment`. |
+| MSP-03 | Role-based administration and customer-level permissions | **Not delivered** | — | The app has no user model or roles; all saved tenants are reachable by the signed-in Windows user. RBAC exists only as tenant guidance in CPM controls. |
 
 ## J. Configuration-as-code
 
@@ -267,9 +267,9 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 
 | Status | Count | Share |
 | --- | --- | --- |
-| **Delivered** | 90 | 67% |
-| **Partial** | 29 | 22% |
-| **Not delivered** | 15 | 11% |
+| **Delivered** | 91 | 68% |
+| **Partial** | 30 | 22% |
+| **Not delivered** | 13 | 10% |
 | **Total tracked** | 134 | 100% |
 
 By section:
@@ -284,7 +284,7 @@ By section:
 | AI assistant and failover | 10 | 1 | 1 |
 | AI privacy guardrail | 11 | 1 | 0 |
 | Change management and safety | 4 | 3 | 0 |
-| Multi-tenant MSP | 0 | 0 | 3 |
+| Multi-tenant MSP | 1 | 1 | 1 |
 | Configuration-as-code | 2 | 0 | 1 |
 | Approval workflow | 2 | 0 | 0 |
 | Offline and regulated | 2 | 0 | 1 |
@@ -301,7 +301,7 @@ By section:
 
 Ranked by risk to the commercial claim, not by effort:
 
-1. **MSP multi-tenancy (MSP-01…03)** — an entire named mode is absent.
+1. **Per-customer RBAC and cross-tenant export (MSP-02, MSP-03)** — tenant switching, isolation and the portfolio view exist, but there are no user roles and no combined report.
 2. **Encryption at rest (SEC-14)** — the client secret is DPAPI-protected and the audit log is hash-chained, but assessment, plan, backup and licence payloads still sit in plaintext SQLite.
 3. **Live deployment execution (DEP-05)** — by design, but the specification asks for apply and rollback; the reviewed script and reversal script exist, execution does not.
 4. **Security Copilot (AIA-02)** and **government clouds (OFF-03)**.
@@ -318,7 +318,7 @@ Ranked by risk to the commercial claim, not by effort:
 | Check | Result |
 | --- | --- |
 | `dotnet build PurviewGovernanceCopilot.sln -c Release` | Succeeded (local SDK 9.0.321) |
-| `dotnet test tests/PurviewCopilot.Tests -c Release` | 58 passed, 0 failed |
+| `dotnet test tests/PurviewCopilot.Tests -c Release` | 60 passed, 0 failed |
 | Catalog count (`grep -c 'Add("' ModuleCatalog.cs`) | 49 rules across 16 modules |
 | Exporter inventory | HTML, JSON, CSV, Markdown, PDF, DOCX, XLSX |
 | `ReportFormat` enum | `Html, Json, Csv, Markdown, Pdf, Docx, Xlsx` |

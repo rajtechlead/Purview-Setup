@@ -141,6 +141,37 @@
             </StackPanel>
         </Grid>
 
+        <Border Style="{StaticResource Card}" Margin="0,14,0,0">
+            <StackPanel>
+                <TextBlock Text="Customer tenants (MSP mode)" Style="{StaticResource SectionHeader}" />
+                <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,8"
+                           Text="Save the current connection as a customer tenant, then activate a tenant to point the next assessment at it. Credentials and evidence stay scoped to that tenant; switching clears the in-session assessment." />
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                    <TextBlock Text="Display name" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                    <TextBox Width="240" Text="{Binding TenantDisplayName}" Margin="0,0,10,0" />
+                    <Button Content="Save current connection" Command="{Binding SaveTenantCommand}" Margin="0,0,8,0" />
+                    <Button Content="Activate selected" Style="{StaticResource PrimaryButton}" Command="{Binding ActivateTenantCommand}" />
+                </StackPanel>
+                <ListBox ItemsSource="{Binding TenantProfiles}" SelectedItem="{Binding SelectedTenant}" MaxHeight="180"
+                         Background="{StaticResource SurfaceAltBrush}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Margin="0,4">
+                                <TextBlock Text="{Binding DisplayName}" FontSize="12" FontWeight="SemiBold" />
+                                <TextBlock Style="{StaticResource Muted}">
+                                    <Run Text="{Binding TenantId}" />
+                                    <Run Text=" · " />
+                                    <Run Text="{Binding Auth.Mode}" />
+                                    <Run Text=" · updated " />
+                                    <Run Text="{Binding UpdatedUtc, StringFormat=yyyy-MM-dd}" />
+                                </TextBlock>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </StackPanel>
+        </Border>
+
         <TextBlock Text="{Binding Status}" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,8,0,0" />
     </StackPanel>
 </UserControl>
