@@ -15,6 +15,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PurviewCopilot.UI", "src\Pu
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PurviewCopilot.Tests", "tests\PurviewCopilot.Tests\PurviewCopilot.Tests.csproj", "{B7F9F2DC-9B5B-47A9-A655-6831545B864C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PurviewCopilot.Cli", "src\PurviewCopilot.Cli\PurviewCopilot.Cli.csproj", "{FB0B33BC-58D9-46F0-8B6E-3A9B9715AC00}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -85,6 +87,18 @@ Global
 		{B7F9F2DC-9B5B-47A9-A655-6831545B864C}.Release|x64.Build.0 = Release|Any CPU
 		{B7F9F2DC-9B5B-47A9-A655-6831545B864C}.Release|x86.ActiveCfg = Release|Any CPU
 		{B7F9F2DC-9B5B-47A9-A655-6831545B864C}.Release|x86.Build.0 = Release|Any CPU
+		{FB0B33BC-58D9-46F0-8B6E-3A9B9715AC00}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FB0B33BC-58D9-46F0-8B6E-3A9B9715AC00}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FB0B33BC-58D9-46F0-8B6E-3A9B9715AC00}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{FB0B33BC-58D9-46F0-8B6E-3A9B9715AC00}.Debug|x64.Build.0 = Debug|Any CPU
+		{FB0B33BC-58D9-46F0-8B6E-3A9B9715AC00}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{FB0B33BC-58D9-46F0-8B6E-3A9B9715AC00}.Debug|x86.Build.0 = Debug|Any CPU
+		{FB0B33BC-58D9-46F0-8B6E-3A9B9715AC00}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FB0B33BC-58D9-46F0-8B6E-3A9B9715AC00}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FB0B33BC-58D9-46F0-8B6E-3A9B9715AC00}.Release|x64.ActiveCfg = Release|Any CPU
+		{FB0B33BC-58D9-46F0-8B6E-3A9B9715AC00}.Release|x64.Build.0 = Release|Any CPU
+		{FB0B33BC-58D9-46F0-8B6E-3A9B9715AC00}.Release|x86.ActiveCfg = Release|Any CPU
+		{FB0B33BC-58D9-46F0-8B6E-3A9B9715AC00}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -95,5 +109,6 @@ Global
 		{4B22C38A-A398-4565-8A99-AD9EA24CC02C} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{96C0DCEC-8D0E-4036-833F-CCFA6D3462EF} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{B7F9F2DC-9B5B-47A9-A655-6831545B864C} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{FB0B33BC-58D9-46F0-8B6E-3A9B9715AC00} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 	EndGlobalSection
 EndGlobal

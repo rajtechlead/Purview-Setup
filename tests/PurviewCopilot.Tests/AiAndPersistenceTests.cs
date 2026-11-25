@@ -23,6 +23,15 @@ public class AiAndPersistenceTests
         public Task<IReadOnlyList<AiUsageRecord>> ListAsync(string? providerId = null, int take = 500, CancellationToken cancellationToken = default) =>
             Task.FromResult<IReadOnlyList<AiUsageRecord>>(
                 Records.Where(r => providerId is null || r.ProviderId == providerId).Take(take).ToList());
+
+        public Task<AiUsageTotals> GetTotalsAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult(new AiUsageTotals(
+                Records.Count,
+                Records.Count(r => !r.Succeeded),
+                Records.Sum(r => r.PromptTokens),
+                Records.Sum(r => r.CompletionTokens),
+                Records.Sum(r => r.EstimatedCostUsd),
+                Records.Select(r => r.ProviderId).Distinct(StringComparer.OrdinalIgnoreCase).Count()));
     }
 
     private sealed class ScriptedProvider : IAiProvider

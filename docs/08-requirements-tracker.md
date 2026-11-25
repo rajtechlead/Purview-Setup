@@ -18,7 +18,7 @@ Verified against commit `353bde2` on 25 November 2026 by reading the source, cou
 
 | Code | Meaning |
 | --- | --- |
-| **T** | Covered by an automated test (68 tests, all passing at audit time). |
+| **T** | Covered by an automated test (74 tests, all passing at audit time). |
 | **B** | Builds and is reachable from the composition root; behaviour not exercised end to end. |
 | **C** | Code exists but is unexercised here (no tenant, certificate, API key or admin rights). |
 | **D** | Documentation or project/manifest artifact only; nothing executes it here. |
@@ -104,8 +104,8 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 | AIA-08 | Cost tracking | **Delivered** | T | Per-call cost from input/output token rates is persisted; `Failover_ComputesCostFromTokenRates`. |
 | AIA-09 | Token tracking | **Delivered** | T | Prompt/completion tokens recorded per attempt, including failures. |
 | AIA-10 | Automatic switch to the next approved provider and continue | **Delivered** | T | Priority-ordered loop with failure classification and usage records. |
-| AIA-11 | Provider configuration in the UI | **Delivered** | B | Settings lists providers with enable flags, endpoints, models and priority. |
-| AIA-12 | Quota, spend and usage visibility | **Delivered** | T | Monitoring's AI usage ledger reports request count, prompt/completion tokens, success rate, failures, distinct providers and estimated spend from the local ledger (explicitly not a provider invoice). Tests: `AiUsageSummary_AggregatesTokensCostsAndFailures`, `AiUsageSummary_EmptyLedger_IsZeroed`. |
+| AIA-11 | Provider configuration in the UI | **Delivered** | T | Settings lists providers with enable flags, endpoints, models and priority; the operator moves each provider up or down and the sequence persists as priorities 1..n, which is exactly the orchestrator's auto-switch order. Tests: `ProviderSequenceTests`. |
+| AIA-12 | Quota, spend and usage visibility | **Delivered** | T | Monitoring's AI usage ledger aggregates every stored row in SQL (`COUNT`/`SUM`/`COUNT DISTINCT`, no listing limit) and reports request count, prompt/completion tokens, success rate, failures, distinct providers and estimated spend (explicitly not a provider invoice). Tests: `UsageTotals_CoverEveryRowBeyondTheListingLimit`, `AiUsageSummary_AggregatesTokensCostsAndFailures`. |
 
 ## G. AI privacy guardrail (mandatory)
 
@@ -318,7 +318,7 @@ Ranked by risk to the commercial claim, not by effort:
 | Check | Result |
 | --- | --- |
 | `dotnet build PurviewGovernanceCopilot.sln -c Release` | Succeeded (local SDK 9.0.321) |
-| `dotnet test tests/PurviewCopilot.Tests -c Release` | 68 passed, 0 failed |
+| `dotnet test tests/PurviewCopilot.Tests -c Release` | 74 passed, 0 failed |
 | Catalog count (`grep -c 'Add("' ModuleCatalog.cs`) | 49 rules across 16 modules |
 | Exporter inventory | HTML, JSON, CSV, Markdown, PDF, DOCX, XLSX |
 | `ReportFormat` enum | `Html, Json, Csv, Markdown, Pdf, Docx, Xlsx` |

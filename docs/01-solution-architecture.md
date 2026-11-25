@@ -46,7 +46,7 @@ WinUI 3 was considered (and remains the preferred future shell), but the verifie
 └─────────────────────────────────────────────────────────────┘
 ```
 
-Dependency rule: Domain ← Application ← Infrastructure, and UI → Application (never Infrastructure types in view models, except the composition root which may reference both).
+Dependency rule: Domain ← Application ← Infrastructure, and UI → Application (never Infrastructure types in view models, except the composition root which may reference both). The CLI is a second composition root: it references Application and Infrastructure, constructs the same `GovernanceWorkspace`, and shares the SQLite store, scoring, approval and reporting code with the desktop shell.
 
 `PurviewCopilot.Domain` has zero package references. `Application` has zero package references. `Infrastructure` has exactly two: `Azure.Identity` (credential chain) and `Microsoft.Data.Sqlite` (local store). This keeps the supply-chain and vulnerability surface small and makes dependency scanning meaningful.
 
@@ -78,6 +78,8 @@ src/PurviewCopilot.Infrastructure/
 src/PurviewCopilot.UI/
   App.xaml(.cs), AppServices.cs, MainWindow.xaml(.cs)
   Mvvm/, ViewModels/, Views/, Converters/, Styles/
+src/PurviewCopilot.Cli/
+  Program.cs                       # headless pgc assess / verify-audit, same workspace and ports
 tests/PurviewCopilot.Tests/
 ```
 

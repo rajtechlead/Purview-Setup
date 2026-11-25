@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Windows.Input;
 using Microsoft.Win32;
 using PurviewCopilot.Application.Abstractions;
+using PurviewCopilot.Application.Ai;
 using PurviewCopilot.Application.Workspace;
 using PurviewCopilot.Domain;
 using PurviewCopilot.Infrastructure.Auth;
@@ -19,12 +20,19 @@ public sealed class AiProviderRow : ObservableObject
         _enabled = descriptor.Enabled;
     }
 
-    public AiProviderDescriptor Descriptor { get; }
+    public AiProviderDescriptor Descriptor { get; private set; }
     public string DisplayName => Descriptor.DisplayName;
     public string Kind => Descriptor.Kind.ToString();
     public bool IsLocal => Descriptor.IsLocal;
     public string Endpoint => Descriptor.Endpoint;
     public string Model => Descriptor.Model;
+    public string PriorityText => $"#{Descriptor.Priority}";
+
+    public void UpdatePriority(int priority)
+    {
+        Descriptor = Descriptor with { Priority = priority };
+        Raise(nameof(PriorityText));
+    }
 
     public bool Enabled
     {
@@ -84,6 +92,8 @@ public sealed class SettingsViewModel : PageViewModel
         VerifyAuditCommand = new AsyncRelayCommand(VerifyAuditAsync, () => !Busy);
         SaveTenantCommand = new AsyncRelayCommand(SaveTenantAsync, () => !Busy);
         ActivateTenantCommand = new AsyncRelayCommand(ActivateTenantAsync, () => !Busy && SelectedTenant is not null);
+        MoveProviderUpCommand = new RelayCommand(p => MoveProvider(p as AiProviderRow, -1));
+        MoveProviderDownCommand = new RelayCommand(p => MoveProvider(p as AiProviderRow, 1));
     }
 
     public override string Title => "Settings";
@@ -147,6 +157,8 @@ public sealed class SettingsViewModel : PageViewModel
     public ICommand VerifyAuditCommand { get; }
     public ICommand SaveTenantCommand { get; }
     public ICommand ActivateTenantCommand { get; }
+    public ICommand MoveProviderUpCommand { get; }
+    public ICommand MoveProviderDownCommand { get; }
 
     public override async Task RefreshAsync()
     {
@@ -162,7 +174,7 @@ public sealed class SettingsViewModel : PageViewModel
         RequirePromptReview = _settings.RequirePromptReview;
 
         Providers.Clear();
-        foreach (var provider in _settings.Providers.OrderBy(p => p.Priority))
+        foreach (var provider in AiProviderSequence.Normalize(_settings.Providers))
         {
             Providers.Add(new AiProviderRow(provider));
         }
@@ -202,7 +214,9 @@ public sealed class SettingsViewModel : PageViewModel
             _settings.OfflineMode = OfflineMode;
             _settings.RequirePromptReview = RequirePromptReview;
 
-            _settings.Providers = Providers.Select(p => p.Descriptor with { Enabled = p.Enabled }).ToList();
+            _settings.Providers = AiProviderSequence
+                .Normalize(Providers.Select(p => p.Descriptor with { Enabled = p.Enabled }))
+                .ToList();
 
             await _settingsStore.SaveAsync(_settings).ConfigureAwait(true);
             Status = "Settings saved. The lab client secret is protected with Windows DPAPI; AI provider keys are read from environment variables only.";
@@ -301,6 +315,22 @@ public sealed class SettingsViewModel : PageViewModel
         {
             Status = $"Rotation failed: {ex.Message}";
         }
+    }
+
+    private void MoveProvider(AiProviderRow? row, int offset)
+    {
+        if (row is null) return;
+
+        var current = Providers.Select(p => p.Descriptor with { Enabled = p.Enabled }).ToList();
+        var moved = AiProviderSequence.Move(current, row.Descriptor.Id, offset);
+
+        Providers.Clear();
+        foreach (var descriptor in moved)
+        {
+            Providers.Add(new AiProviderRow(descriptor));
+        }
+
+        Status = "Auto-switch order updated. Save settings to apply it; providers are tried top to bottom.";
     }
 
     private AuthConfiguration BuildAuth() => new(

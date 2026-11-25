@@ -52,6 +52,60 @@ public class PayloadEncryptionTests
     }
 
     [Fact]
+    public async Task UsageTotals_CoverEveryRowBeyondTheListingLimit()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "pgc-usage-" + Guid.NewGuid().ToString("N"));
+
+        try
+        {
+            using var store = new SqliteStore(directory);
+
+            using (var connection = new SqliteConnection($"Data Source={store.DatabasePath}"))
+            {
+                connection.Open();
+                using var transaction = connection.BeginTransaction();
+
+                for (var i = 0; i < 1005; i++)
+                {
+                    using var insert = connection.CreateCommand();
+                    insert.Transaction = transaction;
+                    insert.CommandText = "INSERT INTO ai_usage(id, provider_id, model, prompt_tokens, completion_tokens, cost, succeeded, error_code, at_utc) VALUES ($id,$provider,$model,10,5,0.001,$ok,$error,$at)";
+                    insert.Parameters.AddWithValue("$id", Guid.NewGuid().ToString());
+                    insert.Parameters.AddWithValue("$provider", i % 2 == 0 ? "openai" : "local");
+                    insert.Parameters.AddWithValue("$model", "model");
+                    insert.Parameters.AddWithValue("$ok", i % 3 != 0 ? 1 : 0);
+                    insert.Parameters.AddWithValue("$error", i % 3 == 0 ? "timeout" : DBNull.Value);
+                    insert.Parameters.AddWithValue("$at", DateTimeOffset.UtcNow.AddSeconds(i).ToString("O"));
+                    insert.ExecuteNonQuery();
+                }
+
+                transaction.Commit();
+            }
+
+            var listed = await ((PurviewCopilot.Application.Abstractions.IAiUsageStore)store).ListAsync(null, 1000);
+            Assert.Equal(1000, listed.Count);
+
+            var totals = await ((PurviewCopilot.Application.Abstractions.IAiUsageStore)store).GetTotalsAsync();
+
+            Assert.Equal(1005, totals.Requests);
+            Assert.Equal(335, totals.FailedRequests);
+            Assert.Equal(10050, totals.PromptTokens);
+            Assert.Equal(5025, totals.CompletionTokens);
+            Assert.Equal(1.005, totals.CostUsd, 3);
+            Assert.Equal(2, totals.Providers);
+
+            var summary = AiUsageSummary.From(totals);
+            Assert.Equal(1005, summary.Requests);
+            Assert.Equal(1.005, summary.CostUsd, 3);
+        }
+        finally
+        {
+            SqliteConnection.ClearAllPools();
+            if (Directory.Exists(directory)) Directory.Delete(directory, true);
+        }
+    }
+
+    [Fact]
     public void AiUsageSummary_AggregatesTokensCostsAndFailures()
     {
         var at = new DateTimeOffset(2026, 11, 25, 9, 0, 0, TimeSpan.Zero);

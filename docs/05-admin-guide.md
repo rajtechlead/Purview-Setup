@@ -102,6 +102,25 @@ Create an MSI application from the WiX output; use the same detection method. De
 
 Evidence handling: reports and backups can contain tenant identifiers. Keep them in the compliance evidence store, not in email or git. The app writes nothing to the repo; `assessments/` is git-ignored for the CLI-style workflow.
 
+### Unattended runs (headless CLI)
+
+`src/PurviewCopilot.Cli` exposes the same pipeline for Task Scheduler or a CI job:
+
+```powershell
+# Acceptance smoke test with the built-in sample tenant
+dotnet run --project src/PurviewCopilot.Cli -c Release -- assess --demo --format json --out C:\evidence\smoke.json
+
+# Live read-only assessment, certificate from CurrentUser\My
+dotnet run --project src/PurviewCopilot.Cli -c Release -- assess `
+  --tenant <tenant-id> --client <app-id> --thumbprint <thumbprint> `
+  --format pdf --out C:\evidence\purview.pdf --org "Contoso"
+
+# Verify the hash-chained audit log
+dotnet run --project src/PurviewCopilot.Cli -c Release -- verify-audit
+```
+
+Use `--data-dir` to point at a service account's evidence store. The CLI never applies changes, writes the same assessment rows as the desktop app, and returns exit code 0 on success, 1 on failure and 2 when the audit chain is invalid.
+
 ## 7. Troubleshooting
 
 | Symptom | Likely cause | Resolution |

@@ -44,7 +44,7 @@ Ordered by risk reduction and by what the current build deliberately leaves out.
 ## Phase 3 — Platform
 
 - **WinUI 3 shell** consuming the same Application layer, with Windows 11 visuals and notification toasts.
-- **Headless CLI** (`pgc assess --tenant … --report …`) for pipeline use, reusing `GovernanceWorkspace`.
+- **Headless CLI** — **Done**. `src/PurviewCopilot.Cli` builds `pgc` and reuses `GovernanceWorkspace`, the same SQLite evidence store and exporters. Commands: `pgc assess` (certificate or lab secret, or `--demo` for the sample tenant) with `--format`, `--out`, `--mode`, `--org`, `--by`, `--data-dir`; and `pgc verify-audit`. It is read-only, exits non-zero on failure and was run end to end with the demo tenant (JSON report plus a valid audit chain).
 - **Optional SQL Server** store for teams that want central evidence, implemented as additional ports.
 - **Plugin SDK**: load third-party `IModule` assemblies from a signed plugin directory with a manifest and permission declaration.
 - **Localization**: externalized strings, starting with the labels and report templates.

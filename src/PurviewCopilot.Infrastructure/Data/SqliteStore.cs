@@ -515,6 +515,32 @@ public sealed class SqliteStore :
         return Task.FromResult<IReadOnlyList<AiUsageRecord>>(records);
     }
 
+    private Task<AiUsageTotals> GetUsageTotalsAsync(CancellationToken cancellationToken = default)
+    {
+        using var connection = Open();
+        using var command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT COUNT(*),
+                   COALESCE(SUM(CASE WHEN succeeded = 0 THEN 1 ELSE 0 END), 0),
+                   COALESCE(SUM(prompt_tokens), 0),
+                   COALESCE(SUM(completion_tokens), 0),
+                   COALESCE(SUM(cost), 0),
+                   COUNT(DISTINCT provider_id)
+            FROM ai_usage
+            """;
+
+        using var reader = command.ExecuteReader();
+        reader.Read();
+
+        return Task.FromResult(new AiUsageTotals(
+            checked((int)reader.GetInt64(0)),
+            checked((int)reader.GetInt64(1)),
+            checked((int)reader.GetInt64(2)),
+            checked((int)reader.GetInt64(3)),
+            reader.GetDouble(4),
+            checked((int)reader.GetInt64(5))));
+    }
+
     // ---------------- Settings ----------------
 
     public Task<AppSettings> LoadAsync(CancellationToken cancellationToken = default)
@@ -636,6 +662,9 @@ public sealed class SqliteStore :
 
     Task<IReadOnlyList<AiUsageRecord>> IAiUsageStore.ListAsync(string? providerId, int take, CancellationToken cancellationToken) =>
         ListUsageAsync(providerId, take, cancellationToken);
+
+    Task<AiUsageTotals> IAiUsageStore.GetTotalsAsync(CancellationToken cancellationToken) =>
+        GetUsageTotalsAsync(cancellationToken);
 
     // ---------------- Helpers ----------------
 

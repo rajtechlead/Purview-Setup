@@ -117,21 +117,39 @@
                     <StackPanel>
                         <TextBlock Text="AI providers" Style="{StaticResource SectionHeader}" />
                         <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,8"
-                                   Text="Keys are read from environment variables named in each provider's key reference; they are never stored in the database." />
+                                   Text="Keys are read from environment variables named in each provider's key reference; they are never stored in the database. Order controls auto-switch: the first enabled, healthy provider is used, then the next." />
                         <ItemsControl ItemsSource="{Binding Providers}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <Border BorderBrush="{StaticResource LineBrush}" BorderThickness="0,0,0,1" Padding="0,6">
-                                        <StackPanel>
-                                            <CheckBox IsChecked="{Binding Enabled}" Content="{Binding DisplayName}" />
-                                            <TextBlock Style="{StaticResource Muted}">
-                                                <Run Text="{Binding Kind}" />
-                                                <Run Text=" · " />
-                                                <Run Text="{Binding Model}" />
-                                                <Run Text=" · " />
-                                                <Run Text="{Binding Endpoint}" />
-                                            </TextBlock>
-                                        </StackPanel>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0">
+                                                <CheckBox IsChecked="{Binding Enabled}" Content="{Binding DisplayName}" />
+                                                <TextBlock Style="{StaticResource Muted}">
+                                                    <Run Text="{Binding Kind}" />
+                                                    <Run Text=" · " />
+                                                    <Run Text="{Binding Model}" />
+                                                    <Run Text=" · " />
+                                                    <Run Text="{Binding Endpoint}" />
+                                                </TextBlock>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding PriorityText}" Style="{StaticResource Muted}"
+                                                           VerticalAlignment="Center" Margin="0,0,8,0" />
+                                                <Button Content="↑" Width="28" Padding="0" Margin="0,0,4,0"
+                                                        ToolTip="Move earlier in the auto-switch sequence"
+                                                        Command="{Binding DataContext.MoveProviderUpCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                        CommandParameter="{Binding}" />
+                                                <Button Content="↓" Width="28" Padding="0"
+                                                        ToolTip="Move later in the auto-switch sequence"
+                                                        Command="{Binding DataContext.MoveProviderDownCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                        CommandParameter="{Binding}" />
+                                            </StackPanel>
+                                        </Grid>
                                     </Border>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>

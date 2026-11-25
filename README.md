@@ -59,13 +59,26 @@ src/
   PurviewCopilot.Application/     # modules, assessment, planning, approvals, AI orchestration, reports
   PurviewCopilot.Infrastructure/  # Graph, PowerShell, SQLite, certificates, Key Vault, AI providers
   PurviewCopilot.UI/              # WPF shell, dashboards, pages (MVVM)
+  PurviewCopilot.Cli/             # headless `pgc assess` / `pgc verify-audit`
 tests/
-  PurviewCopilot.Tests/           # 68 automated tests
+  PurviewCopilot.Tests/           # 74 automated tests
 docs/                             # architecture, design, security, guides, traceability
 installer/                        # WiX MSI project + MSIX manifest
 dist/                             # built MSI + SHA-256 (framework-dependent, unsigned)
 .github/workflows/ci.yml          # build, test, publish
 ```
+
+## Headless CLI
+
+`src/PurviewCopilot.Cli` runs the same `GovernanceWorkspace` pipeline for scheduled tasks and pipelines:
+
+```powershell
+dotnet run --project src/PurviewCopilot.Cli -c Release -- assess --demo --format json --out report.json
+dotnet run --project src/PurviewCopilot.Cli -c Release -- assess --tenant <id> --client <app-id> --thumbprint <thumbprint> --format pdf
+dotnet run --project src/PurviewCopilot.Cli -c Release -- verify-audit
+```
+
+`--demo` scores the built-in sample tenant, so the command works without a tenant. A live run reuses the certificate in `CurrentUser\My`, stores evidence in `%LOCALAPPDATA%\PurviewGovernanceCopilot` (override with `--data-dir`), and writes Html, Json, Csv, Markdown, Pdf, Docx or Xlsx. It never applies changes, and exits non-zero on failure.
 
 ## Documentation
 

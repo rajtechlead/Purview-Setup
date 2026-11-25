@@ -234,6 +234,15 @@ public sealed record AiUsageRecord(
     string? ErrorCode,
     DateTimeOffset AtUtc);
 
+/// <summary>Whole-ledger aggregate, computed over every stored usage row.</summary>
+public sealed record AiUsageTotals(
+    int Requests,
+    int FailedRequests,
+    int PromptTokens,
+    int CompletionTokens,
+    double CostUsd,
+    int Providers);
+
 public sealed record AiRequest(
     string SystemPrompt,
     string UserPrompt,

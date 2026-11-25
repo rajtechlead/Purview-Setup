@@ -18,6 +18,14 @@ public sealed record AiUsageSummary(
 
     public static AiUsageSummary Empty { get; } = new(0, 0, 0, 0, 0, 0);
 
+    public static AiUsageSummary From(AiUsageTotals totals) => new(
+        totals.Requests,
+        totals.FailedRequests,
+        totals.PromptTokens,
+        totals.CompletionTokens,
+        Math.Round(totals.CostUsd, 6),
+        totals.Providers);
+
     public static AiUsageSummary From(IEnumerable<AiUsageRecord> records)
     {
         var list = records as IReadOnlyCollection<AiUsageRecord> ?? records.ToList();
@@ -27,12 +35,12 @@ public sealed record AiUsageSummary(
             return Empty;
         }
 
-        return new AiUsageSummary(
+        return From(new AiUsageTotals(
             list.Count,
             list.Count(r => !r.Succeeded),
             list.Sum(r => r.PromptTokens),
             list.Sum(r => r.CompletionTokens),
-            Math.Round(list.Sum(r => r.EstimatedCostUsd), 6),
-            list.Select(r => r.ProviderId).Distinct(StringComparer.OrdinalIgnoreCase).Count());
+            list.Sum(r => r.EstimatedCostUsd),
+            list.Select(r => r.ProviderId).Distinct(StringComparer.OrdinalIgnoreCase).Count()));
     }
 }

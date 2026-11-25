@@ -99,7 +99,7 @@ public sealed class MonitoringViewModel : PageViewModel
         IntervalMinutes = settings.MonitoringIntervalMinutes;
         ConfigureSchedule(settings.MonitoringIntervalMinutes);
 
-        var summary = AiUsageSummary.From(await _aiUsage.ListAsync(null, 1000).ConfigureAwait(true));
+        var summary = AiUsageSummary.From(await _aiUsage.GetTotalsAsync().ConfigureAwait(true));
         if (summary.Requests == 0)
         {
             AiUsageText = "No AI requests recorded yet.";

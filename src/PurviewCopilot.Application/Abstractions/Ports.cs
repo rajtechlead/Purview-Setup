@@ -59,6 +59,9 @@ public interface IAiUsageStore
 {
     Task RecordAsync(AiUsageRecord record, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<AiUsageRecord>> ListAsync(string? providerId = null, int take = 500, CancellationToken cancellationToken = default);
+
+    /// <summary>Aggregates every stored row, independent of any listing limit.</summary>
+    Task<AiUsageTotals> GetTotalsAsync(CancellationToken cancellationToken = default);
 }
 
 public interface ISettingsStore
