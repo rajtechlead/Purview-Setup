@@ -190,6 +190,21 @@
             </StackPanel>
         </Border>
 
+        <Border Style="{StaticResource Card}" Margin="0,14,0,0">
+            <StackPanel>
+                <TextBlock Text="Updates" Style="{StaticResource SectionHeader}" />
+                <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,8"
+                           Text="Point at an https update manifest ({ version, downloadUrl, sha256 }). Downloads are verified against the manifest hash and saved for you to install; code signing is still recommended for enterprise rollout." />
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                    <TextBox Width="360" Text="{Binding UpdateManifestUrl}" Margin="0,0,8,0"
+                             ToolTip="https://updates.example.com/purview/latest.json" />
+                    <Button Content="Check for updates" Command="{Binding CheckUpdatesCommand}" Margin="0,0,8,0" />
+                    <Button Content="Download verified MSI" Command="{Binding DownloadUpdateCommand}" />
+                </StackPanel>
+                <TextBlock Text="{Binding UpdateStatus}" Style="{StaticResource Muted}" TextWrapping="Wrap" />
+            </StackPanel>
+        </Border>
+
         <TextBlock Text="{Binding Status}" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,8,0,0" />
     </StackPanel>
 </UserControl>

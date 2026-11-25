@@ -18,7 +18,7 @@ Verified against commit `353bde2` on 25 November 2026 by reading the source, cou
 
 | Code | Meaning |
 | --- | --- |
-| **T** | Covered by an automated test (74 tests, all passing at audit time). |
+| **T** | Covered by an automated test (80 tests, all passing at audit time). |
 | **B** | Builds and is reachable from the composition root; behaviour not exercised end to end. |
 | **C** | Code exists but is unexercised here (no tenant, certificate, API key or admin rights). |
 | **D** | Documentation or project/manifest artifact only; nothing executes it here. |
@@ -213,7 +213,7 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 | SEC-13 | Tamper detection | **Delivered** | T | SHA-256 chain over insertion order with legacy backfill, `IAuditLog.VerifyAsync`, and a Settings verification button. Detects edited or deleted rows at the first affected entry. Tests: `AuditChain_VerifiesInOrder`, `AuditChain_DetectsTampering`. |
 | SEC-14 | Encryption at rest | **Delivered** | T | Assessment, change-plan, approval and backup payloads are DPAPI-encrypted (`dpapi:v1:`) before they are written and decrypted on read; legacy rows still load. Tenant ids, timestamps, scores and SQLite pages remain plaintext, so database page encryption (SQLCipher) is still a hardening step. Test: `AssessmentEvidence_IsEncryptedAtRest_AndStillLoads`. |
 | SEC-15 | Encryption in transit | **Delivered** | B | HTTPS only for Graph, Key Vault and AI providers; TLS validated by the platform handler. |
-| SEC-16 | Secure auto-update | **Not delivered** | — | No updater; upgrades are MSI major-upgrade installs. |
+| SEC-16 | Secure auto-update | **Partial** | T | Settings checks an https update manifest, validates version and download URL, requires a 64-hex SHA-256, and writes the MSI only after the downloaded bytes match that hash; installation remains manual. No Authenticode signing or hosted manifest. Tests: `UpdateCheckerTests`. |
 
 ## Q. Architecture and technology
 
@@ -268,8 +268,8 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 | Status | Count | Share |
 | --- | --- | --- |
 | **Delivered** | 94 | 70% |
-| **Partial** | 31 | 23% |
-| **Not delivered** | 9 | 7% |
+| **Partial** | 32 | 24% |
+| **Not delivered** | 8 | 6% |
 | **Total tracked** | 134 | 100% |
 
 By section:
@@ -291,7 +291,7 @@ By section:
 | Licence optimisation | 1 | 1 | 0 |
 | Continuous monitoring | 1 | 3 | 0 |
 | Reporting | 5 | 1 | 0 |
-| Security engineering | 11 | 3 | 2 |
+| Security engineering | 11 | 4 | 1 |
 | Architecture and technology | 7 | 1 | 2 |
 | User experience | 5 | 1 | 0 |
 | Help and About | 3 | 0 | 0 |
@@ -308,7 +308,7 @@ Ranked by risk to the commercial claim, not by effort:
 5. **Unattended scheduling and external alerts (MON-02, MON-04)** — checks run only while the app is open and alerts stay in-app.
 6. **Guided onboarding wizard (AUT-12)** and **Key Vault wiring (AUT-04)**.
 7. **Action centre ownership (UX-06)** — findings have no owner, due date or status.
-8. **Code signing and MSIX packaging (SEC-11, INS-02)** — the MSI is produced but unsigned, and there is no `.msix` build.
+8. **Code signing, MSIX packaging and a hosted update manifest (SEC-11, SEC-16, INS-02)** — the MSI is produced but unsigned, the updater has no published manifest, and there is no `.msix` build.
 9. **SQL Server support (ARC-08)** and **WinUI 3 (ARC-02)**.
 10. **DSPM, Compliance Manager and Defender data collection (DSC-08, DSC-11)**.
 11. **SQLCipher page encryption and per-customer RBAC (SEC-14 metadata, MSP-03)** — sensitive payloads are now encrypted, but database pages and tenant metadata are not, and all saved tenants remain reachable by one Windows user.
@@ -318,7 +318,7 @@ Ranked by risk to the commercial claim, not by effort:
 | Check | Result |
 | --- | --- |
 | `dotnet build PurviewGovernanceCopilot.sln -c Release` | Succeeded (local SDK 9.0.321) |
-| `dotnet test tests/PurviewCopilot.Tests -c Release` | 74 passed, 0 failed |
+| `dotnet test tests/PurviewCopilot.Tests -c Release` | 80 passed, 0 failed |
 | Catalog count (`grep -c 'Add("' ModuleCatalog.cs`) | 49 rules across 16 modules |
 | Exporter inventory | HTML, JSON, CSV, Markdown, PDF, DOCX, XLSX |
 | `ReportFormat` enum | `Html, Json, Csv, Markdown, Pdf, Docx, Xlsx` |

@@ -1,8 +1,10 @@
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Windows.Input;
 using Microsoft.Win32;
 using PurviewCopilot.Application.Abstractions;
 using PurviewCopilot.Application.Ai;
+using PurviewCopilot.Application.Updates;
 using PurviewCopilot.Application.Workspace;
 using PurviewCopilot.Domain;
 using PurviewCopilot.Infrastructure.Auth;
@@ -48,7 +50,9 @@ public sealed class SettingsViewModel : PageViewModel
     private readonly ICertificateService _certificates;
     private readonly ConnectionVerifier _verifier;
     private readonly IAuditLog _auditLog;
+    private readonly UpdateChecker _updates;
     private AppSettings _settings = AppSettings.CreateDefault();
+    private UpdateManifest? _updateManifest;
 
     private string _tenantId = string.Empty;
     private string _clientId = string.Empty;
@@ -65,6 +69,8 @@ public sealed class SettingsViewModel : PageViewModel
     private string _status = "Settings loaded.";
     private string _auditStatus = "Audit chain not verified in this session.";
     private string _tenantDisplayName = string.Empty;
+    private string _updateManifestUrl = string.Empty;
+    private string _updateStatus = "No update check has run.";
     private TenantProfile? _selectedTenant;
     private bool _busy;
 
@@ -73,13 +79,15 @@ public sealed class SettingsViewModel : PageViewModel
         ISettingsStore settingsStore,
         ICertificateService certificates,
         ConnectionVerifier verifier,
-        IAuditLog auditLog)
+        IAuditLog auditLog,
+        UpdateChecker updates)
     {
         _workspace = workspace;
         _settingsStore = settingsStore;
         _certificates = certificates;
         _verifier = verifier;
         _auditLog = auditLog;
+        _updates = updates;
 
         SaveCommand = new AsyncRelayCommand(SaveAsync, () => !Busy);
         CreateCertificateCommand = new RelayCommand(CreateCertificate);
@@ -94,6 +102,8 @@ public sealed class SettingsViewModel : PageViewModel
         ActivateTenantCommand = new AsyncRelayCommand(ActivateTenantAsync, () => !Busy && SelectedTenant is not null);
         MoveProviderUpCommand = new RelayCommand(p => MoveProvider(p as AiProviderRow, -1));
         MoveProviderDownCommand = new RelayCommand(p => MoveProvider(p as AiProviderRow, 1));
+        CheckUpdatesCommand = new AsyncRelayCommand(CheckUpdatesAsync, () => !Busy);
+        DownloadUpdateCommand = new AsyncRelayCommand(DownloadUpdateAsync, () => !Busy && _updateManifest is not null);
     }
 
     public override string Title => "Settings";
@@ -121,6 +131,8 @@ public sealed class SettingsViewModel : PageViewModel
     public string Status { get => _status; private set => SetProperty(ref _status, value); }
     public string AuditStatus { get => _auditStatus; private set => SetProperty(ref _auditStatus, value); }
     public string TenantDisplayName { get => _tenantDisplayName; set => SetProperty(ref _tenantDisplayName, value); }
+    public string UpdateManifestUrl { get => _updateManifestUrl; set => SetProperty(ref _updateManifestUrl, value); }
+    public string UpdateStatus { get => _updateStatus; private set => SetProperty(ref _updateStatus, value); }
     public bool Busy { get => _busy; private set => SetProperty(ref _busy, value); }
 
     public TenantProfile? SelectedTenant
@@ -159,6 +171,8 @@ public sealed class SettingsViewModel : PageViewModel
     public ICommand ActivateTenantCommand { get; }
     public ICommand MoveProviderUpCommand { get; }
     public ICommand MoveProviderDownCommand { get; }
+    public ICommand CheckUpdatesCommand { get; }
+    public ICommand DownloadUpdateCommand { get; }
 
     public override async Task RefreshAsync()
     {
@@ -172,6 +186,7 @@ public sealed class SettingsViewModel : PageViewModel
         CloudAiEnabled = _settings.CloudAiEnabled;
         OfflineMode = _settings.OfflineMode;
         RequirePromptReview = _settings.RequirePromptReview;
+        UpdateManifestUrl = _settings.UpdateManifestUrl ?? string.Empty;
 
         Providers.Clear();
         foreach (var provider in AiProviderSequence.Normalize(_settings.Providers))
@@ -213,6 +228,7 @@ public sealed class SettingsViewModel : PageViewModel
             _settings.CloudAiEnabled = CloudAiEnabled;
             _settings.OfflineMode = OfflineMode;
             _settings.RequirePromptReview = RequirePromptReview;
+            _settings.UpdateManifestUrl = string.IsNullOrWhiteSpace(UpdateManifestUrl) ? null : UpdateManifestUrl.Trim();
 
             _settings.Providers = AiProviderSequence
                 .Normalize(Providers.Select(p => p.Descriptor with { Enabled = p.Enabled }))
@@ -314,6 +330,56 @@ public sealed class SettingsViewModel : PageViewModel
         catch (Exception ex)
         {
             Status = $"Rotation failed: {ex.Message}";
+        }
+    }
+
+    private async Task CheckUpdatesAsync()
+    {
+        Busy = true;
+        try
+        {
+            var current = typeof(SettingsViewModel).Assembly.GetName().Version ?? new Version(1, 0, 0);
+            var result = await _updates.CheckAsync(UpdateManifestUrl, current).ConfigureAwait(true);
+
+            _updateManifest = result.UpdateAvailable ? result.Manifest : null;
+            UpdateStatus = result.UpdateAvailable
+                ? $"{result.Message} Download it, verify the hash shown by your distribution channel, then run the MSI."
+                : result.Message;
+        }
+        catch (Exception ex)
+        {
+            _updateManifest = null;
+            UpdateStatus = $"Update check failed: {ex.Message}";
+        }
+        finally
+        {
+            (DownloadUpdateCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged();
+            Busy = false;
+        }
+    }
+
+    private async Task DownloadUpdateAsync()
+    {
+        if (_updateManifest is null) return;
+
+        Busy = true;
+        try
+        {
+            var directory = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "PurviewGovernanceCopilot",
+                "updates");
+
+            var path = await _updates.DownloadAsync(_updateManifest, directory).ConfigureAwait(true);
+            UpdateStatus = $"Update verified (SHA-256) and saved to {path}. Run the MSI to upgrade; code signing is still recommended before enterprise rollout.";
+        }
+        catch (Exception ex)
+        {
+            UpdateStatus = $"Update download failed: {ex.Message}";
+        }
+        finally
+        {
+            Busy = false;
         }
     }
 

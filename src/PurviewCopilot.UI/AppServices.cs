@@ -6,6 +6,7 @@ using PurviewCopilot.Application.Assessment;
 using PurviewCopilot.Application.Deployment;
 using PurviewCopilot.Application.Modules;
 using PurviewCopilot.Application.Reporting;
+using PurviewCopilot.Application.Updates;
 using PurviewCopilot.Application.Workspace;
 using PurviewCopilot.Infrastructure.Ai;
 using PurviewCopilot.Infrastructure.Auth;
@@ -28,6 +29,7 @@ public sealed class AppServices
         CopilotService copilot,
         IAiUsageStore usage,
         ConnectionVerifier verifier,
+        UpdateChecker updates,
         IClock clock)
     {
         Workspace = workspace;
@@ -36,6 +38,7 @@ public sealed class AppServices
         Copilot = copilot;
         Usage = usage;
         Verifier = verifier;
+        Updates = updates;
         Clock = clock;
     }
 
@@ -45,6 +48,7 @@ public sealed class AppServices
     public CopilotService Copilot { get; }
     public IAiUsageStore Usage { get; }
     public ConnectionVerifier Verifier { get; }
+    public UpdateChecker Updates { get; }
     public IClock Clock { get; }
 
     public static AppServices Create()
@@ -60,6 +64,7 @@ public sealed class AppServices
         var certificates = new WindowsCertificateService();
         var tokens = new EntraTokenProvider(certificates);
         var http = new HttpClient { Timeout = TimeSpan.FromSeconds(90) };
+        var updates = new UpdateChecker(http);
 
         var collector = new CompositeTenantCollector(
             new GraphTenantCollector(tokens, http),
@@ -96,6 +101,6 @@ public sealed class AppServices
 
         var verifier = new ConnectionVerifier(tokens, http);
 
-        return new AppServices(workspace, store, certificates, copilot, store, verifier, clock);
+        return new AppServices(workspace, store, certificates, copilot, store, verifier, updates, clock);
     }
 }

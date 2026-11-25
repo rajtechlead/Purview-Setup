@@ -4,12 +4,12 @@ Ordered by risk reduction and by what the current build deliberately leaves out.
 
 ## Phase 1.1 — Close the safety gaps
 
-**4 of 5 complete.** Updated 25 November 2026.
+**4 complete, 1 partial.** Updated 25 November 2026.
 
 | Item | Status | Why | Notes |
 | --- | --- | --- | --- |
 | Encrypted local store | **Done (payload-level)** | Assessment evidence sat in a plaintext SQLite file | Assessment, change-plan, approval and backup payloads are encrypted with DPAPI (`CurrentUser`) before they reach the file and decrypted on read; legacy plaintext rows still load and are encrypted on their next save. Tenant ids, timestamps and scores stay in columns for indexed queries, so SQLite pages and that metadata remain plaintext — SQLCipher page encryption is still open. Test: `AssessmentEvidence_IsEncryptedAtRest_AndStillLoads`. |
-| Signed builds and update channel | **Open** | Enterprise deployment requires Authenticode | CI signing step is authored but commented out; needs a signing certificate and a published SHA-256 manifest. No auto-update channel exists. |
+| Signed builds and update channel | **Partial** | Enterprise deployment requires Authenticode | Settings → Updates checks an https manifest (`version`, `downloadUrl`, `sha256`), rejects non-https URLs and malformed hashes, and only then downloads the MSI — the file is written solely when its SHA-256 matches, and installation stays an explicit operator action. Still open: Authenticode signing (no certificate here), a published manifest, and automatic install. |
 | Hash-chained audit log | **Done** | Local DB is user-writable | Each row stores the SHA-256 of its canonical fields plus the previous hash, in insertion order. Legacy rows are backfilled on first open; `IAuditLog.VerifyAsync` recomputes the chain; Settings has a **Verify audit log integrity** button. Tamper detection is covered by tests. |
 | Provider health pre-check | **Done** | `IsHealthyAsync` existed but the failover loop did not consult it | Every candidate is probed with a 5-second timeout. Unhealthy providers are skipped and recorded as `Unhealthy`, and any failure puts that provider in a 2-minute cooldown so the next call goes straight to the fallback. |
 | Per-user secret store for lab mode | **Done** | Client secret landed in the settings document | `DpapiSecretProtector` uses crypt32 DPAPI with `CurrentUser` scope, so no key material sits beside the data and another profile cannot decrypt it. Values are transparently re-encrypted on save and decrypted on load; a profile change yields an empty secret rather than a crash. |

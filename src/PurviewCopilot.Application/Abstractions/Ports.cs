@@ -156,6 +156,9 @@ public sealed record AppSettings
     public string? KeyVaultSecretName { get; set; }
     public string DataDirectory { get; set; } = "%LOCALAPPDATA%\\PurviewGovernanceCopilot";
     public string? ReportOutputDirectory { get; set; }
+
+    /// <summary>HTTPS manifest used by the update check; empty disables it.</summary>
+    public string? UpdateManifestUrl { get; set; }
     public DeploymentMode DefaultMode { get; set; } = DeploymentMode.AssessmentOnly;
 
     /// <summary>Minutes between automatic checks while the app is open; 0 disables them.</summary>

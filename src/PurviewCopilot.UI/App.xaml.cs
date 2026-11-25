@@ -37,7 +37,7 @@ public partial class App : System.Windows.Application
                 new MonitoringViewModel(services.Workspace, services.Store, services.Store),
                 new ReportsViewModel(services.Workspace),
                 new AiAssistantViewModel(services.Copilot, services.Workspace, services.Usage, services.Store),
-                new SettingsViewModel(services.Workspace, services.Store, services.Certificates, services.Verifier, services.Store),
+                new SettingsViewModel(services.Workspace, services.Store, services.Certificates, services.Verifier, services.Store, services.Updates),
                 new HelpViewModel(),
                 new AboutViewModel()
             };
