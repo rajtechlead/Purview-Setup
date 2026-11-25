@@ -1,0 +1,14 @@
+<Project Sdk="WixToolset.Sdk/5.0.2">
+  <PropertyGroup>
+    <OutputName>PurviewGovernanceCopilot</OutputName>
+    <OutputType>Package</OutputType>
+    <Platform>x64</Platform>
+    <!-- Set on the command line: -p:PublishDir=..\artifacts\publish\ -->
+    <PublishDir Condition="'$(PublishDir)' == ''">..\artifacts\publish\</PublishDir>
+    <DefineConstants>PublishDir=$(PublishDir);ProductVersion=1.0.0</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="WixToolset.UI.wixext" Version="5.0.2" />
+    <PackageReference Include="WixToolset.Util.wixext" Version="5.0.2" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+
+  <!--
+    Purview Governance Copilot — per-machine MSI.
+    Build:
+      dotnet publish src/PurviewCopilot.UI -c Release -r win-x64 --self-contained true -o artifacts/publish
+      dotnet build installer/PurviewGovernanceCopilot.wixproj -c Release -p:PublishDir=..\artifacts\publish\
+    Silent install:  msiexec /i PurviewGovernanceCopilot.msi /qn
+    Uninstall:       msiexec /x PurviewGovernanceCopilot.msi /qn
+  -->
+
+  <Package Name="Purview Governance Copilot"
+           Manufacturer="Belle-RajaCorp"
+           Version="$(var.ProductVersion)"
+           UpgradeCode="7f3c2a64-9d1b-4c58-9e0a-2b6f4d8c1e35"
+           Scope="perMachine"
+           Compressed="yes">
+
+    <SummaryInformation Description="Purview Governance Copilot — Purview assessment, governance and AI privacy workspace"
+                        Manufacturer="Belle-RajaCorp" />
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version of Purview Governance Copilot is already installed."
+                  Schedule="afterInstallInitialize" />
+
+    <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
+
+    <Feature Id="Main" Title="Purview Governance Copilot" Level="1" AllowAbsent="no">
+      <ComponentGroupRef Id="ProductFiles" />
+      <ComponentRef Id="ApplicationShortcut" />
+    </Feature>
+
+    <!-- Per-machine install; per-user deployment is available by publishing the app directly. -->
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="Purview Governance Copilot">
+        <Files Include="$(var.PublishDir)**" />
+      </Directory>
+    </StandardDirectory>
+
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="ApplicationProgramsFolder" Name="Purview Governance Copilot">
+        <Component Id="ApplicationShortcut" Guid="b1f0c6d2-5c4a-4f1e-9d3b-0a7e2c8f6b14">
+          <Shortcut Id="StartMenuShortcut"
+                    Name="Purview Governance Copilot"
+                    Description="Purview assessment, governance and AI privacy workspace"
+                    Target="[INSTALLFOLDER]PurviewGovernanceCopilot.exe"
+                    WorkingDirectory="INSTALLFOLDER" />
+          <RemoveFolder Id="RemoveApplicationProgramsFolder" On="uninstall" />
+          <RegistryValue Root="HKLM"
+                         Key="Software\BelleRajaCorp\PurviewGovernanceCopilot"
+                         Name="InstallDir"
+                         Type="string"
+                         Value="[INSTALLFOLDER]"
+                         KeyPath="yes" />
+        </Component>
+      </Directory>
+    </StandardDirectory>
+
+    <!-- Desktop shortcut for the governance workstation profile. -->
+    <StandardDirectory Id="DesktopFolder">
+      <Component Id="DesktopShortcut" Guid="c2a1d7e3-6d5b-4a2f-8e4c-1b8f3d9a7c25">
+        <Shortcut Id="DesktopShortcutLink"
+                  Name="Purview Governance Copilot"
+                  Target="[INSTALLFOLDER]PurviewGovernanceCopilot.exe"
+                  WorkingDirectory="INSTALLFOLDER" />
+        <RegistryValue Root="HKCU"
+                       Key="Software\BelleRajaCorp\PurviewGovernanceCopilot"
+                       Name="DesktopShortcut"
+                       Type="integer"
+                       Value="1"
+                       KeyPath="yes" />
+      </Component>
+    </StandardDirectory>
+
+  </Package>
+</Wix>

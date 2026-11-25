@@ -1,0 +1,82 @@
+<UserControl x:Class="PurviewCopilot.UI.Views.DeploymentView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <StackPanel>
+        <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+            <StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Mode" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                    <ComboBox Width="190" ItemsSource="{Binding Modes}" SelectedItem="{Binding Mode}" Margin="0,0,14,0" />
+                    <TextBlock Text="Operator" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                    <TextBox Width="150" Text="{Binding Actor}" Margin="0,0,14,0" />
+                    <Button Content="Build change plan" Style="{StaticResource PrimaryButton}"
+                            Command="{Binding BuildPlanCommand}" />
+                </StackPanel>
+                <TextBlock Text="{Binding Status}" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,10,0,0" />
+            </StackPanel>
+        </Border>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="420" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0" Style="{StaticResource Card}" Margin="0,0,12,0" VerticalAlignment="Top">
+                <StackPanel>
+                    <TextBlock Text="Recommendations" Style="{StaticResource SectionHeader}" />
+                    <TextBlock Text="Select the changes to include. High and critical items are preselected."
+                               Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,8" />
+                    <ItemsControl ItemsSource="{Binding Candidates}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="{StaticResource SurfaceAltBrush}" CornerRadius="6" Padding="10" Margin="0,0,0,6">
+                                    <CheckBox IsChecked="{Binding IsSelected}" VerticalContentAlignment="Top">
+                                        <StackPanel Margin="4,0,0,0">
+                                            <TextBlock Text="{Binding Title}" FontSize="12" TextWrapping="Wrap" />
+                                            <TextBlock Style="{StaticResource Muted}" Margin="0,2,0,0">
+                                                <Run Text="{Binding Id}" />
+                                                <Run Text=" · " />
+                                                <Run Text="{Binding Priority}" />
+                                                <Run Text=" · " />
+                                                <Run Text="{Binding Effort}" />
+                                            </TextBlock>
+                                        </StackPanel>
+                                    </CheckBox>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <StackPanel Grid.Column="1">
+                <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                            <Button Content="Simulate (what-if)" Command="{Binding SimulateCommand}" Margin="0,0,8,0" />
+                            <Button Content="Submit for approval" Command="{Binding SubmitCommand}" Margin="0,0,8,0" />
+                            <Button Content="Approve" Style="{StaticResource PrimaryButton}" Command="{Binding ApproveCommand}" Margin="0,0,8,0" />
+                            <Button Content="Reject" Command="{Binding RejectCommand}" Margin="0,0,8,0" />
+                            <Button Content="Request changes" Command="{Binding RequestChangesCommand}" />
+                        </StackPanel>
+                        <TextBox Text="{Binding ApproverComment, UpdateSourceTrigger=PropertyChanged}"
+                                 Height="30" Margin="0,0,0,10" ToolTip="Approval comment" />
+                        <TextBlock Text="{Binding ApprovalState}" FontSize="12" Foreground="{StaticResource AccentBrush}" Margin="0,0,0,8" />
+                        <TextBlock Text="Change-management pack" Style="{StaticResource SectionHeader}" />
+                        <TextBlock Text="{Binding PlanSummary}" TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource MutedBrush}" />
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Simulation output" Style="{StaticResource SectionHeader}" />
+                        <TextBlock Text="{Binding SimulationLog}" TextWrapping="Wrap" FontFamily="Consolas"
+                                   FontSize="11" Foreground="{StaticResource MutedBrush}" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Grid>
+    </StackPanel>
+</UserControl>

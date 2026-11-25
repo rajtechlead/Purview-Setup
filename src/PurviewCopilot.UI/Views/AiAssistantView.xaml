@@ -1,0 +1,81 @@
+<UserControl x:Class="PurviewCopilot.UI.Views.AiAssistantView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="380" />
+        </Grid.ColumnDefinitions>
+
+        <StackPanel Grid.Column="0" Margin="0,0,12,0">
+            <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+                <StackPanel>
+                    <TextBlock Text="Ask for guidance" Style="{StaticResource SectionHeader}" />
+                    <TextBox Text="{Binding Question, UpdateSourceTrigger=PropertyChanged}" Height="70"
+                             TextWrapping="Wrap" AcceptsReturn="True" VerticalContentAlignment="Top" />
+                    <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                        <Button Content="Prepare sanitized prompt" Command="{Binding PrepareCommand}" Margin="0,0,8,0" />
+                        <Button Content="Send" Style="{StaticResource PrimaryButton}" Command="{Binding SendCommand}" Margin="0,0,8,0" />
+                        <Button Content="Prepare and send" Command="{Binding AskCommand}" />
+                    </StackPanel>
+                    <TextBlock Text="{Binding Status}" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,10,0,0" />
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+                <StackPanel>
+                    <TextBlock Text="Privacy guard" Style="{StaticResource SectionHeader}" />
+                    <TextBlock Text="{Binding RedactionSummary}" FontSize="12" TextWrapping="Wrap"
+                               Foreground="{StaticResource AccentBrush}" />
+                    <TextBlock Text="Sanitized prompt (exactly what will be transmitted)" Style="{StaticResource Muted}" Margin="0,10,0,4" />
+                    <Border Background="#0C1526" CornerRadius="6" Padding="10">
+                        <TextBlock Text="{Binding PromptPreview}" FontFamily="Consolas" FontSize="11"
+                                   TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}" MaxHeight="220" />
+                    </Border>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Text="Conversation" Style="{StaticResource SectionHeader}" />
+                    <ItemsControl ItemsSource="{Binding Transcript}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="{StaticResource SurfaceAltBrush}" CornerRadius="8" Padding="12" Margin="0,0,0,8">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Role}" FontSize="10" Foreground="{StaticResource AccentBrush}" />
+                                        <TextBlock Text="{Binding Text}" FontSize="12" TextWrapping="Wrap" Margin="0,3,0,0" />
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+
+        <StackPanel Grid.Column="1">
+            <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+                <StackPanel>
+                    <TextBlock Text="Provider failover" Style="{StaticResource SectionHeader}" />
+                    <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap"
+                               Text="Providers are tried in priority order. Quota, auth and rate-limit failures move to the next approved provider; every attempt is recorded." />
+                    <TextBlock Text="{Binding UsageSummary}" FontSize="12" Margin="0,10,0,0" Foreground="{StaticResource AccentBrush}" />
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Text="Guardrails in force" Style="{StaticResource SectionHeader}" />
+                    <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,8"
+                               Text="Local detection runs before any network call. Secrets, credentials and tenant identifiers are blocked outright in Block mode." />
+                    <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,6,0,0"
+                               Text="Cloud AI can be disabled entirely; offline mode restricts calls to local providers only. Every prompt decision and AI call is written to the local audit log." />
+                    <TextBlock Text="No raw tenant data is included in prompts: only score and finding summaries, which are sanitized again before transmission."
+                               Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,6,0,0" />
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </Grid>
+</UserControl>

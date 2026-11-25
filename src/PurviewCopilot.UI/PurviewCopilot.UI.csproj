@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>PurviewCopilot.UI</RootNamespace>
+    <AssemblyName>PurviewGovernanceCopilot</AssemblyName>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\PurviewCopilot.Application\PurviewCopilot.Application.csproj" />
+    <ProjectReference Include="..\PurviewCopilot.Infrastructure\PurviewCopilot.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>

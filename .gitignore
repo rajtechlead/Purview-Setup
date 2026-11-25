@@ -1,0 +1,31 @@
+# Build output
+bin/
+obj/
+artifacts/
+*.user
+*.suo
+
+# Local .NET SDK installed for builds on this machine
+.dotnet/
+.dotnet-install.ps1
+.dotnet-install.log
+
+# Generated assessment evidence — may contain tenant identifiers and policy exports.
+assessments/
+out/
+*.log
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# PowerShell
+*.clixml
+
+# Secrets — never commit
+.env
+*.pfx
+*.p12
+secrets.json
