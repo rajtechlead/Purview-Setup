@@ -23,6 +23,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Binary report path**: `IReportExporter.RenderBytes` with a text default, and `GovernanceWorkspace.ExportReportAsync` now writes bytes so every format shares one audited export path.
 - **Persona dashboards, risk heatmap and trends**: Executive, Security, Governance and Compliance tabs; module × severity heatmap of open findings; the last twelve overall scores charted from stored assessments with maturity trail and delta.
 - **MSP tenancy**: a `tenant_profiles` registry with DPAPI-protected credentials, save/activate from Settings, in-session evidence cleared on activation, and a cross-tenant Portfolio tab built from each tenant's latest assessment.
+- **Plugin modules**: external `IModule` assemblies in `%LOCALAPPDATA%\PurviewGovernanceCopilot\plugins` are discovered and registered as custom modules; broken assemblies are skipped and plugins cannot impersonate a built-in.
 - **Upgrade rollback**: a shipped PowerShell script uninstalls the current MSI and installs a named previous package with `-WhatIf` support and verbose logs, removing the manual uninstall/reinstall step.
 - **Greenfield baseline**: an empty tenant is detected from evidence and Greenfield preselects the foundational label, DLP, retention and audit controls; a configured tenant gets an explicit warning instead of a false baseline.
 - **Licence price list**: Settings takes optional monthly SKU prices, so unused and over-assigned seats report a monetary opportunity instead of zero.

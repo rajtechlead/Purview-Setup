@@ -18,7 +18,10 @@ public enum ModuleKey
     Dspm,
     ComplianceManager,
     AiGovernance,
-    CopilotGovernance
+    CopilotGovernance,
+
+    /// <summary>External module loaded from the plugins folder; rules and descriptor come from the plugin.</summary>
+    Custom = 99
 }
 
 public enum Severity

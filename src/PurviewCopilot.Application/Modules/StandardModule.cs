@@ -89,7 +89,7 @@ public sealed class StandardModule : IModule
 /// <summary>Module registry: the single place that knows which modules exist and how they are weighted.</summary>
 public sealed class ModuleRegistry
 {
-    public ModuleRegistry()
+    public ModuleRegistry(IEnumerable<IModule>? plugins = null)
     {
         var descriptors = new[]
         {
@@ -127,9 +127,21 @@ public sealed class ModuleRegistry
                 "Readiness controls for Copilot rollout.", new[] { "Microsoft 365 Copilot" }, new[] { "ISO 42001", "NIST AI RMF" })
         };
 
-        Modules = descriptors
+        var modules = descriptors
             .Select(d => (IModule)new StandardModule(d, ModuleCatalog.All.Where(r => r.Module == d.Key).ToList()))
             .ToList();
+
+        foreach (var plugin in plugins ?? Array.Empty<IModule>())
+        {
+            if (plugin is null || modules.Any(m => m.Key == plugin.Key && plugin.Key != ModuleKey.Custom))
+            {
+                continue;
+            }
+
+            modules.Add(plugin);
+        }
+
+        Modules = modules;
 
         Weights = new Dictionary<ModuleKey, double>
         {
@@ -139,7 +151,8 @@ public sealed class ModuleRegistry
             [ModuleKey.EndpointDlp] = 1.2,
             [ModuleKey.InsiderRisk] = 1.2,
             [ModuleKey.AiGovernance] = 1.2,
-            [ModuleKey.CopilotGovernance] = 1.1
+            [ModuleKey.CopilotGovernance] = 1.1,
+            [ModuleKey.Custom] = 1.0
         };
     }
 

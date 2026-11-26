@@ -94,7 +94,10 @@ public sealed class AppServices
             new GraphTenantCollector(tokens, http),
             new CompliancePowerShellCollector(Path.Combine(dataDirectory, "scripts")));
 
-        var registry = new ModuleRegistry();
+        var pluginDirectory = Path.Combine(dataDirectory, "plugins");
+        Directory.CreateDirectory(pluginDirectory);
+        var plugins = PluginModuleLoader.Load(pluginDirectory);
+        var registry = new ModuleRegistry(plugins.Modules);
         var assessment = new AssessmentService(collector, registry, store, store, clock);
         var planBuilder = new ChangePlanBuilder(clock);
         var backups = new BackupService(store, clock);

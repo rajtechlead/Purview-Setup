@@ -76,7 +76,8 @@ public class ScoringAndModuleTests
     [Fact]
     public void Catalog_CoversEveryModule_WithAtLeastTwoControls()
     {
-        foreach (var module in Enum.GetValues<ModuleKey>())
+        // Custom is supplied by external plugins, so it has no static catalog entry.
+        foreach (var module in Enum.GetValues<ModuleKey>().Where(m => m != ModuleKey.Custom))
         {
             var rules = ModuleCatalog.All.Where(r => r.Module == module).ToList();
             Assert.True(rules.Count >= 2, $"{module} has only {rules.Count} control(s).");

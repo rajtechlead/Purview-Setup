@@ -150,7 +150,10 @@ internal static class Program
             new GraphTenantCollector(tokens, Http),
             new CompliancePowerShellCollector(Path.Combine(dataDirectory, "scripts")));
 
-        var assessment = new AssessmentService(collector, new ModuleRegistry(), store, store, clock);
+        var pluginDirectory = Path.Combine(dataDirectory, "plugins");
+        Directory.CreateDirectory(pluginDirectory);
+        var registry = new ModuleRegistry(PluginModuleLoader.Load(pluginDirectory).Modules);
+        var assessment = new AssessmentService(collector, registry, store, store, clock);
 
         var workspace = new GovernanceWorkspace(
             collector,

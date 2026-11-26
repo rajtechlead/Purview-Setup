@@ -106,6 +106,12 @@ Create an MSI application from the WiX output; use the same detection method. De
 - **Manual rollback**: if the script is unavailable, uninstall the current version from Apps & features, then install the previous MSI and confirm the displayed version.
 - **Back up before upgrade**: copy `%LOCALAPPDATA%\PurviewGovernanceCopilot` (database plus generated scripts).
 
+### Module plugins
+
+Put compiled plugin assemblies in `%LOCALAPPDATA%\PurviewGovernanceCopilot\plugins` and restart the app. A plugin is a public class with a parameterless constructor that implements `PurviewCopilot.Application.Modules.IModule`; it must return a descriptor whose `Key` matches its `Key` property and is registered as `ModuleKey.Custom`. Broken assemblies are skipped and listed in the load result rather than stopping the assessment.
+
+**Trust boundary:** loading a plugin executes its code as the signed-in user. Install only assemblies you built or reviewed, keep the folder out of shared profiles, and remove the DLL to disable it.
+
 ## 6. Operations runbook
 
 | Cadence | Task |

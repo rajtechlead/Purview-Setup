@@ -18,7 +18,7 @@ Verified against commit `353bde2` on 25 November 2026 by reading the source, cou
 
 | Code | Meaning |
 | --- | --- |
-| **T** | Covered by an automated test (146 tests, all passing at audit time). |
+| **T** | Covered by an automated test (149 tests, all passing at audit time). |
 | **B** | Builds and is reachable from the composition root; behaviour not exercised end to end. |
 | **C** | Code exists but is unexercised here (no tenant, certificate, API key or admin rights). |
 | **D** | Documentation or project/manifest artifact only; nothing executes it here. |
@@ -88,7 +88,7 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 | --- | --- | --- | --- | --- |
 | MOD-01 | Sixteen independent modules | **Delivered** | T | `ModuleRegistry` builds all 16 with descriptors, licences, frameworks and weights; `Registry_ExposesSixteenModules_AndWeightsArePositive`. |
 | MOD-02 | Every module supports discovery, assessment, recommendations, deployment, validation, reporting, rollback and monitoring | **Partial** | B | Discovery, assessment, recommendations and reporting are per-module. Deployment operations are generic descriptors (`Purview/<module>/<control>`), validation is advisory text per plan, and rollback/monitoring are tenant-wide rather than per module. |
-| MOD-03 | Plugin architecture | **Partial** | B | `IModule` + registry is a genuine extension seam, but there is no external plugin discovery or loading. |
+| MOD-03 | Plugin architecture | **Delivered** | T | `IModule` + registry is the extension seam; `PluginModuleLoader` discovers public `IModule` implementations with a parameterless constructor from `%LOCALAPPDATA%\PurviewGovernanceCopilot\plugins`, loads each assembly in its own context, skips broken assemblies with a message and keys plugins as `ModuleKey.Custom` so they cannot impersonate a built-in. Wired into the desktop and CLI registries. Loading runs local third-party code, so the folder is the user's own profile and is documented as a trust boundary. Tests: `PluginModuleTests`. |
 
 ## F. AI assistant and failover
 
@@ -267,8 +267,8 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 
 | Status | Count | Share |
 | --- | --- | --- |
-| **Delivered** | 114 | 85% |
-| **Partial** | 16 | 12% |
+| **Delivered** | 115 | 86% |
+| **Partial** | 15 | 11% |
 | **Not delivered** | 4 | 3% |
 | **Total tracked** | 134 | 100% |
 
@@ -280,7 +280,7 @@ By section:
 | Authentication | 12 | 0 | 0 |
 | Discovery and assessment | 10 | 4 | 0 |
 | Deployment and change control | 2 | 3 | 0 |
-| Modular architecture | 1 | 2 | 0 |
+| Modular architecture | 2 | 1 | 0 |
 | AI assistant and failover | 11 | 0 | 1 |
 | AI privacy guardrail | 11 | 1 | 0 |
 | Change management and safety | 6 | 1 | 0 |
@@ -312,7 +312,7 @@ Ranked by risk to the commercial claim, not by effort:
 | Check | Result |
 | --- | --- |
 | `dotnet build PurviewGovernanceCopilot.sln -c Release` | Succeeded (local SDK 9.0.321) |
-| `dotnet test tests/PurviewCopilot.Tests -c Release` | 146 passed, 0 failed |
+| `dotnet test tests/PurviewCopilot.Tests -c Release` | 149 passed, 0 failed |
 | Catalog count (`grep -c 'Add("' ModuleCatalog.cs`) | 49 rules across 16 modules |
 | Exporter inventory | HTML, JSON, CSV, Markdown, PDF, DOCX, XLSX |
 | `ReportFormat` enum | `Html, Json, Csv, Markdown, Pdf, Docx, Xlsx` |
