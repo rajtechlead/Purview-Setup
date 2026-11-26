@@ -64,6 +64,7 @@ public sealed class DeploymentViewModel : PageViewModel
     private string _simulationLog = string.Empty;
     private string _approvalState = "No approval request.";
     private bool _busy;
+    private bool _refreshing;
 
     public DeploymentViewModel(
         GovernanceWorkspace workspace,
@@ -88,7 +89,7 @@ public sealed class DeploymentViewModel : PageViewModel
         ExecutePhaseCommand = new AsyncRelayCommand(ExecutePhaseAsync, () => !Busy && Plan is not null && _phaseExecution?.Status == PhaseStatus.Approved);
         RollbackPhaseCommand = new AsyncRelayCommand(RollbackPhaseAsync, () => !Busy && _phaseExecution is not null);
 
-        BuildPlanCommand = new AsyncRelayCommand(BuildPlanAsync, () => !Busy);
+        BuildPlanCommand = new AsyncRelayCommand(BuildPlanAsync, () => !Busy && DeploymentModePolicy.AllowsPlan(Mode));
         SimulateCommand = new AsyncRelayCommand(SimulateAsync, () => !Busy && Plan is not null);
         SubmitCommand = new AsyncRelayCommand(SubmitAsync, () => !Busy && Plan is not null);
         ApproveCommand = new AsyncRelayCommand(() => DecideAsync(ApprovalDecision.Approve), () => !Busy && Approval is not null);
@@ -143,6 +144,13 @@ public sealed class DeploymentViewModel : PageViewModel
             if (SetProperty(ref _mode, value))
             {
                 ApplyModePreselection();
+                (BuildPlanCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged();
+
+                if (!_refreshing && DeploymentModePolicy.RequiresAutomaticPlan(value) &&
+                    Candidates.Count > 0 && Plan is null)
+                {
+                    _ = BuildPlanAsync();
+                }
             }
         }
     }
@@ -177,14 +185,16 @@ public sealed class DeploymentViewModel : PageViewModel
 
     public override async Task RefreshAsync()
     {
+        _refreshing = true;
         var settings = await _settings.LoadAsync().ConfigureAwait(true);
+        Candidates.Clear();
         Mode = settings.DefaultMode;
         await _workspace.LoadTenantProfilesAsync().ConfigureAwait(true);
 
-        Candidates.Clear();
         var assessment = _workspace.Assessment;
         if (assessment is null)
         {
+            _refreshing = false;
             Status = "Run an assessment first — deployment is driven by its recommendations.";
             return;
         }
@@ -194,6 +204,7 @@ public sealed class DeploymentViewModel : PageViewModel
             Candidates.Add(new SelectableRecommendation(recommendation, false));
         }
 
+        _refreshing = false;
         ApplyModePreselection();
     }
 
@@ -204,9 +215,8 @@ public sealed class DeploymentViewModel : PageViewModel
 
         foreach (var candidate in Candidates)
         {
-            candidate.IsSelected = greenfield
-                ? GreenfieldBaseline.IsFoundation(candidate.Recommendation.Id)
-                : candidate.Priority >= Severity.High;
+            candidate.IsSelected = DeploymentModePolicy.Preselect(
+                Mode, candidate.Recommendation.Id, candidate.Priority, greenfield);
         }
 
         if (Candidates.Count == 0)
@@ -214,18 +224,7 @@ public sealed class DeploymentViewModel : PageViewModel
             return;
         }
 
-        if (Mode == DeploymentMode.Greenfield && !greenfield)
-        {
-            Status = "Greenfield expects an empty tenant; existing labels or policies were found, so foundation items are still available but nothing was preselected as a first-run baseline.";
-        }
-        else if (greenfield)
-        {
-            Status = "Greenfield tenant detected. The first-run baseline preselects labels, label policy, auto-labelling, DLP, retention and audit retention in a safe starting order.";
-        }
-        else
-        {
-            Status = $"{Candidates.Count} recommendation(s) available. High and critical items are preselected.";
-        }
+        Status = DeploymentModePolicy.Describe(Mode, greenfield);
     }
 
     private async Task BackupObjectsAsync()
@@ -432,6 +431,12 @@ public sealed class DeploymentViewModel : PageViewModel
 
     private async Task BuildPlanAsync()
     {
+        if (!DeploymentModePolicy.AllowsPlan(Mode))
+        {
+            Status = DeploymentModePolicy.Describe(Mode, greenfield: false);
+            return;
+        }
+
         var selected = Candidates.Where(c => c.IsSelected).Select(c => c.Recommendation).ToList();
         if (selected.Count == 0)
         {

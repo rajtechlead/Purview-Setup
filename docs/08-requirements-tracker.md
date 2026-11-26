@@ -18,7 +18,7 @@ Verified against commit `353bde2` on 25 November 2026 by reading the source, cou
 
 | Code | Meaning |
 | --- | --- |
-| **T** | Covered by an automated test (149 tests, all passing at audit time). |
+| **T** | Covered by an automated test (153 tests, all passing at audit time). |
 | **B** | Builds and is reachable from the composition root; behaviour not exercised end to end. |
 | **C** | Code exists but is unexercised here (no tenant, certificate, API key or admin rights). |
 | **D** | Documentation or project/manifest artifact only; nothing executes it here. |
@@ -77,7 +77,7 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 | ID | Requirement | Status | Proof | Evidence / gap |
 | --- | --- | --- | --- | --- |
 | DEP-01 | Six deployment modes (assessment, guided, one-click, custom, expert, greenfield) | **Delivered** | B | `DeploymentMode` enum and the Deployment page mode selector expose all six. |
-| DEP-02 | Modes behave materially differently | **Partial** | T | All modes share one guarded pipeline; only recommendation preselection and baseline content differ. One-click and guided are not distinct workflows. |
+| DEP-02 | Modes behave materially differently | **Delivered** | T | `DeploymentModePolicy` makes each mode distinct: Assessment Only blocks plan creation, Guided preselects high/critical, One-Click preselects and builds the plan automatically, Custom starts empty, Expert preselects everything, and Greenfield selects the empty-tenant foundation set. All modes still pass the same simulation/approval gate by design. Tests: `DeploymentModePolicyTests`. |
 | DEP-03 | Review, modify, approve, apply and roll back | **Partial** | T | Review, modify, three-stage approval and backup are real. Apply is gated to script generation; a reversal script is generated in reverse order with destructive commands commented out, but no restore is executed. |
 | DEP-04 | One-click recommended deployment | **Partial** | B | A plan can be built from preselected high/critical recommendations in one action, but it still requires simulation and three approvals before a script is produced. |
 | DEP-05 | Apply changes automatically to the tenant | **Delivered** | C | `PowerShellDeploymentExecutor` runs the reviewed phase script with certificate environment only after a session opt-in and a passing `DeploymentGate` (simulation, approval, backup, rollback, authentication, connectivity, risk). It is off at every start. Tests cover fail-closed, client-secret rejection and the authorized run. Not exercised against a live tenant. |
@@ -267,8 +267,8 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 
 | Status | Count | Share |
 | --- | --- | --- |
-| **Delivered** | 115 | 86% |
-| **Partial** | 15 | 11% |
+| **Delivered** | 116 | 87% |
+| **Partial** | 14 | 10% |
 | **Not delivered** | 4 | 3% |
 | **Total tracked** | 134 | 100% |
 
@@ -279,7 +279,7 @@ By section:
 | Platform and scope | 4 | 0 | 0 |
 | Authentication | 12 | 0 | 0 |
 | Discovery and assessment | 10 | 4 | 0 |
-| Deployment and change control | 2 | 3 | 0 |
+| Deployment and change control | 3 | 2 | 0 |
 | Modular architecture | 2 | 1 | 0 |
 | AI assistant and failover | 11 | 0 | 1 |
 | AI privacy guardrail | 11 | 1 | 0 |
@@ -312,7 +312,7 @@ Ranked by risk to the commercial claim, not by effort:
 | Check | Result |
 | --- | --- |
 | `dotnet build PurviewGovernanceCopilot.sln -c Release` | Succeeded (local SDK 9.0.321) |
-| `dotnet test tests/PurviewCopilot.Tests -c Release` | 149 passed, 0 failed |
+| `dotnet test tests/PurviewCopilot.Tests -c Release` | 153 passed, 0 failed |
 | Catalog count (`grep -c 'Add("' ModuleCatalog.cs`) | 49 rules across 16 modules |
 | Exporter inventory | HTML, JSON, CSV, Markdown, PDF, DOCX, XLSX |
 | `ReportFormat` enum | `Html, Json, Csv, Markdown, Pdf, Docx, Xlsx` |

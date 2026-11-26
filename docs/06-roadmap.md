@@ -42,6 +42,8 @@ Installer rollback: **Done**. `Rollback-PurviewGovernanceCopilot.ps1` ships besi
 
 Plugin modules: **Done**. `PluginModuleLoader` discovers external `IModule` assemblies from the user's plugins folder, isolates load failures and registers them as custom modules; the desktop and CLI both use the extended registry.
 
+Deployment modes: **Done**. `DeploymentModePolicy` gives each mode its own starting set and behaviour — Assessment Only cannot plan, One-Click builds the recommended plan automatically, Expert selects everything, Custom selects nothing — while every plan still passes simulation and approvals.
+
 Greenfield path: **Done**. `GreenfieldBaseline` detects an empty tenant from collected counts and selects a first-run foundation set in a safe order; the same mode on a configured tenant warns rather than claiming a baseline.
 
 **3 of 4 complete, 1 partial.** Updated 26 November 2026.
