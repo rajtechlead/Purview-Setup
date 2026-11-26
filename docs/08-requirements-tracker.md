@@ -18,7 +18,7 @@ Verified against commit `353bde2` on 25 November 2026 by reading the source, cou
 
 | Code | Meaning |
 | --- | --- |
-| **T** | Covered by an automated test (137 tests, all passing at audit time). |
+| **T** | Covered by an automated test (140 tests, all passing at audit time). |
 | **B** | Builds and is reachable from the composition root; behaviour not exercised end to end. |
 | **C** | Code exists but is unexercised here (no tenant, certificate, API key or admin rights). |
 | **D** | Documentation or project/manifest artifact only; nothing executes it here. |
@@ -190,7 +190,7 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 | REP-01 | PDF export | **Delivered** | T | `PdfReportExporter` writes a paginated PDF 1.4 document with Helvetica/Courier base fonts, escaped text, page footers and a valid xref. Tests: `Pdf_ProducesAWellFormedDocumentWithTheReportText`, `Pdf_EscapesParenthesesInContent`. |
 | REP-02 | DOCX and XLSX export | **Delivered** | T | `DocxReportExporter` and `XlsxReportExporter` build OOXML packages directly with `ZipArchive` (no package dependency); XLSX has Scores, Findings and Frameworks sheets. Tests validate the zip entries and cell content. |
 | REP-03 | HTML and JSON export | **Delivered** | T | Self-contained HTML (escaped, no external assets) and structured JSON; CSV and Markdown also ship. |
-| REP-04 | Executive, governance, security, compliance and remediation report types | **Partial** | B | One layout contains all sections; there is no per-audience template or report-type selector. |
+| REP-04 | Executive, governance, security, compliance and remediation report types | **Delivered** | T | Reports has a type selector (Full, Executive, Governance, Security, Compliance, Remediation). HTML, PDF and Markdown filter sections: Executive omits findings/recommendations, Security keeps high/critical findings, Compliance keeps framework-mapped findings, Remediation keeps open findings plus recommendations. JSON records the type; CSV/XLSX stay raw data tables. Tests: `ReportTypeTests`. |
 | REP-05 | Framework readiness for ISO 27001, NIST CSF, CIS, SOC 2, HIPAA, GDPR and PCI-DSS | **Delivered** | B | `FrameworkMapper` also covers ISO 42001 and NIST AI RMF; coverage and gap lists per framework. |
 | REP-06 | Map Purview controls to framework requirements and highlight gaps | **Delivered** | T | Per-control framework references feed coverage percentages and named gaps. |
 
@@ -267,8 +267,8 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 
 | Status | Count | Share |
 | --- | --- | --- |
-| **Delivered** | 110 | 82% |
-| **Partial** | 20 | 15% |
+| **Delivered** | 111 | 83% |
+| **Partial** | 19 | 14% |
 | **Not delivered** | 4 | 3% |
 | **Total tracked** | 134 | 100% |
 
@@ -290,7 +290,7 @@ By section:
 | Offline and regulated | 3 | 0 | 0 |
 | Licence optimisation | 1 | 1 | 0 |
 | Continuous monitoring | 4 | 0 | 0 |
-| Reporting | 5 | 1 | 0 |
+| Reporting | 6 | 0 | 0 |
 | Security engineering | 12 | 3 | 1 |
 | Architecture and technology | 7 | 1 | 2 |
 | User experience | 6 | 0 | 0 |
@@ -312,7 +312,7 @@ Ranked by risk to the commercial claim, not by effort:
 | Check | Result |
 | --- | --- |
 | `dotnet build PurviewGovernanceCopilot.sln -c Release` | Succeeded (local SDK 9.0.321) |
-| `dotnet test tests/PurviewCopilot.Tests -c Release` | 137 passed, 0 failed |
+| `dotnet test tests/PurviewCopilot.Tests -c Release` | 140 passed, 0 failed |
 | Catalog count (`grep -c 'Add("' ModuleCatalog.cs`) | 49 rules across 16 modules |
 | Exporter inventory | HTML, JSON, CSV, Markdown, PDF, DOCX, XLSX |
 | `ReportFormat` enum | `Html, Json, Csv, Markdown, Pdf, Docx, Xlsx` |

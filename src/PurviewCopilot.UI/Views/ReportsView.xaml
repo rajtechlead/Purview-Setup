@@ -5,6 +5,10 @@
     <StackPanel>
         <Border Style="{StaticResource Card}" Margin="0,0,0,16">
             <StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                    <TextBlock Text="Report type" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                    <ComboBox Width="160" ItemsSource="{Binding ReportTypes}" SelectedItem="{Binding SelectedReportType}" />
+                </StackPanel>
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
                     <TextBlock Text="Organisation" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="0,0,8,0" />
                     <TextBox Width="260" Text="{Binding Organization}" Margin="0,0,16,0" />

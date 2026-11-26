@@ -125,6 +125,16 @@ public enum AiProviderKind
     Custom
 }
 
+public enum ReportType
+{
+    Full = 0,
+    Executive,
+    Governance,
+    Security,
+    Compliance,
+    Remediation
+}
+
 public enum ReportFormat
 {
     Html = 0,

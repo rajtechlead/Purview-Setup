@@ -23,6 +23,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Binary report path**: `IReportExporter.RenderBytes` with a text default, and `GovernanceWorkspace.ExportReportAsync` now writes bytes so every format shares one audited export path.
 - **Persona dashboards, risk heatmap and trends**: Executive, Security, Governance and Compliance tabs; module × severity heatmap of open findings; the last twelve overall scores charted from stored assessments with maturity trail and delta.
 - **MSP tenancy**: a `tenant_profiles` registry with DPAPI-protected credentials, save/activate from Settings, in-session evidence cleared on activation, and a cross-tenant Portfolio tab built from each tenant's latest assessment.
+- **Report types**: Reports selects Full, Executive, Governance, Security, Compliance or Remediation; HTML, PDF and Markdown filter findings and recommendations to the audience, and JSON records the type.
 - **Platform floor**: the manifest no longer claims Windows 7/8/8.1, and a shared `PlatformSupport` check refuses pre-1809 builds before the database opens.
 - **Trend report**: Monitoring exports a Markdown time series of overall, security, governance, compliance and risk scores with first-to-last direction and per-assessment rows.
 - **Per-customer RBAC**: tenant profiles carry Viewer/Operator/Approver/Administrator assignments, editable in Settings. Tenant visibility, activation, edits, portfolio and deployment operator/approver checks are enforced; legacy profiles stay limited to their recorded owner.

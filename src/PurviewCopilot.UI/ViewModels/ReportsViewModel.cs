@@ -13,6 +13,7 @@ public sealed class ReportsViewModel : PageViewModel
     private readonly GovernanceWorkspace _workspace;
     private string _status = "Run an assessment to generate reports.";
     private string _organization = string.Empty;
+    private ReportType _selectedReportType = ReportType.Full;
 
     public ReportsViewModel(GovernanceWorkspace workspace)
     {
@@ -30,6 +31,8 @@ public sealed class ReportsViewModel : PageViewModel
     public override string Subtitle => "Executive readiness against ISO 27001, NIST CSF, CIS, SOC 2, HIPAA, GDPR and PCI-DSS.";
 
     public ObservableCollection<FrameworkCoverage> Frameworks { get; } = new();
+    public IReadOnlyList<ReportType> ReportTypes { get; } = Enum.GetValues<ReportType>();
+    public ReportType SelectedReportType { get => _selectedReportType; set => SetProperty(ref _selectedReportType, value); }
 
     public string Status { get => _status; private set => SetProperty(ref _status, value); }
 
@@ -78,16 +81,17 @@ public sealed class ReportsViewModel : PageViewModel
         var dialog = new SaveFileDialog
         {
             Filter = $"Report (*{extension})|*{extension}",
-            FileName = $"purview-governance-{DateTime.Now:yyyyMMdd-HHmm}{extension}",
-            Title = "Export governance report"
+            FileName = $"purview-{SelectedReportType.ToString().ToLowerInvariant()}-{DateTime.Now:yyyyMMdd-HHmm}{extension}",
+            Title = $"Export {SelectedReportType} report"
         };
 
         if (dialog.ShowDialog() != true) return;
 
         try
         {
-            await _workspace.ExportReportAsync(format, dialog.FileName, Organization, Environment.UserName).ConfigureAwait(true);
-            Status = $"Exported {format} report to {dialog.FileName}";
+            await _workspace.ExportReportAsync(format, dialog.FileName, Organization, Environment.UserName, SelectedReportType)
+                .ConfigureAwait(true);
+            Status = $"Exported {SelectedReportType} {format} report to {dialog.FileName}";
         }
         catch (Exception ex)
         {

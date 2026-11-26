@@ -58,9 +58,10 @@ public sealed class PdfReportExporter : IReportExporter
 
         var assessment = context.Assessment;
         var scores = assessment.Scores;
+        var type = context.ReportType;
 
         Put("Purview Governance Copilot", "F2", 19);
-        Put($"Governance report — {context.OrganizationName}", "F2", 13);
+        Put($"{type} governance report — {context.OrganizationName}", "F2", 13);
         Put($"Generated {context.GeneratedUtc:yyyy-MM-dd HH:mm} UTC by {context.GeneratedBy}", "F1", 9);
         Put($"Tenant {context.Tenant.TenantName} · Assessment {assessment.Id} · {assessment.RuleCount} rules evaluated", "F1", 9);
 
@@ -94,23 +95,29 @@ public sealed class PdfReportExporter : IReportExporter
             }
         }
 
-        Heading("Findings");
-        foreach (var finding in assessment.Findings.OrderByDescending(f => f.Severity).ThenBy(f => f.Id).Take(80))
+        if (ReportProfile.IncludesFindings(type))
         {
-            Put($"[{finding.Status}] {finding.Id} — {Truncate(finding.Title, 90)}", "F2", 8.5);
-            Wrapped($"Evidence: {finding.Evidence}", "F1", 8);
-            if (!string.IsNullOrWhiteSpace(finding.Remediation))
+            Heading("Findings");
+            foreach (var finding in ReportProfile.Findings(assessment, type).Take(80))
             {
-                Wrapped($"Remediation: {finding.Remediation}", "F1", 8);
+                Put($"[{finding.Status}] {finding.Id} — {Truncate(finding.Title, 90)}", "F2", 8.5);
+                Wrapped($"Evidence: {finding.Evidence}", "F1", 8);
+                if (!string.IsNullOrWhiteSpace(finding.Remediation))
+                {
+                    Wrapped($"Remediation: {finding.Remediation}", "F1", 8);
+                }
+                y -= 2;
             }
-            y -= 2;
         }
 
-        Heading("Recommendations");
-        foreach (var recommendation in assessment.Recommendations.Take(40))
+        if (ReportProfile.IncludesRecommendations(type))
         {
-            Put($"{recommendation.Priority} · {recommendation.Id} — {Truncate(recommendation.Title, 85)}", "F1", 8.5);
-            Wrapped($"Licences: {string.Join(", ", recommendation.RequiredLicenses)} · Change risk: {recommendation.ChangeRisk}", "F1", 8);
+            Heading("Recommendations");
+            foreach (var recommendation in ReportProfile.Recommendations(assessment, type).Take(40))
+            {
+                Put($"{recommendation.Priority} · {recommendation.Id} — {Truncate(recommendation.Title, 85)}", "F1", 8.5);
+                Wrapped($"Licences: {string.Join(", ", recommendation.RequiredLicenses)} · Change risk: {recommendation.ChangeRisk}", "F1", 8);
+            }
         }
 
         if (page.Length > 0)

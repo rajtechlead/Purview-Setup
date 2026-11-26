@@ -213,7 +213,8 @@ public sealed record ReportContext(
     string OrganizationName,
     string GeneratedBy,
     DateTimeOffset GeneratedUtc,
-    IReadOnlyList<FrameworkCoverage> Frameworks);
+    IReadOnlyList<FrameworkCoverage> Frameworks,
+    ReportType ReportType = ReportType.Full);
 
 public sealed record FrameworkCoverage(string Framework, double Percent, int TotalControls, int CoveredControls, IReadOnlyList<string> Gaps);
 

@@ -283,7 +283,7 @@ public sealed class GovernanceWorkspace
     /// <summary>Configuration-as-code import. Returns a new plan that must be simulated and approved again.</summary>
     public ChangePlan ImportPlan(string json) => ConfigurationPackage.Import(json, _clock.UtcNow);
 
-    public string RenderReport(ReportFormat format, string organization, string generatedBy)
+    public string RenderReport(ReportFormat format, string organization, string generatedBy, ReportType type = ReportType.Full)
     {
         EnsureReportReady();
 
@@ -296,10 +296,11 @@ public sealed class GovernanceWorkspace
             organization,
             generatedBy,
             _clock.UtcNow,
-            Frameworks));
+            Frameworks,
+            type));
     }
 
-    public byte[] RenderReportBytes(ReportFormat format, string organization, string generatedBy)
+    public byte[] RenderReportBytes(ReportFormat format, string organization, string generatedBy, ReportType type = ReportType.Full)
     {
         EnsureReportReady();
 
@@ -312,7 +313,8 @@ public sealed class GovernanceWorkspace
             organization,
             generatedBy,
             _clock.UtcNow,
-            Frameworks));
+            Frameworks,
+            type));
     }
 
     private void EnsureReportReady()
@@ -326,9 +328,10 @@ public sealed class GovernanceWorkspace
         string path,
         string organization,
         string generatedBy,
+        ReportType type = ReportType.Full,
         CancellationToken cancellationToken = default)
     {
-        var bytes = RenderReportBytes(format, organization, generatedBy);
+        var bytes = RenderReportBytes(format, organization, generatedBy, type);
 
         Directory.CreateDirectory(Path.GetDirectoryName(path) ?? ".");
         await File.WriteAllBytesAsync(path, bytes, cancellationToken).ConfigureAwait(false);
