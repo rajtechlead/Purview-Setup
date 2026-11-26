@@ -1,5 +1,7 @@
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Windows.Input;
+using Microsoft.Win32;
 using System.Windows.Threading;
 using PurviewCopilot.Application.Abstractions;
 using PurviewCopilot.Application.Ai;
@@ -24,6 +26,9 @@ public sealed class MonitoringViewModel : PageViewModel
     private string _aiCostText = string.Empty;
     private string _alertWebhookUrl = string.Empty;
     private string _alertDeliveryStatus = "No webhook configured; alerts stay in-app.";
+    private string _cliPath = "pgc.exe";
+    private string _runAt = "06:00";
+    private string _taskScheduleStatus = "No Task Scheduler script generated.";
     private int _intervalMinutes;
     private bool _checking;
 
@@ -42,6 +47,7 @@ public sealed class MonitoringViewModel : PageViewModel
         CheckNowCommand = new AsyncRelayCommand(CheckNowAsync, () => !_checking);
         SaveScheduleCommand = new AsyncRelayCommand(SaveScheduleAsync);
         SendAlertsCommand = new AsyncRelayCommand(SendAlertsAsync);
+        SaveTaskScheduleCommand = new AsyncRelayCommand(SaveTaskScheduleAsync);
 
         _timer = new DispatcherTimer();
         _timer.Tick += OnTimerTick;
@@ -59,6 +65,9 @@ public sealed class MonitoringViewModel : PageViewModel
     public string ScheduleText { get => _scheduleText; private set => SetProperty(ref _scheduleText, value); }
     public string AlertWebhookUrl { get => _alertWebhookUrl; set => SetProperty(ref _alertWebhookUrl, value); }
     public string AlertDeliveryStatus { get => _alertDeliveryStatus; private set => SetProperty(ref _alertDeliveryStatus, value); }
+    public string CliPath { get => _cliPath; set => SetProperty(ref _cliPath, value); }
+    public string RunAt { get => _runAt; set => SetProperty(ref _runAt, value); }
+    public string TaskScheduleStatus { get => _taskScheduleStatus; private set => SetProperty(ref _taskScheduleStatus, value); }
     public string AiUsageText { get => _aiUsageText; private set => SetProperty(ref _aiUsageText, value); }
     public string AiCostText { get => _aiCostText; private set => SetProperty(ref _aiCostText, value); }
     public int IntervalMinutes { get => _intervalMinutes; set => SetProperty(ref _intervalMinutes, value); }
@@ -67,6 +76,7 @@ public sealed class MonitoringViewModel : PageViewModel
     public ICommand CheckNowCommand { get; }
     public ICommand SaveScheduleCommand { get; }
     public ICommand SendAlertsCommand { get; }
+    public ICommand SaveTaskScheduleCommand { get; }
 
     public override async Task RefreshAsync()
     {
@@ -162,6 +172,53 @@ public sealed class MonitoringViewModel : PageViewModel
         catch (Exception ex)
         {
             Status = $"Schedule save failed: {ex.Message}";
+        }
+    }
+
+    private async Task SaveTaskScheduleAsync()
+    {
+        try
+        {
+            var settings = await _settings.LoadAsync().ConfigureAwait(true);
+
+            if (string.IsNullOrWhiteSpace(settings.Auth.TenantId) ||
+                string.IsNullOrWhiteSpace(settings.Auth.ClientId) ||
+                string.IsNullOrWhiteSpace(settings.Auth.CertificateThumbprint))
+            {
+                TaskScheduleStatus = "Complete the connection settings with a certificate thumbprint first.";
+                return;
+            }
+
+            var dialog = new SaveFileDialog
+            {
+                Filter = "PowerShell script (*.ps1)|*.ps1",
+                FileName = "purview-daily-assessment.ps1"
+            };
+
+            if (dialog.ShowDialog() != true) return;
+
+            var dataDirectory = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "PurviewGovernanceCopilot");
+            var reportDirectory = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+                "PurviewGovernanceReports");
+
+            var script = TaskSchedulerScript.Build(new TaskScheduleOptions(
+                CliPath.Trim(),
+                settings.Auth.TenantId,
+                settings.Auth.ClientId,
+                settings.Auth.CertificateThumbprint,
+                dataDirectory,
+                reportDirectory,
+                RunAt.Trim()));
+
+            await File.WriteAllTextAsync(dialog.FileName, script).ConfigureAwait(true);
+            TaskScheduleStatus = $"Saved {dialog.FileName}. Run it once with -Register to create the daily task; it never applies changes.";
+        }
+        catch (Exception ex)
+        {
+            TaskScheduleStatus = $"Task Scheduler script failed: {ex.Message}";
         }
     }
 

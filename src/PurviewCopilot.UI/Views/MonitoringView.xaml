@@ -68,6 +68,22 @@
 
         <Border Style="{StaticResource Card}" Margin="0,0,0,16">
             <StackPanel>
+                <TextBlock Text="Unattended scheduling" Style="{StaticResource SectionHeader}" />
+                <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,8"
+                           Text="Generate a PowerShell script that runs the headless pgc CLI daily. Run the script once with -Register to create the Task Scheduler job; scheduled runs are read-only and write a timestamped HTML report." />
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                    <TextBlock Text="pgc path" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                    <TextBox Width="220" Text="{Binding CliPath}" Margin="0,0,10,0" />
+                    <TextBlock Text="Daily at" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                    <TextBox Width="60" Text="{Binding RunAt}" Margin="0,0,10,0" />
+                    <Button Content="Save Task Scheduler script" Command="{Binding SaveTaskScheduleCommand}" />
+                </StackPanel>
+                <TextBlock Text="{Binding TaskScheduleStatus}" Style="{StaticResource Muted}" TextWrapping="Wrap" />
+            </StackPanel>
+        </Border>
+
+        <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+            <StackPanel>
                 <TextBlock Text="AI usage ledger" Style="{StaticResource SectionHeader}" />
                 <TextBlock Text="{Binding AiUsageText}" FontSize="13" />
                 <TextBlock Text="{Binding AiCostText}" Style="{StaticResource Muted}" TextWrapping="Wrap" />

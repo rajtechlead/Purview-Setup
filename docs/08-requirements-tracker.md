@@ -18,7 +18,7 @@ Verified against commit `353bde2` on 25 November 2026 by reading the source, cou
 
 | Code | Meaning |
 | --- | --- |
-| **T** | Covered by an automated test (92 tests, all passing at audit time). |
+| **T** | Covered by an automated test (97 tests, all passing at audit time). |
 | **B** | Builds and is reachable from the composition root; behaviour not exercised end to end. |
 | **C** | Code exists but is unexercised here (no tenant, certificate, API key or admin rights). |
 | **D** | Documentation or project/manifest artifact only; nothing executes it here. |
@@ -181,7 +181,7 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 | MON-01 | Monitor governance, security, compliance and configuration drift | **Delivered** | T | `DriftDetector` compares a stored baseline with a fresh collection across all four kinds (11 rules). |
 | MON-02 | Generate alerts | **Delivered** | T | `AlertBuilder` generates alerts from drift, score regressions (≤ −5 points) and critical failures; Monitoring lists them and can deliver them to an operator HTTPS webhook (suitable for Teams/Slack incoming webhooks) on **Send alerts now** or automatically after a scheduled check. Rejects non-https URLs; payload has id, title, detail, severity and timestamp. Tests: `MonitoringAlertTests`, `AlertNotifierTests`. |
 | MON-03 | Trend reports | **Partial** | T | Assessment history is stored per tenant; no trend chart, delta view or time-series report. |
-| MON-04 | Continuous (scheduled) monitoring | **Partial** | B | In-app `DispatcherTimer` re-runs the read-only assessment every N minutes (minimum 15, off by default) and refreshes drift, alerts and licence signals; only runs while the window is open. No Windows service or Task Scheduler job. |
+| MON-04 | Continuous (scheduled) monitoring | **Delivered** | T | In-app interval (minimum 15 minutes) for while the app is open, plus **Save Task Scheduler script**: a generated PowerShell script that registers a daily job running `pgc assess`, writes a timestamped HTML report and never applies changes. Run once with `-Register`; the task account needs the certificate. Tests: `TaskSchedulerScriptTests`. |
 
 ## O. Reporting
 
@@ -267,9 +267,9 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 
 | Status | Count | Share |
 | --- | --- | --- |
-| **Delivered** | 99 | 74% |
+| **Delivered** | 100 | 75% |
 | **Partial** | 27 | 20% |
-| **Not delivered** | 8 | 6% |
+| **Not delivered** | 7 | 5% |
 | **Total tracked** | 134 | 100% |
 
 By section:
@@ -289,7 +289,7 @@ By section:
 | Approval workflow | 2 | 0 | 0 |
 | Offline and regulated | 3 | 0 | 0 |
 | Licence optimisation | 1 | 1 | 0 |
-| Continuous monitoring | 2 | 2 | 0 |
+| Continuous monitoring | 3 | 1 | 0 |
 | Reporting | 5 | 1 | 0 |
 | Security engineering | 11 | 4 | 1 |
 | Architecture and technology | 7 | 1 | 2 |
@@ -305,19 +305,18 @@ Ranked by risk to the commercial claim, not by effort:
 2. **Live deployment execution (DEP-05)** — by design, but the specification asks for apply and rollback; the reviewed script and reversal script exist, execution does not.
 3. **Security Copilot (AIA-02)** — no generally available tenant-licensed API to integrate here.
 4. **Config-as-code breadth (CAC-02)** — no ARM/Bicep/Terraform output, and existing tenant objects are not exported individually.
-5. **Unattended scheduling (MON-04)** — checks run only while the app is open; there is no Windows service or Task Scheduler integration.
-6. **Guided onboarding wizard (AUT-12)** — certificate and connection actions exist, but there is no stepped app-registration/consent wizard.
-7. **Code signing, MSIX packaging and a hosted update manifest (SEC-11, SEC-16, INS-02)** — the MSI is produced but unsigned, the updater has no published manifest, and there is no `.msix` build.
-8. **SQL Server support (ARC-08)** and **WinUI 3 (ARC-02)**.
-9. **DSPM, Compliance Manager and Defender data collection (DSC-08, DSC-11)**.
-10. **SQLCipher page encryption and per-customer RBAC (SEC-14 metadata, MSP-03)** — sensitive payloads are now encrypted, but database pages and tenant metadata are not, and all saved tenants remain reachable by one Windows user.
+5. **Guided onboarding wizard (AUT-12)** — certificate and connection actions exist, but there is no stepped app-registration/consent wizard.
+6. **Code signing, MSIX packaging and a hosted update manifest (SEC-11, SEC-16, INS-02)** — the MSI is produced but unsigned, the updater has no published manifest, and there is no `.msix` build.
+7. **SQL Server support (ARC-08)** and **WinUI 3 (ARC-02)**.
+8. **DSPM, Compliance Manager and Defender data collection (DSC-08, DSC-11)**.
+9. **SQLCipher page encryption and per-customer RBAC (SEC-14 metadata, MSP-03)** — sensitive payloads are now encrypted, but database pages and tenant metadata are not, and all saved tenants remain reachable by one Windows user.
 
 ## Verification performed
 
 | Check | Result |
 | --- | --- |
 | `dotnet build PurviewGovernanceCopilot.sln -c Release` | Succeeded (local SDK 9.0.321) |
-| `dotnet test tests/PurviewCopilot.Tests -c Release` | 92 passed, 0 failed |
+| `dotnet test tests/PurviewCopilot.Tests -c Release` | 97 passed, 0 failed |
 | Catalog count (`grep -c 'Add("' ModuleCatalog.cs`) | 49 rules across 16 modules |
 | Exporter inventory | HTML, JSON, CSV, Markdown, PDF, DOCX, XLSX |
 | `ReportFormat` enum | `Html, Json, Csv, Markdown, Pdf, Docx, Xlsx` |

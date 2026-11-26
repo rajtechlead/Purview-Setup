@@ -15,7 +15,7 @@ Designed and built by **Raj Raja** · Owned by **Belle-RajaCorp** · contact@bel
 | Scoring | Security, Governance, Compliance, Maturity, Risk, AI Governance, Copilot Readiness |
 | Planning | Recommended, guided, custom, expert and greenfield change plans with full change-management packs |
 | Safety | Pre-change backups, simulation (what-if), 3-stage approval (Security → Compliance → CAB), rollback packages |
-| Monitoring | Drift detection, local alerts with optional HTTPS webhook delivery, an in-app check schedule, licence utilisation and optimisation insights, score trends and a module × severity risk heatmap |
+| Monitoring | Drift detection, local alerts with optional HTTPS webhook delivery, an in-app check schedule, a generated daily Task Scheduler job for the CLI, licence utilisation and optimisation insights, score trends and a module × severity risk heatmap |
 | National clouds | Connection selector for Commercial/GCC, GCC High and DoD with matching Entra, Graph and compliance PowerShell endpoints |
 | Multi-tenant | Customer tenant registry with per-tenant credentials, tenant activation, a cross-tenant portfolio of latest scores and CSV export |
 | Updates | HTTPS manifest check with version comparison and SHA-256-verified MSI download; installing stays manual |
@@ -64,7 +64,7 @@ src/
   PurviewCopilot.UI/              # WPF shell, dashboards, pages (MVVM)
   PurviewCopilot.Cli/             # headless `pgc assess` / `pgc verify-audit`
 tests/
-  PurviewCopilot.Tests/           # 92 automated tests
+  PurviewCopilot.Tests/           # 97 automated tests
 docs/                             # architecture, design, security, guides, traceability
 installer/                        # WiX MSI project + MSIX manifest
 dist/                             # built MSI + SHA-256 (framework-dependent, unsigned)
