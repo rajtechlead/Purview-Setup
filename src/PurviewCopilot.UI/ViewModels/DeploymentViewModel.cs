@@ -53,6 +53,7 @@ public sealed class DeploymentViewModel : PageViewModel
     private string _phaseApprover = string.Empty;
     private string _phaseApproverRole = "Change Manager";
     private bool _phaseRiskAccepted;
+    private bool _phaseWhatIfAcknowledged;
     private string _phaseStatusText = "No phase prepared.";
     private string _phaseLog = string.Empty;
     private DeploymentMode _mode = DeploymentMode.GuidedDeployment;
@@ -130,6 +131,7 @@ public sealed class DeploymentViewModel : PageViewModel
     public string PhaseApprover { get => _phaseApprover; set => SetProperty(ref _phaseApprover, value); }
     public string PhaseApproverRole { get => _phaseApproverRole; set => SetProperty(ref _phaseApproverRole, value); }
     public bool PhaseRiskAccepted { get => _phaseRiskAccepted; set => SetProperty(ref _phaseRiskAccepted, value); }
+    public bool PhaseWhatIfAcknowledged { get => _phaseWhatIfAcknowledged; set => SetProperty(ref _phaseWhatIfAcknowledged, value); }
     public string PhaseStatusText { get => _phaseStatusText; private set => SetProperty(ref _phaseStatusText, value); }
     public string PhaseLog { get => _phaseLog; private set => SetProperty(ref _phaseLog, value); }
 
@@ -290,7 +292,8 @@ public sealed class DeploymentViewModel : PageViewModel
                 true,
                 verified,
                 verified,
-                PhaseRiskAccepted || Plan.DestructiveOperationCount == 0);
+                PhaseRiskAccepted || Plan.DestructiveOperationCount == 0,
+                PhaseWhatIfAcknowledged);
 
             var result = await _liveExecutor.ExecuteAsync(Plan, _phaseExecution, settings.Auth, tenant, authorization)
                 .ConfigureAwait(true);

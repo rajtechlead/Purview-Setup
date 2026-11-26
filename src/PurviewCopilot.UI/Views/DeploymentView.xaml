@@ -75,6 +75,7 @@
                         <WrapPanel Margin="0,0,0,6">
                             <CheckBox Content="Enable live execution this session" IsChecked="{Binding LiveExecutionEnabled}" VerticalAlignment="Center" Margin="0,0,10,6" ToolTip="Off by default. The safety gate still requires simulation, backup, approval, authentication and connectivity." />
                             <CheckBox Content="Risk accepted" IsChecked="{Binding PhaseRiskAccepted}" VerticalAlignment="Center" Margin="0,0,10,6" />
+                            <CheckBox Content="I acknowledge the what-if report" IsChecked="{Binding PhaseWhatIfAcknowledged}" VerticalAlignment="Center" Margin="0,0,10,6" />
                             <Button Content="Execute approved phase (live)" Command="{Binding ExecutePhaseCommand}" Margin="0,0,8,6" />
                             <Button Content="Mark rolled back" Command="{Binding RollbackPhaseCommand}" Margin="0,0,8,6" />
                         </WrapPanel>

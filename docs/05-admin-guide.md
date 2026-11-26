@@ -124,7 +124,7 @@ Evidence handling: reports and backups can contain tenant identifiers. Keep them
 2. On Deployment choose a phase and **Simulate + backup phase**. The phase is failed if simulation fails.
 3. **Back up tenant objects** for a full label/DLP/retention export, in addition to the automatic phase backup.
 4. Enter an approver and role and **Approve phase**. Self-approval and tenant-administrator roles are rejected.
-5. Enable **live execution this session** only inside the change window; accept the risk when the phase contains destructive operations. **Execute approved phase (live)** runs the reviewed PowerShell with certificate environment variables. The build ships fail-closed and the opt-in is not persisted.
+5. Review the change-management pack and tick **I acknowledge the what-if report**. Enable **live execution this session** only inside the change window; accept the risk when the phase contains destructive operations. **Execute approved phase (live)** runs the reviewed PowerShell with certificate environment variables. The build ships fail-closed and the opt-in is not persisted.
 6. The app re-collects the tenant and validates the phase automatically. A failed phase blocks the next phase; correct it or roll back.
 7. Repeat in order: discovery, audit/monitoring, information protection, DLP, records, insider risk/AI. Do not combine phases.
 

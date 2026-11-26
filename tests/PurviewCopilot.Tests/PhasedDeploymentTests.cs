@@ -32,7 +32,7 @@ public class PhasedDeploymentTests
         var execution = Execution(PhaseStatus.Approved);
 
         var blocked = DeploymentGate.Evaluate(plan, execution, new DeploymentAuthorization(
-            false, false, false, false, false, false, false));
+            false, false, false, false, false, false, false, false));
 
         Assert.True(blocked.Blocked);
         Assert.Contains(blocked.Reasons, r => r.Contains("Simulation", StringComparison.Ordinal));
@@ -49,7 +49,7 @@ public class PhasedDeploymentTests
         var result = DeploymentGate.Evaluate(
             Plan(Operation("a", ModuleKey.Audit)),
             Execution(PhaseStatus.Approved),
-            new DeploymentAuthorization(true, true, true, true, true, true, true));
+            new DeploymentAuthorization(true, true, true, true, true, true, true, true));
 
         Assert.False(result.Blocked);
     }
@@ -60,7 +60,7 @@ public class PhasedDeploymentTests
         var plan = Plan(new ChangeOperation("a", ModuleKey.DataLossPrevention, OperationAction.Delete, "policy", "{}", true, true));
 
         var result = DeploymentGate.Evaluate(plan, Execution(PhaseStatus.Approved),
-            new DeploymentAuthorization(true, true, true, true, true, true, false));
+            new DeploymentAuthorization(true, true, true, true, true, true, false, true));
 
         Assert.True(result.Blocked);
         Assert.Contains(result.Reasons, r => r.Contains("risk", StringComparison.OrdinalIgnoreCase));
@@ -202,7 +202,7 @@ public class PhasedDeploymentTests
             DateTimeOffset.UtcNow, Array.Empty<string>());
 
     private static DeploymentAuthorization Authorization() =>
-        new(true, true, true, true, true, true, true);
+        new(true, true, true, true, true, true, true, true);
 
     private static ChangeOperation Operation(string id, ModuleKey module) =>
         new(id, module, OperationAction.Update, id, "{}", false, true);

@@ -10,7 +10,8 @@ public sealed record DeploymentAuthorization(
     bool RollbackReady,
     bool AuthenticationValidated,
     bool ConnectivityOk,
-    bool RiskAccepted);
+    bool RiskAccepted,
+    bool WhatIfAcknowledged);
 
 public sealed record DeploymentGateResult(bool Blocked, IReadOnlyList<string> Reasons)
 {
@@ -31,6 +32,7 @@ public static class DeploymentGate
         if (!authorization.AuthenticationValidated) reasons.Add("Authentication has not been validated.");
         if (!authorization.ConnectivityOk) reasons.Add("Tenant connectivity has not been validated.");
         if (plan.DestructiveOperationCount > 0 && !authorization.RiskAccepted) reasons.Add("Destructive operations require explicit risk acceptance.");
+        if (!authorization.WhatIfAcknowledged) reasons.Add("The operator has not acknowledged the what-if report.");
 
         if (execution.Status is PhaseStatus.Failed or PhaseStatus.Paused or PhaseStatus.RolledBack)
             reasons.Add($"The phase is {execution.Status} and must be reset before execution.");
