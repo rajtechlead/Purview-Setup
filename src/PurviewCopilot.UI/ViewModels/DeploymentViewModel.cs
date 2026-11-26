@@ -4,6 +4,7 @@ using System.Windows.Input;
 using Microsoft.Win32;
 using PurviewCopilot.Application.Abstractions;
 using PurviewCopilot.Application.Approvals;
+using PurviewCopilot.Application.Deployment;
 using PurviewCopilot.Application.Workspace;
 using PurviewCopilot.Domain;
 using PurviewCopilot.UI.Mvvm;
@@ -65,6 +66,8 @@ public sealed class DeploymentViewModel : PageViewModel
         ExportScriptCommand = new AsyncRelayCommand(() => ExportTextAsync("PowerShell script (*.ps1)|*.ps1", ".ps1", _workspace.GeneratePlanScript), () => !Busy && Plan is not null);
         ExportRollbackCommand = new AsyncRelayCommand(() => ExportTextAsync("PowerShell script (*.ps1)|*.ps1", ".ps1", _workspace.GenerateRollbackScript), () => !Busy && Plan is not null);
         ImportPackageCommand = new AsyncRelayCommand(ImportPackageAsync, () => !Busy);
+        ExportObjectsCommand = new AsyncRelayCommand(ExportObjectsAsync);
+        SaveIaCTemplatesCommand = new AsyncRelayCommand(SaveInfrastructureTemplatesAsync);
         ApplyCommand = new AsyncRelayCommand(ApplyAsync, () => !Busy && Plan is not null);
     }
 
@@ -96,6 +99,8 @@ public sealed class DeploymentViewModel : PageViewModel
     public ICommand ExportScriptCommand { get; }
     public ICommand ExportRollbackCommand { get; }
     public ICommand ImportPackageCommand { get; }
+    public ICommand ExportObjectsCommand { get; }
+    public ICommand SaveIaCTemplatesCommand { get; }
     public ICommand ApplyCommand { get; }
 
     public override async Task RefreshAsync()
@@ -216,6 +221,57 @@ public sealed class DeploymentViewModel : PageViewModel
         catch (Exception ex)
         {
             Status = $"Export failed: {ex.Message}";
+        }
+    }
+
+    private async Task ExportObjectsAsync()
+    {
+        var dialog = new SaveFileDialog
+        {
+            Filter = "PowerShell script (*.ps1)|*.ps1",
+            FileName = "purview-export-existing.ps1"
+        };
+
+        if (dialog.ShowDialog() != true) return;
+
+        try
+        {
+            await File.WriteAllTextAsync(dialog.FileName, ConfigurationExportScript.Script).ConfigureAwait(true);
+            Status = $"Saved {dialog.FileName}. It only reads existing labels, DLP and retention objects into JSON.";
+        }
+        catch (Exception ex)
+        {
+            Status = $"Export script failed: {ex.Message}";
+        }
+    }
+
+    private async Task SaveInfrastructureTemplatesAsync()
+    {
+        var dialog = new SaveFileDialog
+        {
+            Filter = "ARM template (*.json)|*.json",
+            FileName = "purview-infrastructure.json"
+        };
+
+        if (dialog.ShowDialog() != true) return;
+
+        try
+        {
+            var directory = Path.GetDirectoryName(dialog.FileName) ?? ".";
+            var baseName = Path.GetFileNameWithoutExtension(dialog.FileName);
+            var armPath = Path.Combine(directory, baseName + ".json");
+            var bicepPath = Path.Combine(directory, baseName + ".bicep");
+            var terraformPath = Path.Combine(directory, baseName + ".tf");
+
+            await File.WriteAllTextAsync(armPath, InfrastructureTemplates.Arm).ConfigureAwait(true);
+            await File.WriteAllTextAsync(bicepPath, InfrastructureTemplates.Bicep).ConfigureAwait(true);
+            await File.WriteAllTextAsync(terraformPath, InfrastructureTemplates.Terraform).ConfigureAwait(true);
+
+            Status = $"Saved {armPath}, {bicepPath} and {terraformPath}. They cover the Purview account only; compliance objects use the JSON/PowerShell export.";
+        }
+        catch (Exception ex)
+        {
+            Status = $"Template export failed: {ex.Message}";
         }
     }
 

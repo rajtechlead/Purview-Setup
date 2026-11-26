@@ -66,7 +66,7 @@ Status values: **Implemented** · **Partial** · **Planned** · **Not implemente
 | Simulation, what-if, pre/post validation | Implemented | `ChangeExecutor.SimulateAsync`, plan validation steps |
 | Approval workflow: change requests, multi-stage, CAB, history | Implemented | `ApprovalWorkflow` (Security → Compliance → CAB), append-only history, plan state |
 | Multi-tenant MSP mode | Not implemented | Single configured tenant; no switcher or per-customer isolation |
-| Configuration-as-code: PowerShell, ARM, Bicep, Terraform, JSON | Partial | PowerShell script generation and internal JSON; no ARM/Bicep/Terraform |
+| Configuration-as-code: PowerShell, ARM, Bicep, Terraform, JSON | Delivered | PowerShell plan and object export, JSON package import/export, and ARM/Bicep/Terraform for the Purview account (policy is not ARM-deployable) |
 
 ## Operations, reporting and UX
 

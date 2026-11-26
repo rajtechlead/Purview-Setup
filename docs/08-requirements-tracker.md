@@ -18,7 +18,7 @@ Verified against commit `353bde2` on 25 November 2026 by reading the source, cou
 
 | Code | Meaning |
 | --- | --- |
-| **T** | Covered by an automated test (97 tests, all passing at audit time). |
+| **T** | Covered by an automated test (101 tests, all passing at audit time). |
 | **B** | Builds and is reachable from the composition root; behaviour not exercised end to end. |
 | **C** | Code exists but is unexercised here (no tenant, certificate, API key or admin rights). |
 | **D** | Documentation or project/manifest artifact only; nothing executes it here. |
@@ -149,7 +149,7 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 | ID | Requirement | Status | Proof | Evidence / gap |
 | --- | --- | --- | --- | --- |
 | CAC-01 | Export configuration as PowerShell | **Delivered** | T | `PurviewScriptLibrary` emits real, idempotent cmdlets for twelve controls and explicit `MANUAL` steps with verification commands for the rest. Exported from Deployment as `.ps1`. Tests: `Script_UsesTheRealCmdlet_ForMappedControls`, `Script_MarksUnmappedControlsAsManual_AndNeverGuesses`. |
-| CAC-02 | Export as ARM, Bicep and Terraform where applicable | **Not delivered** | — | No templates in the repository. Note: Purview policy is not ARM-deployable, so this should be scoped to the Entra/Graph subset before implementation. |
+| CAC-02 | Export as ARM, Bicep and Terraform where applicable | **Delivered** | T | `InfrastructureTemplates` emits ARM, Bicep and Terraform for the Azure Purview account (system-assigned identity), saved together from Deployment. `ConfigurationExportScript` exports existing labels, label/auto-label policies and rules, DLP, retention and compliance tags to JSON with Get- only cmdlets. Microsoft does not expose Purview compliance objects as ARM resources, so policy remains JSON/PowerShell; the templates are deliberately scoped to the account. Tests: `ConfigurationExportTests`. |
 | CAC-03 | JSON export and import | **Delivered** | T | `ConfigurationPackage` exports a versioned plan envelope and imports it with validation, a fresh plan id and forced re-approval. Assessment JSON export is separate. Tests: `ConfigurationPackage_RoundTripsOperations`, `ConfigurationPackage_RejectsPlanWithoutOperations`. |
 
 ## K. Approval workflow
@@ -267,8 +267,8 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 
 | Status | Count | Share |
 | --- | --- | --- |
-| **Delivered** | 100 | 75% |
-| **Partial** | 27 | 20% |
+| **Delivered** | 101 | 75% |
+| **Partial** | 26 | 19% |
 | **Not delivered** | 7 | 5% |
 | **Total tracked** | 134 | 100% |
 
@@ -285,7 +285,7 @@ By section:
 | AI privacy guardrail | 11 | 1 | 0 |
 | Change management and safety | 4 | 3 | 0 |
 | Multi-tenant MSP | 2 | 0 | 1 |
-| Configuration-as-code | 2 | 0 | 1 |
+| Configuration-as-code | 3 | 0 | 0 |
 | Approval workflow | 2 | 0 | 0 |
 | Offline and regulated | 3 | 0 | 0 |
 | Licence optimisation | 1 | 1 | 0 |
@@ -304,19 +304,18 @@ Ranked by risk to the commercial claim, not by effort:
 1. **Per-customer RBAC (MSP-03)** — tenant switching, isolation, the portfolio and its CSV export exist, but all saved tenants remain reachable by one Windows user.
 2. **Live deployment execution (DEP-05)** — by design, but the specification asks for apply and rollback; the reviewed script and reversal script exist, execution does not.
 3. **Security Copilot (AIA-02)** — no generally available tenant-licensed API to integrate here.
-4. **Config-as-code breadth (CAC-02)** — no ARM/Bicep/Terraform output, and existing tenant objects are not exported individually.
-5. **Guided onboarding wizard (AUT-12)** — certificate and connection actions exist, but there is no stepped app-registration/consent wizard.
-6. **Code signing, MSIX packaging and a hosted update manifest (SEC-11, SEC-16, INS-02)** — the MSI is produced but unsigned, the updater has no published manifest, and there is no `.msix` build.
-7. **SQL Server support (ARC-08)** and **WinUI 3 (ARC-02)**.
-8. **DSPM, Compliance Manager and Defender data collection (DSC-08, DSC-11)**.
-9. **SQLCipher page encryption and per-customer RBAC (SEC-14 metadata, MSP-03)** — sensitive payloads are now encrypted, but database pages and tenant metadata are not, and all saved tenants remain reachable by one Windows user.
+4. **Guided onboarding wizard (AUT-12)** — certificate and connection actions exist, but there is no stepped app-registration/consent wizard.
+5. **Code signing, MSIX packaging and a hosted update manifest (SEC-11, SEC-16, INS-02)** — the MSI is produced but unsigned, the updater has no published manifest, and there is no `.msix` build.
+6. **SQL Server support (ARC-08)** and **WinUI 3 (ARC-02)**.
+7. **DSPM, Compliance Manager and Defender data collection (DSC-08, DSC-11)**.
+8. **SQLCipher page encryption and per-customer RBAC (SEC-14 metadata, MSP-03)** — sensitive payloads are now encrypted, but database pages and tenant metadata are not, and all saved tenants remain reachable by one Windows user.
 
 ## Verification performed
 
 | Check | Result |
 | --- | --- |
 | `dotnet build PurviewGovernanceCopilot.sln -c Release` | Succeeded (local SDK 9.0.321) |
-| `dotnet test tests/PurviewCopilot.Tests -c Release` | 97 passed, 0 failed |
+| `dotnet test tests/PurviewCopilot.Tests -c Release` | 101 passed, 0 failed |
 | Catalog count (`grep -c 'Add("' ModuleCatalog.cs`) | 49 rules across 16 modules |
 | Exporter inventory | HTML, JSON, CSV, Markdown, PDF, DOCX, XLSX |
 | `ReportFormat` enum | `Html, Json, Csv, Markdown, Pdf, Docx, Xlsx` |
