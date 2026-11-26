@@ -38,6 +38,8 @@ Ordered by risk reduction and by what the current build deliberately leaves out.
 
 Platform floor: **Done**. The manifest advertises Windows 10/11 only and startup refuses builds below 17763, so Windows 7/8/8.1 cannot run the app.
 
+MSIX packaging: **Done**. `installer/msix/Build-Msix.ps1` stages the publish output, supplies a full-trust manifest and assets, uses pinned SDK BuildTools and produces a hashed MSIX; signing is optional because no certificate exists here.
+
 Installer rollback: **Done**. `Rollback-PurviewGovernanceCopilot.ps1` ships beside the app and restores a named previous MSI, with `-WhatIf`, version verification and msiexec logs.
 
 Plugin modules: **Done**. `PluginModuleLoader` discovers external `IModule` assemblies from the user's plugins folder, isolates load failures and registers them as custom modules; the desktop and CLI both use the extended registry.

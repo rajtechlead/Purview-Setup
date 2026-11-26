@@ -23,6 +23,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Binary report path**: `IReportExporter.RenderBytes` with a text default, and `GovernanceWorkspace.ExportReportAsync` now writes bytes so every format shares one audited export path.
 - **Persona dashboards, risk heatmap and trends**: Executive, Security, Governance and Compliance tabs; module × severity heatmap of open findings; the last twelve overall scores charted from stored assessments with maturity trail and delta.
 - **MSP tenancy**: a `tenant_profiles` registry with DPAPI-protected credentials, save/activate from Settings, in-session evidence cleared on activation, and a cross-tenant Portfolio tab built from each tenant's latest assessment.
+- **MSIX package**: `installer/msix/Build-Msix.ps1` produces a sideloadable, optionally signed MSIX with logo assets; `dist/PurviewGovernanceCopilot-1.0.0.0.msix` and its SHA-256 are committed.
 - **One-click deployment**: One-Click Recommended now builds the preselected high/critical plan automatically, with the mandatory simulation and approvals unchanged.
 - **Real workload counts**: mailbox and OneDrive totals come from Graph usage reports with `Reports.Read.All` instead of being approximated from enabled users.
 - **Security assurance**: added `SECURITY.md` (disclosure, bug bar), `docs/10-security-assurance.md` (SDL phases, SSDF mapping, threat model, release sign-off) and a CodeQL C# workflow.

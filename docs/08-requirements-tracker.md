@@ -254,7 +254,7 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 | ID | Requirement | Status | Proof | Evidence / gap |
 | --- | --- | --- | --- | --- |
 | INS-01 | MSI/WiX project | **Delivered** | B | `installer/PurviewGovernanceCopilot.wixproj` + `Package.wxs` harvest the publish output into a per-machine package with major upgrade, Start Menu and desktop shortcuts. Built here with WiX 5.0.2 (`dotnet build … -p:PublishDir=…`). |
-| INS-02 | MSIX package | **Partial** | D | `installer/msix/AppxManifest.xml` only; there is no packaging project, assets or build step producing an `.msix`. |
+| INS-02 | MSIX package | **Delivered** | B | `installer/msix/Build-Msix.ps1` stages the publish output with a full-trust manifest and generated PNG assets, downloads pinned Windows SDK BuildTools when `makeappx` is absent, packs `dist/PurviewGovernanceCopilot-1.0.0.0.msix` and writes its SHA-256. Built and round-tripped here (package opens as a ZIP, manifest version and executable verified). Unsigned; signing is supported through `-CertificatePath` with `PGC_MSIX_CERT_PASSWORD`. |
 | INS-03 | Silent install | **Delivered** | D | `msiexec /i ... /qn` documented and used by the WiX package properties; not executed in this environment. |
 | INS-04 | Intune deployment | **Delivered** | D | Documented Win32/MSI Intune commands in `docs/05` §4. |
 | INS-05 | MECM/SCCM deployment | **Delivered** | D | Documented application model steps in `docs/05` §4. |
@@ -267,8 +267,8 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 
 | Status | Count | Share |
 | --- | --- | --- |
-| **Delivered** | 122 | 91% |
-| **Partial** | 8 | 6% |
+| **Delivered** | 123 | 92% |
+| **Partial** | 7 | 5% |
 | **Not delivered** | 4 | 3% |
 | **Total tracked** | 134 | 100% |
 
@@ -295,7 +295,7 @@ By section:
 | Architecture and technology | 7 | 1 | 2 |
 | User experience | 6 | 0 | 0 |
 | Help and About | 3 | 0 | 0 |
-| Installer | 6 | 1 | 0 |
+| Installer | 7 | 0 | 0 |
 
 ## What is genuinely missing
 

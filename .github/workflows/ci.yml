@@ -63,6 +63,18 @@ jobs:
           path: artifacts/publish/
           retention-days: 14
 
+      - name: Build MSIX (unsigned)
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File installer/msix/Build-Msix.ps1 -PublishDir artifacts/publish -Version 1.0.0.0
+
+      - name: Upload MSIX
+        uses: actions/upload-artifact@v4
+        with:
+          name: PurviewGovernanceCopilot-msix
+          path: |
+            dist/*.msix
+            dist/*.msix.sha256
+          retention-days: 14
+
       # Code signing is required for production releases.
       # Configure a certificate in repository secrets and enable this step:
       #
@@ -72,4 +84,5 @@ jobs:
       #     signtool sign /fd SHA256 /f ${{ secrets.SIGNING_CERT_PATH }} `
       #       /p ${{ secrets.SIGNING_CERT_PASSWORD }} `
       #       /tr http://timestamp.digicert.com /td SHA256 `
-      #       artifacts/publish/PurviewGovernanceCopilot.exe
+            #     artifacts/publish/PurviewGovernanceCopilot.exe
+      #     dist/PurviewGovernanceCopilot-1.0.0.0.msix
