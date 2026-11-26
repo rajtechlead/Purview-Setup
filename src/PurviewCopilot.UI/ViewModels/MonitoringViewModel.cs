@@ -7,6 +7,7 @@ using PurviewCopilot.Application.Abstractions;
 using PurviewCopilot.Application.Ai;
 using PurviewCopilot.Application.Licensing;
 using PurviewCopilot.Application.Monitoring;
+using PurviewCopilot.Application.Reporting;
 using PurviewCopilot.Application.Workspace;
 using PurviewCopilot.Domain;
 using PurviewCopilot.UI.Mvvm;
@@ -48,6 +49,7 @@ public sealed class MonitoringViewModel : PageViewModel
         SaveScheduleCommand = new AsyncRelayCommand(SaveScheduleAsync);
         SendAlertsCommand = new AsyncRelayCommand(SendAlertsAsync);
         SaveTaskScheduleCommand = new AsyncRelayCommand(SaveTaskScheduleAsync);
+        ExportTrendReportCommand = new AsyncRelayCommand(ExportTrendReportAsync);
 
         _timer = new DispatcherTimer();
         _timer.Tick += OnTimerTick;
@@ -77,6 +79,7 @@ public sealed class MonitoringViewModel : PageViewModel
     public ICommand SaveScheduleCommand { get; }
     public ICommand SendAlertsCommand { get; }
     public ICommand SaveTaskScheduleCommand { get; }
+    public ICommand ExportTrendReportCommand { get; }
 
     public override async Task RefreshAsync()
     {
@@ -172,6 +175,42 @@ public sealed class MonitoringViewModel : PageViewModel
         catch (Exception ex)
         {
             Status = $"Schedule save failed: {ex.Message}";
+        }
+    }
+
+    private async Task ExportTrendReportAsync()
+    {
+        var tenant = _workspace.Tenant;
+        if (tenant is null)
+        {
+            Status = "Run an assessment first; the trend report reads stored assessment history.";
+            return;
+        }
+
+        await _workspace.RefreshHistoryAsync(tenant.TenantId).ConfigureAwait(true);
+
+        var dialog = new SaveFileDialog
+        {
+            Filter = "Markdown report (*.md)|*.md",
+            FileName = $"purview-trend-{tenant.TenantId[..Math.Min(8, tenant.TenantId.Length)]}.md"
+        };
+
+        if (dialog.ShowDialog() != true) return;
+
+        try
+        {
+            var markdown = TrendReport.BuildMarkdown(
+                tenant.TenantName,
+                tenant.TenantId,
+                _workspace.History,
+                DateTimeOffset.UtcNow);
+
+            await File.WriteAllTextAsync(dialog.FileName, markdown).ConfigureAwait(true);
+            Status = $"Trend report saved to {dialog.FileName} ({_workspace.History.Count} stored assessment(s)).";
+        }
+        catch (Exception ex)
+        {
+            Status = $"Trend report failed: {ex.Message}";
         }
     }
 

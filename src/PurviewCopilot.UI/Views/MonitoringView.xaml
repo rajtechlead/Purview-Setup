@@ -5,7 +5,8 @@
     <StackPanel>
         <Border Style="{StaticResource Card}" Margin="0,0,0,16">
             <StackPanel Orientation="Horizontal">
-                <Button Content="Refresh signals" Command="{Binding RefreshCommand}" Margin="0,0,12,0" />
+                <Button Content="Refresh signals" Command="{Binding RefreshCommand}" Margin="0,0,8,0" />
+                <Button Content="Export trend report" Command="{Binding ExportTrendReportCommand}" Margin="0,0,12,0" />
                 <TextBlock Text="{Binding Status}" Style="{StaticResource Muted}" VerticalAlignment="Center" TextWrapping="Wrap" />
             </StackPanel>
         </Border>

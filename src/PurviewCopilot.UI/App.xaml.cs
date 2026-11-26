@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Threading;
+using PurviewCopilot.Domain;
 using PurviewCopilot.UI.ViewModels;
 
 namespace PurviewCopilot.UI;
@@ -15,11 +16,10 @@ public partial class App : System.Windows.Application
 
         // Windows Server 2019 / Windows 10 1809 (build 17763) is the supported floor.
         // Older, end-of-life builds are refused rather than allowed to fail unpredictably.
-        if (Environment.OSVersion.Version.Build < 17763)
+        if (!PlatformSupport.IsSupported(Environment.OSVersion.Version))
         {
             MessageBox.Show(
-                "Purview Governance Copilot requires Windows 10 version 1809 or later, " +
-                "Windows 11, or Windows Server 2019/2022/2025. End-of-life operating systems are not supported.",
+                $"Purview Governance Copilot requires {PlatformSupport.Describe()}",
                 "Unsupported operating system", MessageBoxButton.OK, MessageBoxImage.Stop);
             Shutdown(1);
             return;

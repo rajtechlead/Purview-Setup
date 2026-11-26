@@ -36,10 +36,12 @@ Ordered by risk reduction and by what the current build deliberately leaves out.
 
 ## Phase 1.3 — Reporting and multi-tenant
 
+Platform floor: **Done**. The manifest advertises Windows 10/11 only and startup refuses builds below 17763, so Windows 7/8/8.1 cannot run the app.
+
 **3 of 4 complete, 1 partial.** Updated 26 November 2026.
 
 - **PDF, DOCX and XLSX** — **Done**. Dependency-free writers: a paginated PDF 1.4 document with base-14 fonts, and OOXML packages built directly with `ZipArchive` for DOCX (single document part) and XLSX (Scores, Findings, Frameworks sheets). Exported from Reports; covered by five tests including escaping and package validity.
-- **Risk heatmap, trends and persona dashboards** — **Done**. The dashboard has Executive, Security, Governance and Compliance tabs; the Security tab carries a module × severity heatmap of open findings; Executive charts the last twelve overall scores from stored assessments and shows the maturity trail and delta.
+- **Risk heatmap, trends and persona dashboards** — **Done**. The dashboard has Executive, Security, Governance and Compliance tabs; the Security tab carries a module × severity heatmap of open findings; Executive charts the last twelve overall scores from stored assessments and shows the maturity trail and delta. Monitoring exports a Markdown trend report with overall/security/governance/compliance/risk direction.
 - **Multi-tenant MSP mode** — **Done**. Customer tenants persist in `tenant_profiles` with DPAPI-protected credentials; Settings saves/activates a tenant and clears in-session evidence. Per-customer access assignments (Viewer/Operator/Approver/Administrator) restrict which tenants appear, who may activate or edit them, and who may operate or approve a deployment. The Dashboard Portfolio and CSV export remain. Tests: `TenantAccessTests`.
 - **Scheduled monitoring** — **Partial**. Monitoring has an in-app schedule (`MonitoringIntervalMinutes`, minimum 15 minutes, off by default) that re-runs the read-only assessment and rebuilds drift, alerts and licence signals; **Check now** runs the same path. Alerts are generated locally from drift, score drops and critical failures, listed on the Monitoring page, and can be delivered to an operator-supplied HTTPS webhook (Teams/Slack incoming webhooks work) either on demand or after a scheduled check. **Save Task Scheduler script** generates a PowerShell file that registers a daily headless `pgc assess` job and writes timestamped HTML reports, so checks are not limited to an open window. There is no Windows service or native email/Teams connector yet.
 

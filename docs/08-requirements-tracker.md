@@ -18,7 +18,7 @@ Verified against commit `353bde2` on 25 November 2026 by reading the source, cou
 
 | Code | Meaning |
 | --- | --- |
-| **T** | Covered by an automated test (129 tests, all passing at audit time). |
+| **T** | Covered by an automated test (137 tests, all passing at audit time). |
 | **B** | Builds and is reachable from the composition root; behaviour not exercised end to end. |
 | **C** | Code exists but is unexercised here (no tenant, certificate, API key or admin rights). |
 | **D** | Documentation or project/manifest artifact only; nothing executes it here. |
@@ -31,7 +31,7 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 
 | ID | Requirement | Status | Proof | Evidence / gap |
 | --- | --- | --- | --- | --- |
-| PLT-01 | Windows 10/11 and Server 2019/2022/2025 only; EOL operating systems excluded | **Partial** | B | `App.xaml.cs` refuses builds below 17763 (Server 2019 / Win10 1809). `app.manifest` still declares Windows 7, 8 and 8.1 `supportedOS` GUIDs, contradicting the stated floor. Action: reduce the manifest to the Win10/11 GUID and add explicit Server 2019/2022/2025 compatibility notes. |
+| PLT-01 | Windows 10/11 and Server 2019/2022/2025 only; EOL operating systems excluded | **Delivered** | T | `app.manifest` declares only the Windows 10/11 GUID (Windows 7/8/8.1 removed) and `PlatformSupport` refuses builds below 17763 before any data is opened. Tests: `PlatformSupportTests`. |
 | PLT-02 | Single-pane workspace covering assessment, deployment, governance, monitoring, reporting, optimisation and lifecycle | **Delivered** | B | Nine pages: Dashboard, Assessment, Deployment, Monitoring, Reports, AI Assistant, Settings, Help, About (`src/PurviewCopilot.UI/Views`). |
 | PLT-03 | Support both greenfield and existing deployments | **Partial** | B | All six modes exist, but Greenfield differs only in recommendation preselection; there is no distinct first-run baseline or empty-tenant path. |
 | PLT-04 | Design grounded in Microsoft Learn, Purview, Entra, Graph, Security Copilot, CIS, NIST, OWASP, ISO 27001, SOC 2, HIPAA, GDPR and PCI-DSS guidance | **Delivered** | D | Framework references are attached per control (`ModuleCatalog.cs`) and reviewed in `docs/03`. No in-app live retrieval of Microsoft guidance. |
@@ -180,7 +180,7 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 | --- | --- | --- | --- | --- |
 | MON-01 | Monitor governance, security, compliance and configuration drift | **Delivered** | T | `DriftDetector` compares a stored baseline with a fresh collection across all four kinds (11 rules). |
 | MON-02 | Generate alerts | **Delivered** | T | `AlertBuilder` generates alerts from drift, score regressions (≤ −5 points) and critical failures; Monitoring lists them and can deliver them to an operator HTTPS webhook (suitable for Teams/Slack incoming webhooks) on **Send alerts now** or automatically after a scheduled check. Rejects non-https URLs; payload has id, title, detail, severity and timestamp. Tests: `MonitoringAlertTests`, `AlertNotifierTests`. |
-| MON-03 | Trend reports | **Partial** | T | Assessment history is stored per tenant; no trend chart, delta view or time-series report. |
+| MON-03 | Trend reports | **Delivered** | T | Dashboard charts the last twelve assessments; Monitoring **Export trend report** writes a Markdown time series with overall/security/governance/compliance/risk direction and per-assessment rows from stored history. Tests: `TrendReportTests`. |
 | MON-04 | Continuous (scheduled) monitoring | **Delivered** | T | In-app interval (minimum 15 minutes) for while the app is open, plus **Save Task Scheduler script**: a generated PowerShell script that registers a daily job running `pgc assess`, writes a timestamped HTML report and never applies changes. Run once with `-Register`; the task account needs the certificate. Tests: `TaskSchedulerScriptTests`. |
 
 ## O. Reporting
@@ -203,7 +203,7 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 | SEC-03 | CIS Controls | **Delivered** | D | CIS v8 mappings per control and in the security review. |
 | SEC-04 | NIST SSDF | **Partial** | D | Mapped in prose; no SSDF practice evidence or attestation. |
 | SEC-05 | Secure coding and least privilege | **Delivered** | B | Read-only collectors, parameterised SQL, encoded report output, no write cmdlets in the embedded script, per-user install. |
-| SEC-06 | RBAC | **Partial** | D | Tenant-side role guidance (Purview role groups, PIM) is assessed; the application itself has no roles. |
+| SEC-06 | RBAC | **Delivered** | T | Per-customer Viewer/Operator/Approver/Administrator assignments are persisted and enforced for visibility, activation, edits, portfolio and deployment operator/approver checks; tenant-side role guidance (Purview role groups, PIM) remains assessed. Tests: `TenantAccessTests`. |
 | SEC-07 | Dependency scanning | **Delivered** | D | CI runs `dotnet list package --vulnerable --include-transitive`; two direct third-party dependencies. |
 | SEC-08 | Vulnerability scanning | **Delivered** | D | Same CI gate; no container or binary scanner because there is no container. |
 | SEC-09 | Threat modelling | **Delivered** | D | STRIDE model with trust boundaries in `docs/03` §5. |
@@ -267,8 +267,8 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 
 | Status | Count | Share |
 | --- | --- | --- |
-| **Delivered** | 107 | 80% |
-| **Partial** | 23 | 17% |
+| **Delivered** | 110 | 82% |
+| **Partial** | 20 | 15% |
 | **Not delivered** | 4 | 3% |
 | **Total tracked** | 134 | 100% |
 
@@ -276,7 +276,7 @@ By section:
 
 | Section | Delivered | Partial | Not delivered |
 | --- | --- | --- | --- |
-| Platform and scope | 2 | 2 | 0 |
+| Platform and scope | 3 | 1 | 0 |
 | Authentication | 12 | 0 | 0 |
 | Discovery and assessment | 10 | 4 | 0 |
 | Deployment and change control | 2 | 3 | 0 |
@@ -289,9 +289,9 @@ By section:
 | Approval workflow | 2 | 0 | 0 |
 | Offline and regulated | 3 | 0 | 0 |
 | Licence optimisation | 1 | 1 | 0 |
-| Continuous monitoring | 3 | 1 | 0 |
+| Continuous monitoring | 4 | 0 | 0 |
 | Reporting | 5 | 1 | 0 |
-| Security engineering | 11 | 4 | 1 |
+| Security engineering | 12 | 3 | 1 |
 | Architecture and technology | 7 | 1 | 2 |
 | User experience | 6 | 0 | 0 |
 | Help and About | 3 | 0 | 0 |
@@ -312,7 +312,7 @@ Ranked by risk to the commercial claim, not by effort:
 | Check | Result |
 | --- | --- |
 | `dotnet build PurviewGovernanceCopilot.sln -c Release` | Succeeded (local SDK 9.0.321) |
-| `dotnet test tests/PurviewCopilot.Tests -c Release` | 129 passed, 0 failed |
+| `dotnet test tests/PurviewCopilot.Tests -c Release` | 137 passed, 0 failed |
 | Catalog count (`grep -c 'Add("' ModuleCatalog.cs`) | 49 rules across 16 modules |
 | Exporter inventory | HTML, JSON, CSV, Markdown, PDF, DOCX, XLSX |
 | `ReportFormat` enum | `Html, Json, Csv, Markdown, Pdf, Docx, Xlsx` |
