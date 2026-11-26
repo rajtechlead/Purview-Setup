@@ -268,8 +268,8 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 | Status | Count | Share |
 | --- | --- | --- |
 | **Delivered** | 107 | 80% |
-| **Partial** | 22 | 16% |
-| **Not delivered** | 5 | 4% |
+| **Partial** | 23 | 17% |
+| **Not delivered** | 4 | 3% |
 | **Total tracked** | 134 | 100% |
 
 By section:
