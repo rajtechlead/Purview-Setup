@@ -225,7 +225,7 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 | ARC-04 | MVVM | **Delivered** | B | ViewModels, `ObservableObject`, `RelayCommand`, `AsyncRelayCommand`; no code-behind logic. |
 | ARC-05 | Microsoft Graph SDK | **Partial** | B | Graph is consumed through typed `HttpClient` calls against v1.0/beta REST, not the SDK. |
 | ARC-06 | REST APIs | **Delivered** | B | Graph, Key Vault and all AI provider calls are REST. |
-| ARC-07 | SQLite | **Delivered** | T | Eight tables, WAL-friendly pooling, round-trip test. |
+| ARC-07 | SQLite | **Delivered** | T | Ten tables (assessments, plans, approvals, backups, audit, AI usage, settings, tenant profiles, finding actions, baselines), WAL-friendly pooling and round-trip tests. |
 | ARC-08 | Optional SQL Server | **Not delivered** | — | No SQL Server port or implementation. |
 | ARC-09 | Clean architecture, SOLID, DRY, dependency injection | **Delivered** | B | Four layers with ports/adapters and one composition root; rules are data-driven rather than duplicated per module. |
 | ARC-10 | Repository, factory and strategy patterns | **Delivered** | B | Stores as repositories, `AiProviderFactory`, strategy-shaped providers and modules. |

@@ -14,6 +14,8 @@ Pragmas: `journal_mode=WAL`, `foreign_keys=ON`. Schema is created idempotently o
 | `audit_log` | Local audit trail | `id` PK, `at_utc`, `actor`, `action`, `target`, `detail`, `correlation_id` |
 | `ai_usage` | Provider attempts, tokens and cost | `id` PK, `provider_id`, `model`, `prompt_tokens`, `completion_tokens`, `cost`, `succeeded`, `error_code`, `at_utc` |
 | `settings` | Single JSON document | `key` PK (`'app'`), `value` |
+| `tenant_profiles` | MSP customer tenants and per-customer access | `tenant_id` PK, `updated_utc`, `payload` |
+| `finding_actions` | Action-centre owner, due date, status and encrypted notes | `tenant_id`, `finding_id`, `updated_utc`, `payload` |
 | `baselines` | Reserved for persisted drift baselines | `tenant_id` PK, `updated_utc`, `payload` |
 
 Indexes: `assessments(tenant_id, run_utc DESC)`, `change_plans(tenant_id, created_utc DESC)`, `backups(tenant_id, created_utc DESC)`, `audit_log(at_utc DESC)`, `ai_usage(at_utc DESC)`.
@@ -71,7 +73,7 @@ The generated script is stored at `%LOCALAPPDATA%\PurviewGovernanceCopilot\scrip
 | `ICertificateService` | certificate lifecycle |
 | `IKeyVaultCertificateStore` | optional central PFX storage |
 | `IAiProvider` / `IAiProviderFactory` | provider adapter and construction |
-| `IChangeExecutor` | simulate / apply / rollback |
+| `IChangeExecutor` | simulate / apply / generate plan and rollback scripts |
 | `IReportExporter` | one renderer per format |
 
 ## 4. UI information architecture

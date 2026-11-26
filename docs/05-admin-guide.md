@@ -22,6 +22,8 @@ dotnet publish src/PurviewCopilot.UI -c Release -r win-x64 --self-contained true
 
 Output: `artifacts/publish/PurviewGovernanceCopilot.exe` plus the .NET runtime payload.
 
+For a one-command publish + MSI + checksum, run `powershell -File installer/build.ps1`. Add `-SigningCertificate <pfx>` to sign the executable and MSI when a certificate is available. Build the MSIX separately with `installer/msix/Build-Msix.ps1`.
+
 ## 3. Entra app registration and authentication provisioning
 
 ### Automated (recommended)
