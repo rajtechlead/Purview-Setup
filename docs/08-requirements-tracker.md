@@ -18,7 +18,7 @@ Verified against commit `353bde2` on 25 November 2026 by reading the source, cou
 
 | Code | Meaning |
 | --- | --- |
-| **T** | Covered by an automated test (88 tests, all passing at audit time). |
+| **T** | Covered by an automated test (92 tests, all passing at audit time). |
 | **B** | Builds and is reachable from the composition root; behaviour not exercised end to end. |
 | **C** | Code exists but is unexercised here (no tenant, certificate, API key or admin rights). |
 | **D** | Documentation or project/manifest artifact only; nothing executes it here. |
@@ -165,7 +165,7 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 | --- | --- | --- | --- | --- |
 | OFF-01 | Offline deployments for regulated and isolated environments | **Delivered** | B | Self-contained publish, local SQLite, no telemetry, self-contained HTML reports, local AI only. |
 | OFF-02 | Local-AI-only and no-cloud operation modes | **Delivered** | B | `OfflineMode` + `CloudAiEnabled`; every cloud call path is filtered. |
-| OFF-03 | Government clouds (GCC, GCC High, DoD) | **Not delivered** | — | Graph and commercial endpoints are constants; no cloud selector or sovereign endpoints. |
+| OFF-03 | Government clouds (GCC, GCC High, DoD) | **Delivered** | C | Settings has a Cloud selector stored on `AuthConfiguration` (and therefore in tenant profiles). Token scope/authority, Graph v1.0/beta hosts, connection test and Security & Compliance PowerShell connection/authorization URIs follow `CloudProfiles` (GCC = worldwide; GCC High = `graph.microsoft.us`; DoD = `dod-graph.microsoft.us`, L5 compliance). Endpoints verified against Microsoft Learn; no sovereign tenant was available to exercise them. Tests: `CloudProfileTests`. |
 
 ## M. Licence optimisation
 
@@ -267,8 +267,8 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 
 | Status | Count | Share |
 | --- | --- | --- |
-| **Delivered** | 98 | 73% |
-| **Partial** | 28 | 21% |
+| **Delivered** | 99 | 74% |
+| **Partial** | 27 | 20% |
 | **Not delivered** | 8 | 6% |
 | **Total tracked** | 134 | 100% |
 
@@ -287,7 +287,7 @@ By section:
 | Multi-tenant MSP | 2 | 0 | 1 |
 | Configuration-as-code | 2 | 0 | 1 |
 | Approval workflow | 2 | 0 | 0 |
-| Offline and regulated | 2 | 0 | 1 |
+| Offline and regulated | 3 | 0 | 0 |
 | Licence optimisation | 1 | 1 | 0 |
 | Continuous monitoring | 2 | 2 | 0 |
 | Reporting | 5 | 1 | 0 |
@@ -303,7 +303,7 @@ Ranked by risk to the commercial claim, not by effort:
 
 1. **Per-customer RBAC (MSP-03)** — tenant switching, isolation, the portfolio and its CSV export exist, but all saved tenants remain reachable by one Windows user.
 2. **Live deployment execution (DEP-05)** — by design, but the specification asks for apply and rollback; the reviewed script and reversal script exist, execution does not.
-3. **Security Copilot (AIA-02)** and **government clouds (OFF-03)**.
+3. **Security Copilot (AIA-02)** — no generally available tenant-licensed API to integrate here.
 4. **Config-as-code breadth (CAC-02)** — no ARM/Bicep/Terraform output, and existing tenant objects are not exported individually.
 5. **Unattended scheduling (MON-04)** — checks run only while the app is open; there is no Windows service or Task Scheduler integration.
 6. **Guided onboarding wizard (AUT-12)** — certificate and connection actions exist, but there is no stepped app-registration/consent wizard.
@@ -317,7 +317,7 @@ Ranked by risk to the commercial claim, not by effort:
 | Check | Result |
 | --- | --- |
 | `dotnet build PurviewGovernanceCopilot.sln -c Release` | Succeeded (local SDK 9.0.321) |
-| `dotnet test tests/PurviewCopilot.Tests -c Release` | 88 passed, 0 failed |
+| `dotnet test tests/PurviewCopilot.Tests -c Release` | 92 passed, 0 failed |
 | Catalog count (`grep -c 'Add("' ModuleCatalog.cs`) | 49 rules across 16 modules |
 | Exporter inventory | HTML, JSON, CSV, Markdown, PDF, DOCX, XLSX |
 | `ReportFormat` enum | `Html, Json, Csv, Markdown, Pdf, Docx, Xlsx` |

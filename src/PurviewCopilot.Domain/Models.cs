@@ -334,7 +334,8 @@ public sealed record AuthConfiguration(
     string ClientId,
     string? CertificateThumbprint,
     string? ClientSecret,
-    string? ManagedIdentityClientId)
+    string? ManagedIdentityClientId,
+    CloudEnvironment Cloud = CloudEnvironment.Commercial)
 {
     public static AuthConfiguration Empty { get; } =
         new(AuthMode.Certificate, string.Empty, string.Empty, null, null, null);

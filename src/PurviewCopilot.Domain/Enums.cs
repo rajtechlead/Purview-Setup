@@ -136,6 +136,14 @@ public enum ReportFormat
     Xlsx
 }
 
+public enum CloudEnvironment
+{
+    Commercial = 0,
+    Gcc,
+    GccHigh,
+    Dod
+}
+
 public enum ActionStatus
 {
     Open = 0,

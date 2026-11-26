@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Text.Json;
 using PurviewCopilot.Application.Abstractions;
+using PurviewCopilot.Application.Auth;
 using PurviewCopilot.Domain;
 
 namespace PurviewCopilot.Infrastructure.Discovery;
@@ -39,10 +40,15 @@ public sealed class CompliancePowerShellCollector
         var outputPath = Path.Combine(_scriptDirectory, $"purview-facts-{Guid.NewGuid():N}.json");
         await File.WriteAllTextAsync(scriptPath, Script, cancellationToken).ConfigureAwait(false);
 
+        var cloud = CloudProfiles.For(auth.Cloud);
+        var cloudArguments = cloud.ComplianceConnectionUri is null
+            ? string.Empty
+            : $" -ConnectionUri \"{cloud.ComplianceConnectionUri}\" -AuthorizationUri \"{cloud.ComplianceAuthorizationUri}\"";
+
         var arguments =
             $"-NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"{scriptPath}\" " +
             $"-AppId \"{auth.ClientId}\" -Thumbprint \"{auth.CertificateThumbprint}\" " +
-            $"-Organization \"{snapshot.TenantDomain}\" -OutputPath \"{outputPath}\"";
+            $"-Organization \"{snapshot.TenantDomain}\" -OutputPath \"{outputPath}\"" + cloudArguments;
 
         var startInfo = new ProcessStartInfo
         {
@@ -144,7 +150,9 @@ public sealed class CompliancePowerShellCollector
             [Parameter(Mandatory=$true)][string]$AppId,
             [Parameter(Mandatory=$true)][string]$Thumbprint,
             [Parameter(Mandatory=$true)][string]$Organization,
-            [Parameter(Mandatory=$true)][string]$OutputPath
+            [Parameter(Mandatory=$true)][string]$OutputPath,
+            [string]$ConnectionUri,
+            [string]$AuthorizationUri
         )
 
         $ErrorActionPreference = 'Stop'
@@ -173,7 +181,11 @@ public sealed class CompliancePowerShellCollector
         }
 
         Import-Module ExchangeOnlineManagement -ErrorAction Stop
-        Connect-IPPSSession -AppId $AppId -CertificateThumbprint $Thumbprint -Organization $Organization -ErrorAction Stop | Out-Null
+
+        $connect = @{ AppId = $AppId; CertificateThumbprint = $Thumbprint; Organization = $Organization }
+        if (-not [string]::IsNullOrWhiteSpace($ConnectionUri)) { $connect.ConnectionUri = $ConnectionUri }
+        if (-not [string]::IsNullOrWhiteSpace($AuthorizationUri)) { $connect.AzureADAuthorizationEndpointUri = $AuthorizationUri }
+        Connect-IPPSSession @connect -ErrorAction Stop | Out-Null
 
         try { $result.labelCount = @(Get-Label).Count } catch { Add-Error 'labels' $_.Exception.Message }
         try { $result.labelPolicyCount = @(Get-LabelPolicy).Count } catch { Add-Error 'labelPolicies' $_.Exception.Message }

@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using PurviewCopilot.Application.Abstractions;
+using PurviewCopilot.Application.Auth;
 using PurviewCopilot.Domain;
 using PurviewCopilot.Infrastructure.Auth;
 
@@ -14,8 +15,6 @@ namespace PurviewCopilot.Infrastructure.Discovery;
 /// </summary>
 public sealed class GraphTenantCollector : ITenantCollector
 {
-    private const string Graph = "https://graph.microsoft.com/v1.0";
-    private const string GraphBeta = "https://graph.microsoft.com/beta";
     private const string GlobalAdminRoleTemplateId = "62e90394-69f5-4237-9190-012177145e10";
 
     private readonly EntraTokenProvider _tokens;
@@ -30,10 +29,13 @@ public sealed class GraphTenantCollector : ITenantCollector
     public async Task<TenantSnapshot> CollectAsync(AuthConfiguration auth, CancellationToken cancellationToken = default)
     {
         var token = await _tokens.GetGraphTokenAsync(auth, cancellationToken).ConfigureAwait(false);
+        var profile = CloudProfiles.For(auth.Cloud);
+        var graph = profile.GraphBaseUrl;
+        var graphBeta = profile.GraphBetaUrl;
         var warnings = new List<string>();
         var snapshot = new TenantSnapshot { CollectedUtc = DateTimeOffset.UtcNow };
 
-        using (var organization = await GetJsonAsync($"{Graph}/organization?$select=id,displayName", token, warnings, cancellationToken).ConfigureAwait(false))
+        using (var organization = await GetJsonAsync($"{graph}/organization?$select=id,displayName", token, warnings, cancellationToken).ConfigureAwait(false))
         {
             if (organization is not null &&
                 organization.RootElement.TryGetProperty("value", out var organizations) &&
@@ -48,7 +50,7 @@ public sealed class GraphTenantCollector : ITenantCollector
             }
         }
 
-        using (var domains = await GetJsonAsync($"{Graph}/domains?$select=id,isInitial", token, warnings, cancellationToken).ConfigureAwait(false))
+        using (var domains = await GetJsonAsync($"{graph}/domains?$select=id,isInitial", token, warnings, cancellationToken).ConfigureAwait(false))
         {
             if (domains is not null)
             {
@@ -63,26 +65,26 @@ public sealed class GraphTenantCollector : ITenantCollector
             }
         }
 
-        snapshot.UsersEnabled = await CountAsync($"{Graph}/users?$filter=accountEnabled eq true&$top=1&$count=true", token, warnings, cancellationToken).ConfigureAwait(false);
-        snapshot.Guests = await CountAsync($"{Graph}/users?$filter=userType eq 'Guest'&$top=1&$count=true", token, warnings, cancellationToken).ConfigureAwait(false);
-        snapshot.Groups = await CountAsync($"{Graph}/groups?$top=1&$count=true", token, warnings, cancellationToken).ConfigureAwait(false);
-        snapshot.ServicePrincipals = await CountAsync($"{Graph}/servicePrincipals?$top=1&$count=true", token, warnings, cancellationToken).ConfigureAwait(false);
-        snapshot.SharePointSites = await CountAsync($"{Graph}/sites?$top=1&$count=true", token, warnings, cancellationToken).ConfigureAwait(false);
-        snapshot.TeamsCount = await CountAsync($"{Graph}/teams?$top=1&$count=true", token, warnings, cancellationToken).ConfigureAwait(false);
+        snapshot.UsersEnabled = await CountAsync($"{graph}/users?$filter=accountEnabled eq true&$top=1&$count=true", token, warnings, cancellationToken).ConfigureAwait(false);
+        snapshot.Guests = await CountAsync($"{graph}/users?$filter=userType eq 'Guest'&$top=1&$count=true", token, warnings, cancellationToken).ConfigureAwait(false);
+        snapshot.Groups = await CountAsync($"{graph}/groups?$top=1&$count=true", token, warnings, cancellationToken).ConfigureAwait(false);
+        snapshot.ServicePrincipals = await CountAsync($"{graph}/servicePrincipals?$top=1&$count=true", token, warnings, cancellationToken).ConfigureAwait(false);
+        snapshot.SharePointSites = await CountAsync($"{graph}/sites?$top=1&$count=true", token, warnings, cancellationToken).ConfigureAwait(false);
+        snapshot.TeamsCount = await CountAsync($"{graph}/teams?$top=1&$count=true", token, warnings, cancellationToken).ConfigureAwait(false);
 
-        snapshot.DevicesOnboarded = await CountAsync($"{Graph}/deviceManagement/managedDevices?$top=1&$count=true", token, warnings, cancellationToken).ConfigureAwait(false);
-        snapshot.ConditionalAccessPolicies = await CountAsync($"{GraphBeta}/identity/conditionalAccess/policies?$top=1&$count=true", token, warnings, cancellationToken).ConfigureAwait(false);
+        snapshot.DevicesOnboarded = await CountAsync($"{graph}/deviceManagement/managedDevices?$top=1&$count=true", token, warnings, cancellationToken).ConfigureAwait(false);
+        snapshot.ConditionalAccessPolicies = await CountAsync($"{graphBeta}/identity/conditionalAccess/policies?$top=1&$count=true", token, warnings, cancellationToken).ConfigureAwait(false);
 
-        var mfaRegistered = await CountAsync($"{Graph}/reports/authenticationMethods/userRegistrationDetails?$filter=isMfaRegistered eq true&$top=1&$count=true", token, warnings, cancellationToken).ConfigureAwait(false);
+        var mfaRegistered = await CountAsync($"{graph}/reports/authenticationMethods/userRegistrationDetails?$filter=isMfaRegistered eq true&$top=1&$count=true", token, warnings, cancellationToken).ConfigureAwait(false);
         if (mfaRegistered > 0 && snapshot.UsersEnabled > 0)
         {
             snapshot.MfaRegistrationPercent = Math.Round(mfaRegistered * 100.0 / snapshot.UsersEnabled, 1);
         }
 
-        await ReadLicensesAsync(snapshot, token, warnings, cancellationToken).ConfigureAwait(false);
-        await ReadSecureScoreAsync(snapshot, token, warnings, cancellationToken).ConfigureAwait(false);
-        await ReadApplicationsAsync(snapshot, token, warnings, cancellationToken).ConfigureAwait(false);
-        await ReadGlobalAdministratorsAsync(snapshot, token, warnings, cancellationToken).ConfigureAwait(false);
+        await ReadLicensesAsync(snapshot, token, graph, warnings, cancellationToken).ConfigureAwait(false);
+        await ReadSecureScoreAsync(snapshot, token, graph, warnings, cancellationToken).ConfigureAwait(false);
+        await ReadApplicationsAsync(snapshot, token, graph, warnings, cancellationToken).ConfigureAwait(false);
+        await ReadGlobalAdministratorsAsync(snapshot, token, graph, warnings, cancellationToken).ConfigureAwait(false);
 
         // Purview-specific configuration is read through Security & Compliance PowerShell.
         snapshot.ExchangeMailboxes = snapshot.UsersEnabled;
@@ -92,9 +94,9 @@ public sealed class GraphTenantCollector : ITenantCollector
         return snapshot;
     }
 
-    private async Task ReadLicensesAsync(TenantSnapshot snapshot, string token, List<string> warnings, CancellationToken cancellationToken)
+    private async Task ReadLicensesAsync(TenantSnapshot snapshot, string token, string graph, List<string> warnings, CancellationToken cancellationToken)
     {
-        using var document = await GetJsonAsync($"{Graph}/subscribedSkus?$select=skuPartNumber,consumedUnits,prepaidUnits", token, warnings, cancellationToken).ConfigureAwait(false);
+        using var document = await GetJsonAsync($"{graph}/subscribedSkus?$select=skuPartNumber,consumedUnits,prepaidUnits", token, warnings, cancellationToken).ConfigureAwait(false);
         if (document is null) return;
 
         var licenses = new List<LicenseSku>();
@@ -115,9 +117,9 @@ public sealed class GraphTenantCollector : ITenantCollector
             .Sum(l => l.Consumed);
     }
 
-    private async Task ReadSecureScoreAsync(TenantSnapshot snapshot, string token, List<string> warnings, CancellationToken cancellationToken)
+    private async Task ReadSecureScoreAsync(TenantSnapshot snapshot, string token, string graph, List<string> warnings, CancellationToken cancellationToken)
     {
-        using var document = await GetJsonAsync($"{Graph}/security/secureScores?$top=1", token, warnings, cancellationToken).ConfigureAwait(false);
+        using var document = await GetJsonAsync($"{graph}/security/secureScores?$top=1", token, warnings, cancellationToken).ConfigureAwait(false);
         if (document is null) return;
 
         if (!document.RootElement.TryGetProperty("value", out var scoreValues) || scoreValues.ValueKind != JsonValueKind.Array) return;
@@ -131,9 +133,9 @@ public sealed class GraphTenantCollector : ITenantCollector
         if (max > 0) snapshot.SecureScorePercent = Math.Round(current * 100.0 / max, 1);
     }
 
-    private async Task ReadApplicationsAsync(TenantSnapshot snapshot, string token, List<string> warnings, CancellationToken cancellationToken)
+    private async Task ReadApplicationsAsync(TenantSnapshot snapshot, string token, string graph, List<string> warnings, CancellationToken cancellationToken)
     {
-        using var document = await GetJsonAsync($"{Graph}/applications?$select=id,passwordCredentials&$top=999", token, warnings, cancellationToken).ConfigureAwait(false);
+        using var document = await GetJsonAsync($"{graph}/applications?$select=id,passwordCredentials&$top=999", token, warnings, cancellationToken).ConfigureAwait(false);
         if (document is null) return;
 
         var withSecrets = 0;
@@ -150,10 +152,10 @@ public sealed class GraphTenantCollector : ITenantCollector
         snapshot.AppRegistrationsWithSecrets = withSecrets;
     }
 
-    private async Task ReadGlobalAdministratorsAsync(TenantSnapshot snapshot, string token, List<string> warnings, CancellationToken cancellationToken)
+    private async Task ReadGlobalAdministratorsAsync(TenantSnapshot snapshot, string token, string graph, List<string> warnings, CancellationToken cancellationToken)
     {
         using var roles = await GetJsonAsync(
-            $"{Graph}/directoryRoles?$filter=roleTemplateId eq '{GlobalAdminRoleTemplateId}'", token, warnings, cancellationToken).ConfigureAwait(false);
+            $"{graph}/directoryRoles?$filter=roleTemplateId eq '{GlobalAdminRoleTemplateId}'", token, warnings, cancellationToken).ConfigureAwait(false);
 
         if (roles is null) return;
 
@@ -163,7 +165,7 @@ public sealed class GraphTenantCollector : ITenantCollector
         if (role.ValueKind != JsonValueKind.Object || !role.TryGetProperty("id", out var roleId)) return;
 
         snapshot.GlobalAdministrators = await CountAsync(
-            $"{Graph}/directoryRoles/{roleId.GetString()}/members?$top=1&$count=true", token, warnings, cancellationToken).ConfigureAwait(false);
+            $"{graph}/directoryRoles/{roleId.GetString()}/members?$top=1&$count=true", token, warnings, cancellationToken).ConfigureAwait(false);
     }
 
     private async Task<int> CountAsync(string url, string token, List<string> warnings, CancellationToken cancellationToken)

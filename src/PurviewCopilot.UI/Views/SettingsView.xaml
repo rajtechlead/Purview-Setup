@@ -36,6 +36,9 @@
                              ToolTip="Protected at rest with Windows DPAPI for the current user. Use certificate authentication for production." />
 
                     <StackPanel Grid.Row="2" Grid.Column="2" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,4">
+                        <TextBlock Text="Cloud" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                        <ComboBox Width="130" ItemsSource="{Binding CloudEnvironments}" SelectedItem="{Binding Cloud}"
+                                  Margin="0,0,10,0" ToolTip="GCC uses the commercial endpoints; GCC High and DoD use Azure Government" />
                         <Button Content="Test connection" Command="{Binding TestConnectionCommand}" Margin="0,0,8,0" />
                         <Button Content="Save settings" Style="{StaticResource PrimaryButton}" Command="{Binding SaveCommand}" />
                     </StackPanel>

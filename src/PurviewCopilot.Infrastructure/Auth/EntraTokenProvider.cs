@@ -1,5 +1,6 @@
 using Azure.Core;
 using Azure.Identity;
+using PurviewCopilot.Application.Auth;
 using PurviewCopilot.Domain;
 
 namespace PurviewCopilot.Infrastructure.Auth;
@@ -19,13 +20,15 @@ public sealed class EntraTokenProvider
     public TokenCredential CreateCredential(AuthConfiguration auth)
     {
         Validate(auth);
+        var authority = CloudProfiles.For(auth.Cloud).AuthorityHost;
 
         return auth.Mode switch
         {
             AuthMode.Certificate => new ClientCertificateCredential(
                 auth.TenantId,
                 auth.ClientId,
-                _certificates.LoadForAuthentication(auth.CertificateThumbprint!)),
+                _certificates.LoadForAuthentication(auth.CertificateThumbprint!),
+                new ClientCertificateCredentialOptions { AuthorityHost = authority }),
 
             AuthMode.ManagedIdentity => string.IsNullOrWhiteSpace(auth.ManagedIdentityClientId)
                 ? new ManagedIdentityCredential()
@@ -35,11 +38,13 @@ public sealed class EntraTokenProvider
             {
                 TenantId = auth.TenantId,
                 ClientId = auth.ClientId,
-                RedirectUri = new Uri("http://localhost")
+                RedirectUri = new Uri("http://localhost"),
+                AuthorityHost = authority
             }),
 
             AuthMode.ClientSecret => new ClientSecretCredential(
-                auth.TenantId, auth.ClientId, auth.ClientSecret),
+                auth.TenantId, auth.ClientId, auth.ClientSecret,
+                new ClientSecretCredentialOptions { AuthorityHost = authority }),
 
             _ => throw new NotSupportedException($"Auth mode {auth.Mode} is not supported.")
         };
@@ -48,7 +53,8 @@ public sealed class EntraTokenProvider
     public async Task<string> GetGraphTokenAsync(AuthConfiguration auth, CancellationToken cancellationToken = default)
     {
         var credential = CreateCredential(auth);
-        var token = await credential.GetTokenAsync(new TokenRequestContext(GraphScopes), cancellationToken)
+        var scope = CloudProfiles.For(auth.Cloud).GraphScope;
+        var token = await credential.GetTokenAsync(new TokenRequestContext(new[] { scope }), cancellationToken)
             .ConfigureAwait(false);
         return token.Token;
     }

@@ -60,6 +60,7 @@ public sealed class SettingsViewModel : PageViewModel
     private string _thumbprint = string.Empty;
     private string _clientSecret = string.Empty;
     private AuthMode _authMode = AuthMode.Certificate;
+    private CloudEnvironment _cloud = CloudEnvironment.Commercial;
     private AiRedactionMode _redactionMode = AiRedactionMode.Tokenize;
     private bool _cloudAiEnabled = true;
     private bool _offlineMode;
@@ -118,6 +119,7 @@ public sealed class SettingsViewModel : PageViewModel
     public override string Subtitle => "Connection, certificate lifecycle, AI providers and privacy guardrails.";
 
     public IReadOnlyList<AuthMode> AuthModes { get; } = Enum.GetValues<AuthMode>();
+    public IReadOnlyList<CloudEnvironment> CloudEnvironments { get; } = Enum.GetValues<CloudEnvironment>();
     public IReadOnlyList<AiRedactionMode> RedactionModes { get; } = Enum.GetValues<AiRedactionMode>();
 
     public ObservableCollection<CertificateInfo> Certificates { get; } = new();
@@ -129,6 +131,7 @@ public sealed class SettingsViewModel : PageViewModel
     public string Thumbprint { get => _thumbprint; set => SetProperty(ref _thumbprint, value); }
     public string ClientSecret { get => _clientSecret; set => SetProperty(ref _clientSecret, value); }
     public AuthMode AuthMode { get => _authMode; set => SetProperty(ref _authMode, value); }
+    public CloudEnvironment Cloud { get => _cloud; set => SetProperty(ref _cloud, value); }
     public AiRedactionMode RedactionMode { get => _redactionMode; set => SetProperty(ref _redactionMode, value); }
     public bool CloudAiEnabled { get => _cloudAiEnabled; set => SetProperty(ref _cloudAiEnabled, value); }
     public bool OfflineMode { get => _offlineMode; set => SetProperty(ref _offlineMode, value); }
@@ -195,6 +198,7 @@ public sealed class SettingsViewModel : PageViewModel
         ClientId = _settings.Auth.ClientId;
         Thumbprint = _settings.Auth.CertificateThumbprint ?? string.Empty;
         AuthMode = _settings.Auth.Mode;
+        Cloud = _settings.Auth.Cloud;
         RedactionMode = _settings.RedactionMode;
         CloudAiEnabled = _settings.CloudAiEnabled;
         OfflineMode = _settings.OfflineMode;
@@ -490,7 +494,8 @@ public sealed class SettingsViewModel : PageViewModel
         ClientId.Trim(),
         string.IsNullOrWhiteSpace(Thumbprint) ? null : Thumbprint.Trim(),
         string.IsNullOrWhiteSpace(ClientSecret) ? null : ClientSecret,
-        null);
+        null,
+        Cloud);
 
     private async Task SaveTenantAsync()
     {
@@ -533,6 +538,7 @@ public sealed class SettingsViewModel : PageViewModel
             ClientId = SelectedTenant.Auth.ClientId;
             Thumbprint = SelectedTenant.Auth.CertificateThumbprint ?? string.Empty;
             AuthMode = SelectedTenant.Auth.Mode;
+            Cloud = SelectedTenant.Auth.Cloud;
             ClientSecret = SelectedTenant.Auth.ClientSecret ?? string.Empty;
 
             Status = $"Activated {SelectedTenant.DisplayName}. The next assessment targets this tenant.";

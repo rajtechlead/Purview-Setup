@@ -38,7 +38,7 @@ Ordered by risk reduction and by what the current build deliberately leaves out.
 - **Deeper AI governance**: prompt/response classification history, model inventory, ISO 42001 control mapping, agent governance.
 - **Compliance Manager API**: real improvement-action ingestion and score instead of a placeholder posture value.
 - **Defender integration**: exposure management signals and device risk feeding endpoint DLP readiness.
-- **Government clouds**: configurable Graph/EXO endpoints for GCC/GCC High/DoD.
+- **Government clouds** — **Done**. A Cloud selector on the connection (`AuthConfiguration.Cloud`) routes the Entra authority and Graph scope, Graph v1.0/beta base URLs, the connection test and Security & Compliance PowerShell to commercial/GCC, GCC High (`graph.microsoft.us`) or DoD (`dod-graph.microsoft.us`, L5 compliance). Endpoints were checked against Microsoft Learn; no sovereign tenant was available to exercise them.
 - **Custom sensitive information types**: author and validate custom SITs as part of deployment.
 
 ## Phase 3 — Platform

@@ -1,5 +1,6 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
+using PurviewCopilot.Application.Auth;
 using PurviewCopilot.Domain;
 
 namespace PurviewCopilot.Infrastructure.Auth;
@@ -21,9 +22,10 @@ public sealed class ConnectionVerifier
         try
         {
             var token = await _tokens.GetGraphTokenAsync(auth, cancellationToken).ConfigureAwait(false);
+            var graph = CloudProfiles.For(auth.Cloud).GraphBaseUrl;
 
             using var request = new HttpRequestMessage(HttpMethod.Get,
-                "https://graph.microsoft.com/v1.0/organization?$select=id,displayName");
+                $"{graph}/organization?$select=id,displayName");
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             using var response = await _http.SendAsync(request, cancellationToken).ConfigureAwait(false);
