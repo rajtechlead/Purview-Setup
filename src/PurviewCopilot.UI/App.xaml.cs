@@ -33,7 +33,7 @@ public partial class App : System.Windows.Application
             {
                 new DashboardViewModel(services.Workspace, services.Store, services.Store),
                 new AssessmentViewModel(services.Workspace, services.Store, services.Store, services.Clock),
-                new DeploymentViewModel(services.Workspace, services.Store, services.Clock, services.PhasedDeployment, services.LiveExecutor, services.Verifier),
+                new DeploymentViewModel(services.Workspace, services.Store, services.Clock, services.PhasedDeployment, services.LiveExecutor, services.ObjectBackups, services.Verifier),
                 new MonitoringViewModel(services.Workspace, services.Store, services.Store, services.Alerts),
                 new ReportsViewModel(services.Workspace),
                 new AiAssistantViewModel(services.Copilot, services.Workspace, services.Usage, services.Store),

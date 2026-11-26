@@ -19,6 +19,34 @@ public sealed class BackupService
     public Task<ConfigurationBackup?> LatestAsync(string tenantId, CancellationToken cancellationToken = default) =>
         _store.GetLatestAsync(tenantId, cancellationToken);
 
+    /// <summary>Stores a full object export (labels, policies, rules, tags) as a backup payload.</summary>
+    public async Task<ConfigurationBackup> CaptureExportedObjectsAsync(
+        TenantSnapshot snapshot,
+        ChangePlan plan,
+        string exportedJson,
+        string actor,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(exportedJson))
+            throw new InvalidOperationException("The object export was empty; refusing to store an empty backup.");
+
+        JsonDocument.Parse(exportedJson);
+
+        var payload = JsonSerializer.Serialize(new
+        {
+            snapshot,
+            operations = plan.Operations,
+            objects = JsonDocument.Parse(exportedJson).RootElement,
+            capturedUtc = _clock.UtcNow
+        });
+
+        var backup = new ConfigurationBackup(
+            Guid.NewGuid(), plan.TenantId, $"objects/{plan.Id:N}", "2.0", payload, _clock.UtcNow, actor);
+
+        await _store.SaveAsync(backup, cancellationToken).ConfigureAwait(false);
+        return backup;
+    }
+
     /// <summary>Captures the exact operations of one phase, so a phase can be restored alone.</summary>
     public async Task<ConfigurationBackup> CapturePhaseAsync(
         TenantSnapshot snapshot,

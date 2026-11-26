@@ -35,6 +35,7 @@ public sealed class AppServices
         AuthenticationProvisioningService authProvisioning,
         PhasedDeploymentService phasedDeployment,
         ILiveDeploymentExecutor liveExecutor,
+        ObjectBackupService objectBackups,
         UpdateChecker updates,
         Func<string, AuthConfiguration, IKeyVaultCertificateStore> keyVaultFactory,
         AlertNotifier alerts,
@@ -49,6 +50,7 @@ public sealed class AppServices
         AuthProvisioning = authProvisioning;
         PhasedDeployment = phasedDeployment;
         LiveExecutor = liveExecutor;
+        ObjectBackups = objectBackups;
         Updates = updates;
         KeyVaultFactory = keyVaultFactory;
         Alerts = alerts;
@@ -64,6 +66,7 @@ public sealed class AppServices
     public AuthenticationProvisioningService AuthProvisioning { get; }
     public PhasedDeploymentService PhasedDeployment { get; }
     public ILiveDeploymentExecutor LiveExecutor { get; }
+    public ObjectBackupService ObjectBackups { get; }
     public UpdateChecker Updates { get; }
     public Func<string, AuthConfiguration, IKeyVaultCertificateStore> KeyVaultFactory { get; }
     public AlertNotifier Alerts { get; }
@@ -97,7 +100,9 @@ public sealed class AppServices
         var backups = new BackupService(store, clock);
         var executor = new ChangeExecutor(allowLiveExecution: false);
         var phasedDeployment = new PhasedDeploymentService(executor, backups, store, clock);
-        var liveExecutor = new PowerShellDeploymentExecutor(new PowerShellRunner(), allowLiveExecution: false);
+        var runner = new PowerShellRunner();
+        var liveExecutor = new PowerShellDeploymentExecutor(runner, allowLiveExecution: false);
+        var objectBackups = new ObjectBackupService(runner, backups, clock);
 
         var exporters = new IReportExporter[]
         {
@@ -127,6 +132,6 @@ public sealed class AppServices
         var authProvisioning = new AuthenticationProvisioningService(provisioner, certificates, store, clock);
 
         return new AppServices(workspace, store, certificates, copilot, store, verifier, authProvisioning,
-            phasedDeployment, liveExecutor, updates, keyVault, alerts, clock);
+            phasedDeployment, liveExecutor, objectBackups, updates, keyVault, alerts, clock);
     }
 }

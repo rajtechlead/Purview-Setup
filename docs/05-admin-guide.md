@@ -22,7 +22,21 @@ dotnet publish src/PurviewCopilot.UI -c Release -r win-x64 --self-contained true
 
 Output: `artifacts/publish/PurviewGovernanceCopilot.exe` plus the .NET runtime payload.
 
-## 3. Entra app registration (certificate auth)
+## 3. Entra app registration and authentication provisioning
+
+### Automated (recommended)
+
+Settings → **Authentication Provisioning Center** creates the app registration, enterprise application and service principal, certificate (RSA 2048/3072/4096 or ECC P-256/P-384; 6–120 months) or lab-only secret, owners, least-privilege Graph role assignments and admin consent, then validates the credential. The current connection is the administrator bootstrap.
+
+1. Complete the existing connection fields (tenant, client and an admin-capable credential) and **Test connection**.
+2. In the provisioning center choose **Dry run** and run it once; every check must pass and no tenant change occurs.
+3. Enter an approver and role. The approver must differ from the signed-in operator and must be a change manager, CAB member, governance/compliance/risk officer or business owner. A 10-year certificate needs the acknowledgement checkbox.
+4. Clear **Dry run** and **Provision authentication**. The step list shows each Graph action; success saves the new client id/thumbprint into settings and registers the tenant profile.
+5. Save the generated **rollback script** before rollout. It removes the service principal, application and local certificate.
+
+Client-secret mode is accepted only when Environment is **Lab**, stores the secret through the DPAPI-protected settings store and should not be used for production. Prefer certificate authentication.
+
+### Manual fallback
 
 1. **Entra admin center → App registrations → New registration**. Name `Purview Governance Copilot`, single tenant, no redirect URI (app-only).
 2. **Certificates & secrets → Certificates → Upload certificate**: upload the `.cer` (public key) exported from the app's Settings page.
@@ -86,6 +100,7 @@ Create an MSI application from the WiX output; use the same detection method. De
 
 ## 5. Upgrade and rollback
 
+- **Deployment rollback**: every phase is backed up before execution. Use **Mark rolled back** for the phase, export the reviewed reversal script from the plan, and restore the named backup. Re-run the assessment afterwards; validation compares labels, DLP, retention and audit against the pre-phase snapshot.
 - **Upgrade**: MSI uses `MajorUpgrade` (same UpgradeCode, higher version). Install over the existing version; settings and database remain in `%LOCALAPPDATA%`.
 - **Rollback**: uninstall the new version and reinstall the previous MSI. The database schema is additive and created idempotently; older builds tolerate newer tables because they only query known ones.
 - **Back up before upgrade**: copy `%LOCALAPPDATA%\PurviewGovernanceCopilot` (database plus generated scripts).
@@ -98,9 +113,22 @@ Create an MSI application from the WiX output; use the same detection method. De
 | Weekly | Run assessment; export the HTML report to the evidence store; review AI usage and cost |
 | Monthly | Check certificate expiry warning; rotate if ≤30 days; review privileged role changes; tune DLP thresholds |
 | Quarterly | Re-validate app registration permissions; review audit log export; test restore of a backup |
-| Per change | Plan → simulate → approve (3 stages) → apply in window → validate → record evidence |
+| Per change | Plan → simulate → per-phase backup → separation-of-duties approval → apply in window → validate → record evidence |
+| Per phase | Confirm the previous phase validated; back up tenant objects; execute only the selected phase; export the validation result |
 
 Evidence handling: reports and backups can contain tenant identifiers. Keep them in the compliance evidence store, not in email or git. The app writes nothing to the repo; `assessments/` is git-ignored for the CLI-style workflow.
+
+### Phased production rollout
+
+1. Run an assessment and build a change plan. Only recommendations with mapped operations can be executed; manual steps remain in the plan.
+2. On Deployment choose a phase and **Simulate + backup phase**. The phase is failed if simulation fails.
+3. **Back up tenant objects** for a full label/DLP/retention export, in addition to the automatic phase backup.
+4. Enter an approver and role and **Approve phase**. Self-approval and tenant-administrator roles are rejected.
+5. Enable **live execution this session** only inside the change window; accept the risk when the phase contains destructive operations. **Execute approved phase (live)** runs the reviewed PowerShell with certificate environment variables. The build ships fail-closed and the opt-in is not persisted.
+6. The app re-collects the tenant and validates the phase automatically. A failed phase blocks the next phase; correct it or roll back.
+7. Repeat in order: discovery, audit/monitoring, information protection, DLP, records, insider risk/AI. Do not combine phases.
+
+If any gate fails (simulation, approval, backup, rollback package, authentication, connectivity, risk), execution is blocked and the reason is listed. No bypass exists in the UI.
 
 ### Unattended runs (headless CLI)
 

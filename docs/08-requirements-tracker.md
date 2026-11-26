@@ -18,7 +18,7 @@ Verified against commit `353bde2` on 25 November 2026 by reading the source, cou
 
 | Code | Meaning |
 | --- | --- |
-| **T** | Covered by an automated test (121 tests, all passing at audit time). |
+| **T** | Covered by an automated test (124 tests, all passing at audit time). |
 | **B** | Builds and is reachable from the composition root; behaviour not exercised end to end. |
 | **C** | Code exists but is unexercised here (no tenant, certificate, API key or admin rights). |
 | **D** | Documentation or project/manifest artifact only; nothing executes it here. |
@@ -130,7 +130,7 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 | --- | --- | --- | --- | --- |
 | CHG-01 | Change pack: executive, technical, business, user, security, compliance, licensing impacts, risk, validation and rollback | **Delivered** | T | `ChangeImpact` carries all ten sections; `ChangePlan_DeduplicatesOperations_AndBuildsImpact`. |
 | CHG-02 | Risk analysis, validation plan and rollback plan per change | **Delivered** | T | Risks, validation steps and rollback steps are generated per plan. |
-| SAF-01 | Configuration, policy, label and rule backups | **Partial** | T | `BackupService` stores a tenant snapshot plus the operation payload. No per-object export of labels, DLP policies, rules or retention labels. |
+| SAF-01 | Configuration, policy, label and rule backups | **Delivered** | C | Phase backups store the snapshot and exact phase operations. **Back up tenant objects** runs the read-only export and stores labels, label/auto-label policies and rules, DLP policies/rules, retention policies/rules and compliance tags as a versioned, DPAPI-encrypted `objects/` backup. Tests: `ObjectBackupTests`. The live compliance cmdlets were not exercised against a tenant. |
 | SAF-02 | Full rollback packages | **Partial** | T | A rollback package is stored and validated, and a reversal script is generated from the plan; no automated restore is executed. |
 | SAF-03 | Policy simulation mode | **Delivered** | T | `SimulateAsync` validates every operation payload and returns the exact script that would run; empty payloads fail simulation. |
 | SAF-04 | What-if analysis | **Delivered** | B | Simulation reports per-operation validation and post-checks before approval. |
@@ -267,8 +267,8 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 
 | Status | Count | Share |
 | --- | --- | --- |
-| **Delivered** | 105 | 78% |
-| **Partial** | 24 | 18% |
+| **Delivered** | 106 | 79% |
+| **Partial** | 23 | 17% |
 | **Not delivered** | 5 | 4% |
 | **Total tracked** | 134 | 100% |
 
@@ -283,7 +283,7 @@ By section:
 | Modular architecture | 1 | 2 | 0 |
 | AI assistant and failover | 11 | 0 | 1 |
 | AI privacy guardrail | 11 | 1 | 0 |
-| Change management and safety | 5 | 2 | 0 |
+| Change management and safety | 6 | 1 | 0 |
 | Multi-tenant MSP | 2 | 0 | 1 |
 | Configuration-as-code | 3 | 0 | 0 |
 | Approval workflow | 2 | 0 | 0 |
@@ -313,7 +313,7 @@ Ranked by risk to the commercial claim, not by effort:
 | Check | Result |
 | --- | --- |
 | `dotnet build PurviewGovernanceCopilot.sln -c Release` | Succeeded (local SDK 9.0.321) |
-| `dotnet test tests/PurviewCopilot.Tests -c Release` | 121 passed, 0 failed |
+| `dotnet test tests/PurviewCopilot.Tests -c Release` | 124 passed, 0 failed |
 | Catalog count (`grep -c 'Add("' ModuleCatalog.cs`) | 49 rules across 16 modules |
 | Exporter inventory | HTML, JSON, CSV, Markdown, PDF, DOCX, XLSX |
 | `ReportFormat` enum | `Html, Json, Csv, Markdown, Pdf, Docx, Xlsx` |

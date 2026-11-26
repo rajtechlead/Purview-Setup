@@ -45,6 +45,7 @@ public sealed class DeploymentViewModel : PageViewModel
     private readonly IClock _clock;
     private readonly PhasedDeploymentService _phased;
     private readonly ILiveDeploymentExecutor _liveExecutor;
+    private readonly ObjectBackupService _objectBackups;
     private readonly ConnectionVerifier _verifier;
     private DeploymentPhaseDefinition _selectedPhase = DeploymentPhases.All[0];
     private PhaseExecution? _phaseExecution;
@@ -69,6 +70,7 @@ public sealed class DeploymentViewModel : PageViewModel
         IClock clock,
         PhasedDeploymentService phased,
         ILiveDeploymentExecutor liveExecutor,
+        ObjectBackupService objectBackups,
         ConnectionVerifier verifier)
     {
         _workspace = workspace;
@@ -76,7 +78,9 @@ public sealed class DeploymentViewModel : PageViewModel
         _clock = clock;
         _phased = phased;
         _liveExecutor = liveExecutor;
+        _objectBackups = objectBackups;
         _verifier = verifier;
+        BackupObjectsCommand = new AsyncRelayCommand(BackupObjectsAsync, () => !Busy && Plan is not null);
 
         PreparePhaseCommand = new AsyncRelayCommand(PreparePhaseAsync, () => !Busy && Plan is not null);
         ApprovePhaseCommand = new AsyncRelayCommand(ApprovePhaseAsync, () => !Busy && _phaseExecution?.Status == PhaseStatus.Simulated);
@@ -144,6 +148,7 @@ public sealed class DeploymentViewModel : PageViewModel
     public ICommand ApprovePhaseCommand { get; }
     public ICommand ExecutePhaseCommand { get; }
     public ICommand RollbackPhaseCommand { get; }
+    public ICommand BackupObjectsCommand { get; }
     public ICommand BuildPlanCommand { get; }
     public ICommand SimulateCommand { get; }
     public ICommand SubmitCommand { get; }
@@ -177,6 +182,34 @@ public sealed class DeploymentViewModel : PageViewModel
         }
 
         Status = $"{Candidates.Count} recommendation(s) available. High and critical items are preselected.";
+    }
+
+    private async Task BackupObjectsAsync()
+    {
+        if (Plan is null) return;
+        var tenant = _workspace.Tenant;
+        if (tenant is null)
+        {
+            PhaseStatusText = "Run an assessment first so the backup has tenant context.";
+            return;
+        }
+
+        Busy = true;
+        try
+        {
+            var settings = await _settings.LoadAsync().ConfigureAwait(true);
+            var backup = await _objectBackups.CaptureAsync(tenant, Plan, settings.Auth, Actor).ConfigureAwait(true);
+            PhaseStatusText = $"Object backup {backup.Id} captured: labels, label policies, auto-label rules, DLP, retention and compliance tags.";
+        }
+        catch (Exception ex)
+        {
+            PhaseStatusText = $"Object backup failed: {ex.Message}";
+        }
+        finally
+        {
+            Busy = false;
+            RefreshPhaseCommands();
+        }
     }
 
     private async Task PreparePhaseAsync()
@@ -321,7 +354,7 @@ public sealed class DeploymentViewModel : PageViewModel
 
     private void RefreshPhaseCommands()
     {
-        foreach (var command in new[] { PreparePhaseCommand, ApprovePhaseCommand, ExecutePhaseCommand, RollbackPhaseCommand })
+        foreach (var command in new[] { PreparePhaseCommand, ApprovePhaseCommand, ExecutePhaseCommand, RollbackPhaseCommand, BackupObjectsCommand })
         {
             (command as AsyncRelayCommand)?.RaiseCanExecuteChanged();
         }

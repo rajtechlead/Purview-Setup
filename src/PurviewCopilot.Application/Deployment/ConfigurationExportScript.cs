@@ -67,4 +67,26 @@ public static class ConfigurationExportScript
 
         Write-Host "Exported existing Purview configuration to $OutputPath."
         """;
+
+    /// <summary>Wraps the export in a script block and supplies its mandatory parameters.</summary>
+    public static string BuildInvocation(
+        string appId,
+        string thumbprint,
+        string organization,
+        string outputPath,
+        string? connectionUri = null,
+        string? authorizationUri = null)
+    {
+        var cloud = string.IsNullOrWhiteSpace(connectionUri)
+            ? string.Empty
+            : $" -ConnectionUri '{Escape(connectionUri)}'";
+
+        if (!string.IsNullOrWhiteSpace(authorizationUri))
+            cloud += $" -AuthorizationUri '{Escape(authorizationUri)}'";
+
+        return $"& {{\n{Script}\n}} -AppId '{Escape(appId)}' -Thumbprint '{Escape(thumbprint)}' " +
+               $"-Organization '{Escape(organization)}' -OutputPath '{Escape(outputPath)}'{cloud}";
+    }
+
+    private static string Escape(string value) => value.Replace("'", "''");
 }

@@ -22,13 +22,19 @@
 | `Interactive` | `InteractiveBrowserCredential` (loopback redirect) | First-run/diagnostic only |
 | `ClientSecret` | `ClientSecretCredential` | Lab/testing only, labelled in the UI |
 
-Certificate requirements: RSA 4096, SHA-256, client-auth EKU, 12-month default validity (1–36 months enforced), subject `CN=Purview Governance Copilot` (configurable). The certificate is created in the per-user store, never machine-wide, and export requires an operator-chosen PFX password.
+Certificate requirements: RSA 2048/3072/4096 or ECC P-256/P-384, SHA-256/384, client-auth EKU, 12-month default validity (6/12/24/36/60/120 months; 120 needs explicit acknowledgement), subject `CN=Purview Governance Copilot` (configurable). The certificate is created in the per-user store, never machine-wide, and export requires an operator-chosen PFX password. Graph receives only the public DER as `keyCredentials`.
 
 Rotation: `Rotate` creates the replacement first (no authentication gap), returns the new thumbprint, and leaves removal of the old certificate to the operator after the app registration is updated. `CertificateInfo.DaysUntilExpiry` drives the 30-day warning on the Settings page.
 
 Key Vault (optional): PFX is stored base64 in a vault secret via the REST API with a `DefaultAzureCredential` token; the vault URI must be HTTPS. This gives central rotation without putting the PFX in the app database.
 
-Guided setup, as implemented: the Settings page presents connection (auth mode, tenant, client, thumbprint, test), certificate lifecycle (create/import/export/rotate/remove with a live expiry list) and provider/privacy configuration. It is a single reviewable page rather than a modal multi-step wizard; every step the wizard would perform is present and labelled.
+Provisioning trust boundary: `AuthenticationProvisioningService` uses the existing administrator bootstrap credential to create the app registration, enterprise application/service principal, certificate or lab secret, owners, Graph app-role assignments and delegated admin consent through `GraphAuthenticationProvisioner`. It never stores an administrator token. Dry run performs all validation without a Graph write. A generated rollback script deletes the application, service principal and local certificate. The resulting client id/thumbprint is saved only after the new credential acquires a token and reads `/organization`.
+
+Separation of duties: `SeparationOfDuties` rejects self-approval and approver roles that can also administer the tenant (Global, Purview, Security, Compliance and Application Administrator, Deployment Operator). Recommended approvers are change manager, CAB member, governance/compliance/risk officer and business owner. The same policy gates every deployment phase and the provisioning request.
+
+Deployment authorization: `DeploymentGate` evaluates simulation, phase approval, backup, rollback package, authentication, connectivity and risk acceptance before `PowerShellDeploymentExecutor` may run. Live execution is session-scoped, off at every start, requires certificate authentication, and receives credentials only through process environment variables. Scored PowerShell output is retained in the phase log.
+
+Guided setup, as implemented: Settings presents connection (auth mode, tenant, client, thumbprint, test), the **Authentication Provisioning Center** (dry run, one-click provisioning, approver/role, certificate lifetime/algorithm, lab-only secret, rollback), certificate lifecycle (create/import/export/rotate/remove with a live expiry list) and provider/privacy configuration.
 
 ## 3. AI privacy architecture (mandatory gate)
 

@@ -31,7 +31,8 @@ Ordered by risk reduction and by what the current build deliberately leaves out.
 - **Certificate lifecycle** — **Done**. Generation/install/export/rotation plus ECDSA support, expiration warnings and public-key upload to the app registration.
 - **Client secret automation** — **Done**. Lab/test only, 3/6/12/24 months, DPAPI at rest through the settings store, with the production warning retained.
 - **Safe deployment execution and phased rollout** — **Done (unverified live)**. A six-phase plan (discovery, audit/monitoring, information protection, DLP, records, insider risk/AI) runs one phase at a time: simulate, per-phase backup, separation-of-duties approval, gated live execution, automatic post-deployment validation, and a blocked next phase until the previous one validates. Destructive phases need explicit risk acceptance.
-- **Backup and rollback depth** — **Partial**. Phase backups contain the snapshot and phase operations; object-level label/DLP/retention exports and an automated restore are still open.
+- **Backup depth** — **Done (unverified live)**. Phase backups contain the snapshot and phase operations; **Back up tenant objects** additionally stores the real label, label-policy, auto-label, DLP, retention and compliance-tag export as an encrypted `objects/` backup.
+- **Rollback execution** — **Partial**. Phase rollback marks the phase, names the backup and generates the reviewed reversal script, but there is no automated restore or post-restore re-read.
 
 ## Phase 1.3 — Reporting and multi-tenant
 
