@@ -42,6 +42,8 @@ Installer rollback: **Done**. `Rollback-PurviewGovernanceCopilot.ps1` ships besi
 
 Plugin modules: **Done**. `PluginModuleLoader` discovers external `IModule` assemblies from the user's plugins folder, isolates load failures and registers them as custom modules; the desktop and CLI both use the extended registry.
 
+Security assurance: **Done**. SDL and SSDF practices are mapped to repository evidence in `docs/10-security-assurance.md`, `SECURITY.md` defines the bug bar, and CodeQL runs alongside the build, tests and dependency scan.
+
 Entra discovery: **Done (unverified live)**. Graph now returns directory-role counts, active assignments, PIM eligibility, service principals with secrets and Conditional Access enabled/MFA counts, and the Compliance Manager rules use them.
 
 Customer-information detection: **Done**. Labelled customer/client/tenant names, company names and titled person names join tenant ids and SharePoint URLs in the `CustomerData` ruleset.

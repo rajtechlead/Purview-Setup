@@ -198,10 +198,10 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 
 | ID | Requirement | Status | Proof | Evidence / gap |
 | --- | --- | --- | --- | --- |
-| SEC-01 | Microsoft SDL practices | **Partial** | D | SDL-style practices are documented and partly enforced in CI; there is no formal SDL process record (training, bug bar, security sign-off). |
+| SEC-01 | Microsoft SDL practices | **Delivered** | D | `SECURITY.md` records the disclosure route, supported versions and a severity bug bar with fix targets. `docs/10-security-assurance.md` maps every SDL phase to repository evidence, records the threat model and carries a per-release security sign-off checklist; `codeql.yml` adds static analysis to the existing build/test/vulnerability CI. Named gaps: no independent penetration test and no Authenticode certificate (SEC-11). |
 | SEC-02 | OWASP Top 10 and ASVS | **Delivered** | D | Reviewed in `docs/03` §6 with per-item status. |
 | SEC-03 | CIS Controls | **Delivered** | D | CIS v8 mappings per control and in the security review. |
-| SEC-04 | NIST SSDF | **Partial** | D | Mapped in prose; no SSDF practice evidence or attestation. |
+| SEC-04 | NIST SSDF | **Delivered** | D | `docs/10-security-assurance.md` §2 maps PO.1–PO.5, PS.1–PS.3, PW.1–PW.9 and RV.1–RV.3 to concrete files, tests and CI controls, and the release sign-off table records the current evidence. Self-attestation, not third-party certification. |
 | SEC-05 | Secure coding and least privilege | **Delivered** | B | Read-only collectors, parameterised SQL, encoded report output, no write cmdlets in the embedded script, per-user install. |
 | SEC-06 | RBAC | **Delivered** | T | Per-customer Viewer/Operator/Approver/Administrator assignments are persisted and enforced for visibility, activation, edits, portfolio and deployment operator/approver checks; tenant-side role guidance (Purview role groups, PIM) remains assessed. Tests: `TenantAccessTests`. |
 | SEC-07 | Dependency scanning | **Delivered** | D | CI runs `dotnet list package --vulnerable --include-transitive`; two direct third-party dependencies. |
@@ -267,8 +267,8 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 
 | Status | Count | Share |
 | --- | --- | --- |
-| **Delivered** | 118 | 88% |
-| **Partial** | 12 | 9% |
+| **Delivered** | 120 | 90% |
+| **Partial** | 10 | 7% |
 | **Not delivered** | 4 | 3% |
 | **Total tracked** | 134 | 100% |
 
@@ -291,7 +291,7 @@ By section:
 | Licence optimisation | 2 | 0 | 0 |
 | Continuous monitoring | 4 | 0 | 0 |
 | Reporting | 6 | 0 | 0 |
-| Security engineering | 12 | 3 | 1 |
+| Security engineering | 14 | 1 | 1 |
 | Architecture and technology | 7 | 1 | 2 |
 | User experience | 6 | 0 | 0 |
 | Help and About | 3 | 0 | 0 |

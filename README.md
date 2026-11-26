@@ -96,6 +96,8 @@ dotnet run --project src/PurviewCopilot.Cli -c Release -- verify-audit
 | [07 Requirements traceability](docs/07-requirements-traceability.md) | Spec → implementation status summary |
 | [08 Requirements tracker](docs/08-requirements-tracker.md) | Requirement-level tracker: 134 requirements with status, proof and gap |
 | [09 Deliverables tracker](docs/09-deliverables-tracker.md) | The 22 named deliverables, locations and limitations |
+| [10 Security assurance](docs/10-security-assurance.md) | SDL/SSDF mapping, threat model and release security sign-off |
+| [SECURITY.md](SECURITY.md) | Vulnerability disclosure and the severity bug bar |
 
 ## Status
 
