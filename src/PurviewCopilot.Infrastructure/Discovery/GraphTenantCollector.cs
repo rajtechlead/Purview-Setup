@@ -73,7 +73,10 @@ public sealed class GraphTenantCollector : ITenantCollector
         snapshot.TeamsCount = await CountAsync($"{graph}/teams?$top=1&$count=true", token, warnings, cancellationToken).ConfigureAwait(false);
 
         snapshot.DevicesOnboarded = await CountAsync($"{graph}/deviceManagement/managedDevices?$top=1&$count=true", token, warnings, cancellationToken).ConfigureAwait(false);
-        snapshot.ConditionalAccessPolicies = await CountAsync($"{graphBeta}/identity/conditionalAccess/policies?$top=1&$count=true", token, warnings, cancellationToken).ConfigureAwait(false);
+        await ReadConditionalAccessAsync(snapshot, token, graphBeta, warnings, cancellationToken).ConfigureAwait(false);
+        snapshot.DirectoryRoles = await CountAsync($"{graph}/directoryRoles?$top=1&$count=true", token, warnings, cancellationToken).ConfigureAwait(false);
+        snapshot.DirectoryRoleAssignments = await CountAsync($"{graph}/roleManagement/directory/roleAssignments?$filter=assignmentType eq 'Assigned'&$top=1&$count=true", token, warnings, cancellationToken).ConfigureAwait(false);
+        snapshot.PimEnabled = await CountAsync($"{graph}/roleManagement/directory/roleEligibilitySchedules?$top=1&$count=true", token, warnings, cancellationToken).ConfigureAwait(false) > 0;
 
         var mfaRegistered = await CountAsync($"{graph}/reports/authenticationMethods/userRegistrationDetails?$filter=isMfaRegistered eq true&$top=1&$count=true", token, warnings, cancellationToken).ConfigureAwait(false);
         if (mfaRegistered > 0 && snapshot.UsersEnabled > 0)
@@ -84,6 +87,7 @@ public sealed class GraphTenantCollector : ITenantCollector
         await ReadLicensesAsync(snapshot, token, graph, warnings, cancellationToken).ConfigureAwait(false);
         await ReadSecureScoreAsync(snapshot, token, graph, warnings, cancellationToken).ConfigureAwait(false);
         await ReadApplicationsAsync(snapshot, token, graph, warnings, cancellationToken).ConfigureAwait(false);
+        await ReadServicePrincipalSecretsAsync(snapshot, token, graph, warnings, cancellationToken).ConfigureAwait(false);
         await ReadGlobalAdministratorsAsync(snapshot, token, graph, warnings, cancellationToken).ConfigureAwait(false);
 
         // Purview-specific configuration is read through Security & Compliance PowerShell.
@@ -150,6 +154,55 @@ public sealed class GraphTenantCollector : ITenantCollector
         }
 
         snapshot.AppRegistrationsWithSecrets = withSecrets;
+    }
+
+    private async Task ReadConditionalAccessAsync(TenantSnapshot snapshot, string token, string graphBeta, List<string> warnings, CancellationToken cancellationToken)
+    {
+        using var document = await GetJsonAsync(
+            $"{graphBeta}/identity/conditionalAccess/policies?$select=id,state,grantControls&$top=999", token, warnings, cancellationToken).ConfigureAwait(false);
+        if (document is null) return;
+
+        if (!document.RootElement.TryGetProperty("value", out var policies) || policies.ValueKind != JsonValueKind.Array) return;
+
+        var enabled = 0;
+        var mfa = 0;
+        foreach (var policy in policies.EnumerateArray())
+        {
+            var state = policy.TryGetProperty("state", out var s) ? s.GetString() : null;
+            if (!string.Equals(state, "enabled", StringComparison.OrdinalIgnoreCase)) continue;
+
+            enabled++;
+            if (policy.TryGetProperty("grantControls", out var grant) &&
+                grant.ValueKind == JsonValueKind.Object &&
+                grant.TryGetProperty("builtInControls", out var controls) &&
+                controls.ValueKind == JsonValueKind.Array &&
+                controls.EnumerateArray().Any(c => string.Equals(c.GetString(), "mfa", StringComparison.OrdinalIgnoreCase)))
+            {
+                mfa++;
+            }
+        }
+
+        snapshot.ConditionalAccessPolicies = policies.GetArrayLength();
+        snapshot.ConditionalAccessPoliciesEnabled = enabled;
+        snapshot.ConditionalAccessMfaPolicies = mfa;
+    }
+
+    private async Task ReadServicePrincipalSecretsAsync(TenantSnapshot snapshot, string token, string graph, List<string> warnings, CancellationToken cancellationToken)
+    {
+        using var document = await GetJsonAsync($"{graph}/servicePrincipals?$select=id,passwordCredentials&$top=999", token, warnings, cancellationToken).ConfigureAwait(false);
+        if (document is null) return;
+
+        var withSecrets = 0;
+        foreach (var principal in document.RootElement.GetProperty("value").EnumerateArray())
+        {
+            if (principal.TryGetProperty("passwordCredentials", out var credentials) &&
+                credentials.ValueKind == JsonValueKind.Array && credentials.GetArrayLength() > 0)
+            {
+                withSecrets++;
+            }
+        }
+
+        snapshot.ServicePrincipalsWithSecrets = withSecrets;
     }
 
     private async Task ReadGlobalAdministratorsAsync(TenantSnapshot snapshot, string token, string graph, List<string> warnings, CancellationToken cancellationToken)

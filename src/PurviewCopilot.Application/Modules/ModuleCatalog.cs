@@ -244,8 +244,11 @@ public static class ModuleCatalog
             new[] { "ISO 27001 9.1", "SOC 2 CC4.1" }, new[] { "E3" });
 
         Add("CPM-02", ModuleKey.ComplianceManager, "Conditional Access protects admin and data access", Severity.High,
-            s => s.ConditionalAccessPolicies > 0 ? Pass($"{s.ConditionalAccessPolicies} conditional access policy(ies) present.")
-                : Fail("No conditional access policies are configured."),
+            s => s.ConditionalAccessPoliciesEnabled > 0
+                ? Pass($"{s.ConditionalAccessPoliciesEnabled} of {s.ConditionalAccessPolicies} conditional access policy(ies) enabled; {s.ConditionalAccessMfaPolicies} enforce MFA.")
+                : s.ConditionalAccessPolicies > 0
+                    ? Warn($"{s.ConditionalAccessPolicies} conditional access policy(ies) exist but none is enabled.")
+                    : Fail("No conditional access policies are configured."),
             "Require MFA and compliant devices for administrative and Purview roles.",
             new[] { "ISO 27001 A.8.5", "NIST CSF PR.AC-1", "CIS v8 6.3" }, new[] { "Entra ID P1" });
 
@@ -263,9 +266,17 @@ public static class ModuleCatalog
             new[] { "CIS v8 6.5", "NIST CSF PR.AC-7", "PCI-DSS 8.4" }, new[] { "Entra ID P1" });
 
         Add("CPM-05", ModuleKey.ComplianceManager, "Privileged Identity Management is in use", Severity.Medium,
-            s => s.PimEnabled ? Pass("PIM is enabled.") : Warn("PIM is not enabled; privileged roles may be permanent."),
+            s => s.PimEnabled
+                ? Pass($"PIM eligibility schedules exist across {s.DirectoryRoles} directory role(s) and {s.DirectoryRoleAssignments} active assignment(s).")
+                : Warn($"No PIM eligibility schedule was found ({s.DirectoryRoleAssignments} active role assignment(s))."),
             "Move Purview and Entra admin roles to eligible, time-bound assignments with approval.",
             new[] { "ISO 27001 A.8.2", "CIS v8 5.4" }, new[] { "Entra ID P2" });
+
+        Add("CPM-07", ModuleKey.ComplianceManager, "Service principals avoid client secrets", Severity.High,
+            s => s.ServicePrincipalsWithSecrets == 0 ? Pass("No service principal relies on a client secret.")
+                : Warn($"{s.ServicePrincipalsWithSecrets} service principal(s) use client secrets."),
+            "Replace service-principal secrets with certificates or federated credentials, starting with privileged apps.",
+            new[] { "ISO 27001 A.8.24", "NIST CSF PR.AC-1" }, new[] { "Entra ID P1" });
 
         Add("CPM-06", ModuleKey.ComplianceManager, "App registrations avoid client secrets", Severity.High,
             s => s.AppRegistrationsWithSecrets == 0 ? Pass("No app registration relies on a client secret.")

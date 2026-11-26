@@ -66,7 +66,7 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 | DSC-07 | Discover eDiscovery | **Delivered** | C | `Get-ComplianceCase`; advanced eDiscovery capacity is inferred, not queried directly. |
 | DSC-08 | Discover DSPM and AI governance | **Partial** | C | Controls DSP-01…03 and AIG-01…03 exist, but DSPM and DSPM-for-AI enablement are not collected from any stable API, so they report as failures by default. |
 | DSC-09 | Discover Exchange Online, SharePoint Online, OneDrive, Teams, users and groups | **Partial** | C | Users, groups and site/team counts come from Graph. Mailbox and OneDrive counts are approximations from enabled users, and the collector says so in its evidence text. |
-| DSC-10 | Discover Entra users, roles, applications, service principals and Conditional Access | **Partial** | C | Users, Global Administrator count, app registrations with secrets and Conditional Access policy count are collected. No role inventory beyond GA, no service-principal inventory, no per-policy CA detail. |
+| DSC-10 | Discover Entra users, roles, applications, service principals and Conditional Access | **Delivered** | C | Users, guests and groups; directory-role count, active role assignments, PIM eligibility and Global Administrators; app registrations and service principals with client secrets; Conditional Access total, enabled and MFA-enforcing counts. Read-only Graph GETs with per-call degradation; not run against a live tenant here (no tenant/certificate). CPM-02/05/06/07 consume the new signals. |
 | DSC-11 | Discover Defender integrations, security posture and compliance posture | **Partial** | C | Secure score is read from Graph. Defender product signals are not ingested and the Compliance Manager score is not collected, so `CPM-01` warns on an absent value. |
 | DSC-12 | Produce Security, Governance, Compliance, Purview Maturity, Risk, AI Governance and Copilot Readiness scores | **Delivered** | T | `ScoringEngine` + `ScoreSet` (seven scores plus maturity band); weighted modules, capped risk. Tests: `Compute_*`, `Risk_*`. |
 | DSC-13 | Assess all sixteen module areas automatically | **Delivered** | T | 49 `ControlRule`s in `ModuleCatalog` across 16 `StandardModule`s; `Catalog_CoversEveryModule_WithAtLeastTwoControls` enforces coverage. |
@@ -267,8 +267,8 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 
 | Status | Count | Share |
 | --- | --- | --- |
-| **Delivered** | 117 | 87% |
-| **Partial** | 13 | 10% |
+| **Delivered** | 118 | 88% |
+| **Partial** | 12 | 9% |
 | **Not delivered** | 4 | 3% |
 | **Total tracked** | 134 | 100% |
 
@@ -278,7 +278,7 @@ By section:
 | --- | --- | --- | --- |
 | Platform and scope | 4 | 0 | 0 |
 | Authentication | 12 | 0 | 0 |
-| Discovery and assessment | 10 | 4 | 0 |
+| Discovery and assessment | 11 | 3 | 0 |
 | Deployment and change control | 3 | 2 | 0 |
 | Modular architecture | 2 | 1 | 0 |
 | AI assistant and failover | 11 | 0 | 1 |

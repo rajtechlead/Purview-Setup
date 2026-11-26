@@ -143,9 +143,14 @@ public sealed class TenantSnapshot
     public int Guests { get; set; }
     public int Groups { get; set; }
     public int ServicePrincipals { get; set; }
+    public int ServicePrincipalsWithSecrets { get; set; }
     public int AppRegistrationsWithSecrets { get; set; }
+    public int DirectoryRoles { get; set; }
+    public int DirectoryRoleAssignments { get; set; }
     public int GlobalAdministrators { get; set; }
     public int ConditionalAccessPolicies { get; set; }
+    public int ConditionalAccessPoliciesEnabled { get; set; }
+    public int ConditionalAccessMfaPolicies { get; set; }
     public double MfaRegistrationPercent { get; set; }
     public bool PimEnabled { get; set; }
     public double SecureScorePercent { get; set; }
