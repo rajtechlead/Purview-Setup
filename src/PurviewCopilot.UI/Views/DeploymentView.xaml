@@ -58,6 +58,32 @@
             <StackPanel Grid.Column="1">
                 <Border Style="{StaticResource Card}" Margin="0,0,0,12">
                     <StackPanel>
+                        <TextBlock Text="Phased production deployment" Style="{StaticResource SectionHeader}" />
+                        <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,8"
+                                   Text="One phase at a time: simulate, back up, approve with separation of duties, execute, then validate before the next phase. Live execution is disabled unless the host enables an approved executor profile." />
+                        <WrapPanel Margin="0,0,0,6">
+                            <ComboBox Width="240" ItemsSource="{Binding PhaseDefinitions}" DisplayMemberPath="Name"
+                                      SelectedItem="{Binding SelectedPhase}" Margin="0,0,8,6" />
+                            <Button Content="Simulate + backup phase" Command="{Binding PreparePhaseCommand}" Margin="0,0,8,6" />
+                        </WrapPanel>
+                        <WrapPanel Margin="0,0,0,6">
+                            <TextBox Width="140" Text="{Binding PhaseApprover}" ToolTip="Approver (must differ from the operator)" Margin="0,0,6,6" />
+                            <ComboBox Width="160" ItemsSource="{Binding ApproverRoles}" SelectedItem="{Binding PhaseApproverRole}" Margin="0,0,8,6" />
+                            <Button Content="Approve phase" Style="{StaticResource PrimaryButton}" Command="{Binding ApprovePhaseCommand}" Margin="0,0,8,6" />
+                        </WrapPanel>
+                        <WrapPanel Margin="0,0,0,6">
+                            <CheckBox Content="Enable live execution this session" IsChecked="{Binding LiveExecutionEnabled}" VerticalAlignment="Center" Margin="0,0,10,6" ToolTip="Off by default. The safety gate still requires simulation, backup, approval, authentication and connectivity." />
+                            <CheckBox Content="Risk accepted" IsChecked="{Binding PhaseRiskAccepted}" VerticalAlignment="Center" Margin="0,0,10,6" />
+                            <Button Content="Execute approved phase (live)" Command="{Binding ExecutePhaseCommand}" Margin="0,0,8,6" />
+                            <Button Content="Mark rolled back" Command="{Binding RollbackPhaseCommand}" Margin="0,0,8,6" />
+                        </WrapPanel>
+                        <TextBlock Text="{Binding PhaseStatusText}" FontSize="12" Foreground="{StaticResource AccentBrush}" TextWrapping="Wrap" Margin="0,0,0,4" />
+                        <TextBlock Text="{Binding PhaseLog}" Style="{StaticResource Muted}" TextWrapping="Wrap" FontFamily="Consolas" FontSize="11" MaxHeight="120" />
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+                    <StackPanel>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
                             <Button Content="Simulate (what-if)" Command="{Binding SimulateCommand}" Margin="0,0,8,0" />
                             <Button Content="Submit for approval" Command="{Binding SubmitCommand}" Margin="0,0,8,0" />

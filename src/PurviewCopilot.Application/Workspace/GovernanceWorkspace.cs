@@ -64,6 +64,9 @@ public sealed class GovernanceWorkspace
     }
 
     public TenantSnapshot? Tenant => _lastCollected;
+
+    public Task<ConfigurationBackup?> GetLatestBackupAsync(CancellationToken cancellationToken = default) =>
+        _backups.LatestAsync(_lastCollected?.TenantId ?? ActiveProfile?.TenantId ?? string.Empty, cancellationToken);
     public AssessmentResult? Assessment { get; private set; }
     public IReadOnlyList<FrameworkCoverage> Frameworks =>
         Assessment is null ? Array.Empty<FrameworkCoverage>() : FrameworkMapper.Map(Assessment.Findings);

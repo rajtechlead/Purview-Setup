@@ -374,8 +374,6 @@ public sealed record PhaseExecution(
     DateTimeOffset UpdatedUtc,
     IReadOnlyList<string> Log);
 
-public sealed record DeploymentGateResult(bool Blocked, IReadOnlyList<string> Reasons);
-
 public sealed record AuthConfiguration(
     AuthMode Mode,
     string TenantId,

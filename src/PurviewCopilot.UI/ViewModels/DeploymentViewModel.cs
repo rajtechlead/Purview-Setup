@@ -4,9 +4,11 @@ using System.Windows.Input;
 using Microsoft.Win32;
 using PurviewCopilot.Application.Abstractions;
 using PurviewCopilot.Application.Approvals;
+using PurviewCopilot.Application.Auth;
 using PurviewCopilot.Application.Deployment;
 using PurviewCopilot.Application.Workspace;
 using PurviewCopilot.Domain;
+using PurviewCopilot.Infrastructure.Auth;
 using PurviewCopilot.UI.Mvvm;
 
 namespace PurviewCopilot.UI.ViewModels;
@@ -41,6 +43,17 @@ public sealed class DeploymentViewModel : PageViewModel
     private readonly GovernanceWorkspace _workspace;
     private readonly ISettingsStore _settings;
     private readonly IClock _clock;
+    private readonly PhasedDeploymentService _phased;
+    private readonly ILiveDeploymentExecutor _liveExecutor;
+    private readonly ConnectionVerifier _verifier;
+    private DeploymentPhaseDefinition _selectedPhase = DeploymentPhases.All[0];
+    private PhaseExecution? _phaseExecution;
+    private bool _phaseSimulated;
+    private string _phaseApprover = string.Empty;
+    private string _phaseApproverRole = "Change Manager";
+    private bool _phaseRiskAccepted;
+    private string _phaseStatusText = "No phase prepared.";
+    private string _phaseLog = string.Empty;
     private DeploymentMode _mode = DeploymentMode.GuidedDeployment;
     private string _actor = Environment.UserName;
     private string _approverComment = string.Empty;
@@ -50,11 +63,25 @@ public sealed class DeploymentViewModel : PageViewModel
     private string _approvalState = "No approval request.";
     private bool _busy;
 
-    public DeploymentViewModel(GovernanceWorkspace workspace, ISettingsStore settings, IClock clock)
+    public DeploymentViewModel(
+        GovernanceWorkspace workspace,
+        ISettingsStore settings,
+        IClock clock,
+        PhasedDeploymentService phased,
+        ILiveDeploymentExecutor liveExecutor,
+        ConnectionVerifier verifier)
     {
         _workspace = workspace;
         _settings = settings;
         _clock = clock;
+        _phased = phased;
+        _liveExecutor = liveExecutor;
+        _verifier = verifier;
+
+        PreparePhaseCommand = new AsyncRelayCommand(PreparePhaseAsync, () => !Busy && Plan is not null);
+        ApprovePhaseCommand = new AsyncRelayCommand(ApprovePhaseAsync, () => !Busy && _phaseExecution?.Status == PhaseStatus.Simulated);
+        ExecutePhaseCommand = new AsyncRelayCommand(ExecutePhaseAsync, () => !Busy && Plan is not null && _phaseExecution?.Status == PhaseStatus.Approved);
+        RollbackPhaseCommand = new AsyncRelayCommand(RollbackPhaseAsync, () => !Busy && _phaseExecution is not null);
 
         BuildPlanCommand = new AsyncRelayCommand(BuildPlanAsync, () => !Busy);
         SimulateCommand = new AsyncRelayCommand(SimulateAsync, () => !Busy && Plan is not null);
@@ -77,6 +104,30 @@ public sealed class DeploymentViewModel : PageViewModel
     public ObservableCollection<SelectableRecommendation> Candidates { get; } = new();
 
     public IReadOnlyList<DeploymentMode> Modes { get; } = Enum.GetValues<DeploymentMode>();
+    public IReadOnlyList<DeploymentPhaseDefinition> PhaseDefinitions => DeploymentPhases.All;
+    public IReadOnlyList<string> ApproverRoles => SeparationOfDuties.RecommendedApproverRoles;
+    public bool LiveExecutionEnabled
+    {
+        get => _liveExecutor.LiveExecutionEnabled;
+        set
+        {
+            _liveExecutor.SetLiveExecutionEnabled(value);
+            Raise(nameof(LiveExecutionEnabled));
+        }
+    }
+
+    public DeploymentPhaseDefinition SelectedPhase
+    {
+        get => _selectedPhase;
+        set => SetProperty(ref _selectedPhase, value);
+    }
+
+    public PhaseExecution? PhaseExecution { get => _phaseExecution; private set => SetProperty(ref _phaseExecution, value); }
+    public string PhaseApprover { get => _phaseApprover; set => SetProperty(ref _phaseApprover, value); }
+    public string PhaseApproverRole { get => _phaseApproverRole; set => SetProperty(ref _phaseApproverRole, value); }
+    public bool PhaseRiskAccepted { get => _phaseRiskAccepted; set => SetProperty(ref _phaseRiskAccepted, value); }
+    public string PhaseStatusText { get => _phaseStatusText; private set => SetProperty(ref _phaseStatusText, value); }
+    public string PhaseLog { get => _phaseLog; private set => SetProperty(ref _phaseLog, value); }
 
     public DeploymentMode Mode { get => _mode; set => SetProperty(ref _mode, value); }
     public string Actor { get => _actor; set => SetProperty(ref _actor, value); }
@@ -89,6 +140,10 @@ public sealed class DeploymentViewModel : PageViewModel
     public ChangePlan? Plan { get; private set; }
     public ApprovalRequest? Approval { get; private set; }
 
+    public ICommand PreparePhaseCommand { get; }
+    public ICommand ApprovePhaseCommand { get; }
+    public ICommand ExecutePhaseCommand { get; }
+    public ICommand RollbackPhaseCommand { get; }
     public ICommand BuildPlanCommand { get; }
     public ICommand SimulateCommand { get; }
     public ICommand SubmitCommand { get; }
@@ -122,6 +177,154 @@ public sealed class DeploymentViewModel : PageViewModel
         }
 
         Status = $"{Candidates.Count} recommendation(s) available. High and critical items are preselected.";
+    }
+
+    private async Task PreparePhaseAsync()
+    {
+        if (Plan is null) return;
+        var tenant = _workspace.Tenant;
+        if (tenant is null)
+        {
+            PhaseStatusText = "Run an assessment first so the phase has a snapshot and backup source.";
+            return;
+        }
+
+        Busy = true;
+        try
+        {
+            var execution = _phased.Prepare(Plan, SelectedPhase.Phase, Actor);
+            var (updated, result) = await _phased.SimulateAndBackupAsync(Plan, execution, tenant, Actor).ConfigureAwait(true);
+
+            PhaseExecution = updated;
+            _phaseSimulated = result.Succeeded;
+            PhaseLog = string.Join(Environment.NewLine, updated.Log);
+            PhaseStatusText = result.Summary;
+        }
+        catch (Exception ex)
+        {
+            PhaseStatusText = $"Phase preparation failed: {ex.Message}";
+        }
+        finally
+        {
+            Busy = false;
+            RefreshPhaseCommands();
+        }
+    }
+
+    private async Task ApprovePhaseAsync()
+    {
+        if (_phaseExecution is null) return;
+
+        Busy = true;
+        try
+        {
+            PhaseExecution = await _phased.ApproveAsync(_phaseExecution, Actor, PhaseApprover, PhaseApproverRole).ConfigureAwait(true);
+            PhaseLog = string.Join(Environment.NewLine, PhaseExecution.Log);
+            PhaseStatusText = $"Phase approved by {PhaseApprover} ({PhaseApproverRole}).";
+        }
+        catch (Exception ex)
+        {
+            PhaseStatusText = $"Approval failed: {ex.Message}";
+        }
+        finally
+        {
+            Busy = false;
+            RefreshPhaseCommands();
+        }
+    }
+
+    private async Task ExecutePhaseAsync()
+    {
+        if (Plan is null || _phaseExecution is null) return;
+
+        var tenant = _workspace.Tenant;
+        if (tenant is null)
+        {
+            PhaseStatusText = "No tenant snapshot is available.";
+            return;
+        }
+
+        Busy = true;
+        try
+        {
+            var settings = await _settings.LoadAsync().ConfigureAwait(true);
+            var (verified, message) = await _verifier.VerifyAsync(settings.Auth).ConfigureAwait(true);
+
+            var authorization = new DeploymentAuthorization(
+                _phaseSimulated,
+                _phaseExecution.Status == PhaseStatus.Approved,
+                true,
+                true,
+                verified,
+                verified,
+                PhaseRiskAccepted || Plan.DestructiveOperationCount == 0);
+
+            var result = await _liveExecutor.ExecuteAsync(Plan, _phaseExecution, settings.Auth, tenant, authorization)
+                .ConfigureAwait(true);
+
+            PhaseExecution = await _phased.RecordExecutionAsync(_phaseExecution, result, Actor).ConfigureAwait(true);
+
+            if (result.Succeeded)
+            {
+                var before = tenant;
+                await _workspace.AssessAsync(settings.Auth, settings.DefaultMode).ConfigureAwait(true);
+                var report = DeploymentValidation.Validate(Plan, before, _workspace.Tenant!);
+                PhaseExecution = await _phased.RecordValidationAsync(PhaseExecution, report, Actor).ConfigureAwait(true);
+                PhaseStatusText = $"{result.Summary} {report.Summary}";
+            }
+            else
+            {
+                PhaseStatusText = $"{result.Summary} Authentication: {message}";
+            }
+
+            PhaseLog = string.Join(Environment.NewLine, PhaseExecution.Log);
+        }
+        catch (Exception ex)
+        {
+            PhaseStatusText = $"Execution failed: {ex.Message}";
+        }
+        finally
+        {
+            Busy = false;
+            RefreshPhaseCommands();
+        }
+    }
+
+    private async Task RollbackPhaseAsync()
+    {
+        if (_phaseExecution is null) return;
+
+        Busy = true;
+        try
+        {
+            var backup = await _workspace.GetLatestBackupAsync().ConfigureAwait(true);
+            if (backup is null)
+            {
+                PhaseStatusText = "No backup is available; rollback is blocked.";
+                return;
+            }
+
+            PhaseExecution = _phased.MarkRolledBack(_phaseExecution, backup);
+            PhaseLog = string.Join(Environment.NewLine, PhaseExecution.Log);
+            PhaseStatusText = "Phase marked rolled back. Export and run the rollback script, then re-assess to confirm the restored state.";
+        }
+        catch (Exception ex)
+        {
+            PhaseStatusText = $"Rollback failed: {ex.Message}";
+        }
+        finally
+        {
+            Busy = false;
+            RefreshPhaseCommands();
+        }
+    }
+
+    private void RefreshPhaseCommands()
+    {
+        foreach (var command in new[] { PreparePhaseCommand, ApprovePhaseCommand, ExecutePhaseCommand, RollbackPhaseCommand })
+        {
+            (command as AsyncRelayCommand)?.RaiseCanExecuteChanged();
+        }
     }
 
     private async Task BuildPlanAsync()
@@ -176,6 +379,8 @@ public sealed class DeploymentViewModel : PageViewModel
         {
             (command as AsyncRelayCommand)?.RaiseCanExecuteChanged();
         }
+
+        RefreshPhaseCommands();
     }
 
     private async Task ExportPackageAsync()

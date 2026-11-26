@@ -1,3 +1,4 @@
+using PurviewCopilot.Application.Deployment;
 using PurviewCopilot.Domain;
 
 namespace PurviewCopilot.Application.Abstractions;
@@ -165,6 +166,36 @@ public interface IChangeExecutor
 }
 
 public sealed record ExecutionResult(bool Succeeded, string Summary, IReadOnlyList<string> Log);
+
+public sealed record PowerShellResult(int ExitCode, string Output, string Error);
+
+/// <summary>Runs a reviewed PowerShell script with an explicit, minimal environment.</summary>
+public interface IPowerShellRunner
+{
+    Task<PowerShellResult> RunAsync(
+        string script,
+        IReadOnlyDictionary<string, string> environment,
+        CancellationToken cancellationToken = default);
+}
+
+/// <summary>Executes an approved phase against a live tenant. Implementations must fail closed.</summary>
+public interface ILiveDeploymentExecutor
+{
+    bool LiveExecutionEnabled { get; }
+
+    /// <summary>Session-scoped opt-in. It never persists, so a restart returns to fail-closed.</summary>
+    void SetLiveExecutionEnabled(bool enabled);
+
+    Task<ExecutionResult> ExecuteAsync(
+        ChangePlan plan,
+        PhaseExecution execution,
+        AuthConfiguration auth,
+        TenantSnapshot tenant,
+        DeploymentAuthorization authorization,
+        CancellationToken cancellationToken = default);
+
+    string BuildPreview(ChangePlan plan);
+}
 
 public interface IReportExporter
 {

@@ -18,7 +18,7 @@ Verified against commit `353bde2` on 25 November 2026 by reading the source, cou
 
 | Code | Meaning |
 | --- | --- |
-| **T** | Covered by an automated test (109 tests, all passing at audit time). |
+| **T** | Covered by an automated test (121 tests, all passing at audit time). |
 | **B** | Builds and is reachable from the composition root; behaviour not exercised end to end. |
 | **C** | Code exists but is unexercised here (no tenant, certificate, API key or admin rights). |
 | **D** | Documentation or project/manifest artifact only; nothing executes it here. |
@@ -80,7 +80,7 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 | DEP-02 | Modes behave materially differently | **Partial** | T | All modes share one guarded pipeline; only recommendation preselection and baseline content differ. One-click and guided are not distinct workflows. |
 | DEP-03 | Review, modify, approve, apply and roll back | **Partial** | T | Review, modify, three-stage approval and backup are real. Apply is gated to script generation; a reversal script is generated in reverse order with destructive commands commented out, but no restore is executed. |
 | DEP-04 | One-click recommended deployment | **Partial** | B | A plan can be built from preselected high/critical recommendations in one action, but it still requires simulation and three approvals before a script is produced. |
-| DEP-05 | Apply changes automatically to the tenant | **Not delivered** | B | `ChangeExecutor(allowLiveExecution: false)` is hard-coded in `AppServices`; `ApplyAsync` returns "blocked by configuration". This is a deliberate safety decision, but the requirement as written is unmet. |
+| DEP-05 | Apply changes automatically to the tenant | **Delivered** | C | `PowerShellDeploymentExecutor` runs the reviewed phase script with certificate environment only after a session opt-in and a passing `DeploymentGate` (simulation, approval, backup, rollback, authentication, connectivity, risk). It is off at every start. Tests cover fail-closed, client-secret rejection and the authorized run. Not exercised against a live tenant. |
 
 ## E. Modular architecture
 
@@ -134,7 +134,7 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 | SAF-02 | Full rollback packages | **Partial** | T | A rollback package is stored and validated, and a reversal script is generated from the plan; no automated restore is executed. |
 | SAF-03 | Policy simulation mode | **Delivered** | T | `SimulateAsync` validates every operation payload and returns the exact script that would run; empty payloads fail simulation. |
 | SAF-04 | What-if analysis | **Delivered** | B | Simulation reports per-operation validation and post-checks before approval. |
-| SAF-05 | Pre-deployment and post-deployment validation | **Partial** | B | Pre-flight payload validation is real. Post-deployment validation is a checklist in the plan, not an automated re-read of tenant state. |
+| SAF-05 | Pre-deployment and post-deployment validation | **Delivered** | T | Pre-flight simulation validates every payload. After a phase executes, the UI re-collects the tenant and `DeploymentValidation` compares identity, audit, labels, DLP, retention and collection warnings against the pre-phase snapshot, recording pass/fail per check. Tests: `PhasedDeploymentTests.Validation_DetectsAReducedControlSet`. |
 
 ## I. Multi-tenant MSP mode
 
@@ -267,9 +267,9 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 
 | Status | Count | Share |
 | --- | --- | --- |
-| **Delivered** | 103 | 77% |
-| **Partial** | 25 | 19% |
-| **Not delivered** | 6 | 4% |
+| **Delivered** | 105 | 78% |
+| **Partial** | 24 | 18% |
+| **Not delivered** | 5 | 4% |
 | **Total tracked** | 134 | 100% |
 
 By section:
@@ -279,11 +279,11 @@ By section:
 | Platform and scope | 2 | 2 | 0 |
 | Authentication | 12 | 0 | 0 |
 | Discovery and assessment | 10 | 4 | 0 |
-| Deployment and change control | 1 | 3 | 1 |
+| Deployment and change control | 2 | 3 | 0 |
 | Modular architecture | 1 | 2 | 0 |
 | AI assistant and failover | 11 | 0 | 1 |
 | AI privacy guardrail | 11 | 1 | 0 |
-| Change management and safety | 4 | 3 | 0 |
+| Change management and safety | 5 | 2 | 0 |
 | Multi-tenant MSP | 2 | 0 | 1 |
 | Configuration-as-code | 3 | 0 | 0 |
 | Approval workflow | 2 | 0 | 0 |
@@ -302,19 +302,18 @@ By section:
 Ranked by risk to the commercial claim, not by effort:
 
 1. **Per-customer RBAC (MSP-03)** — tenant switching, isolation, the portfolio and its CSV export exist, but all saved tenants remain reachable by one Windows user.
-2. **Live deployment execution (DEP-05)** — by design, but the specification asks for apply and rollback; the reviewed script and reversal script exist, execution does not.
-3. **Security Copilot (AIA-02)** — no generally available tenant-licensed API to integrate here.
-4. **Code signing, MSIX packaging and a hosted update manifest (SEC-11, SEC-16, INS-02)** — the MSI is produced but unsigned, the updater has no published manifest, and there is no `.msix` build.
-5. **SQL Server support (ARC-08)** and **WinUI 3 (ARC-02)**.
-6. **DSPM, Compliance Manager and Defender data collection (DSC-08, DSC-11)**.
-7. **SQLCipher page encryption and per-customer RBAC (SEC-14 metadata, MSP-03)** — sensitive payloads are now encrypted, but database pages and tenant metadata are not, and all saved tenants remain reachable by one Windows user.
+2. **Security Copilot (AIA-02)** — no generally available tenant-licensed API to integrate here.
+3. **Code signing, MSIX packaging and a hosted update manifest (SEC-11, SEC-16, INS-02)** — the MSI is produced but unsigned, the updater has no published manifest, and there is no `.msix` build.
+4. **SQL Server support (ARC-08)** and **WinUI 3 (ARC-02)**.
+5. **DSPM, Compliance Manager and Defender data collection (DSC-08, DSC-11)**.
+6. **SQLCipher page encryption and per-customer RBAC (SEC-14 metadata, MSP-03)** — sensitive payloads are now encrypted, but database pages and tenant metadata are not, and all saved tenants remain reachable by one Windows user.
 
 ## Verification performed
 
 | Check | Result |
 | --- | --- |
 | `dotnet build PurviewGovernanceCopilot.sln -c Release` | Succeeded (local SDK 9.0.321) |
-| `dotnet test tests/PurviewCopilot.Tests -c Release` | 109 passed, 0 failed |
+| `dotnet test tests/PurviewCopilot.Tests -c Release` | 121 passed, 0 failed |
 | Catalog count (`grep -c 'Add("' ModuleCatalog.cs`) | 49 rules across 16 modules |
 | Exporter inventory | HTML, JSON, CSV, Markdown, PDF, DOCX, XLSX |
 | `ReportFormat` enum | `Html, Json, Csv, Markdown, Pdf, Docx, Xlsx` |

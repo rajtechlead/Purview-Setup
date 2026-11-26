@@ -16,9 +16,9 @@ Ordered by risk reduction and by what the current build deliberately leaves out.
 
 ## Phase 1.2 — Deployment depth
 
-**2 of 4 complete, 1 partial.** Updated 25 November 2026.
+**3 of 4 complete, 1 partial.** Updated 26 November 2026.
 
-- **Live executor profile** — **Open**. Needs a separately installed, signed executor component and a live tenant to verify post-conditions. Apply remains gated to script generation.
+- **Live executor profile** — **Done (unverified live)**. `PowerShellDeploymentExecutor` runs only after a session opt-in and a passing safety gate (simulation, per-phase backup, approval, rollback package, authentication, connectivity, risk), with certificate auth and no secrets in the script. Off at every start; no live tenant was available to verify post-conditions.
 - **Real operation payloads** — **Done**. `PurviewScriptLibrary` maps twelve controls to the cmdlets that actually configure them: `New-Label`, `New-LabelPolicy`, `New-AutoSensitivityLabelPolicy`/`Rule`, `New-DlpCompliancePolicy`/`Rule`, `Set-DlpCompliancePolicy`, `New-ComplianceTag`, `New-RetentionCompliancePolicy`/`Rule`, `Set-AdminAuditLogConfig` and `New-UnifiedAuditLogRetentionPolicy`. Every block is idempotent and checks current state first. Controls with no reliable cmdlet (DSPM, Endpoint DLP onboarding, Compliance Manager, AI governance, eDiscovery cases) are emitted as explicit `MANUAL` steps with the verification command instead of guessed syntax.
 - **Rollback execution** — **Partial**. A reversal script is generated in reverse operation order with destructive commands deliberately commented out and the pre-change backup named as the source of truth. Executing the restore and comparing post-rollback scores still requires the live executor.
 - **Configuration-as-code** — **Done**. Change plans export as a portable JSON package and as PowerShell, and import back with a new plan id that forces simulation and approval again. Deployment also exports existing labels, label/auto-label policies and rules, DLP, retention and compliance tags to JSON, and saves ARM, Bicep and Terraform templates for the Purview account (compliance policy is not ARM-deployable, so it stays JSON/PowerShell).
@@ -30,7 +30,8 @@ Ordered by risk reduction and by what the current build deliberately leaves out.
 - **Authentication Provisioning Center** — **Done (unverified live)**. Guided/one-click setup creates the app registration, enterprise application and service principal, certificate (RSA 2048/3072/4096 or ECC P-256/P-384; 6–120 months) or lab-only secret, owners, Graph role assignments and admin consent, then validates the token and organisation read. Dry run, mandatory separation of duties, 10-year acknowledgement, audit steps and a rollback script are included. No sovereign or commercial tenant was available to exercise the Graph calls.
 - **Certificate lifecycle** — **Done**. Generation/install/export/rotation plus ECDSA support, expiration warnings and public-key upload to the app registration.
 - **Client secret automation** — **Done**. Lab/test only, 3/6/12/24 months, DPAPI at rest through the settings store, with the production warning retained.
-- **Safe deployment execution, phased rollout, what-if gates and object-level backups** — **Next** in this workstream.
+- **Safe deployment execution and phased rollout** — **Done (unverified live)**. A six-phase plan (discovery, audit/monitoring, information protection, DLP, records, insider risk/AI) runs one phase at a time: simulate, per-phase backup, separation-of-duties approval, gated live execution, automatic post-deployment validation, and a blocked next phase until the previous one validates. Destructive phases need explicit risk acceptance.
+- **Backup and rollback depth** — **Partial**. Phase backups contain the snapshot and phase operations; object-level label/DLP/retention exports and an automated restore are still open.
 
 ## Phase 1.3 — Reporting and multi-tenant
 

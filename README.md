@@ -64,7 +64,7 @@ src/
   PurviewCopilot.UI/              # WPF shell, dashboards, pages (MVVM)
   PurviewCopilot.Cli/             # headless `pgc assess` / `pgc verify-audit`
 tests/
-  PurviewCopilot.Tests/           # 109 automated tests
+  PurviewCopilot.Tests/           # 121 automated tests
 docs/                             # architecture, design, security, guides, traceability
 installer/                        # WiX MSI project + MSIX manifest
 dist/                             # built MSI + SHA-256 (framework-dependent, unsigned)
@@ -99,6 +99,6 @@ dotnet run --project src/PurviewCopilot.Cli -c Release -- verify-audit
 
 ## Status
 
-Version **1.0.0** — buildable, tested and runnable. Assessment, scoring, planning, approval, backup, simulation, reporting, AI failover and privacy guard are implemented and covered by tests. The local audit log is hash-chained and verifiable from Settings, AI failover probes provider health and cools down failed providers, and the lab client secret is DPAPI-protected at rest. Deployment exports a reviewed PowerShell script built from real Purview cmdlets, a reversal script and a portable JSON plan that can be imported on another workstation. Settings includes an Authentication Provisioning Center that can create the app registration, service principal, certificate, Graph permissions and consent in one guided flow (dry run first), and certificate generation supports RSA 2048/3072/4096 and ECC P-256/P-384. Live tenant mutation remains gated in this build: deployment generates a reviewed PowerShell script rather than executing it. See the trackers for the precise boundary.
+Version **1.0.0** — buildable, tested and runnable. Assessment, scoring, planning, approval, backup, simulation, reporting, AI failover and privacy guard are implemented and covered by tests. The local audit log is hash-chained and verifiable from Settings, AI failover probes provider health and cools down failed providers, and the lab client secret is DPAPI-protected at rest. Deployment exports a reviewed PowerShell script built from real Purview cmdlets, a reversal script and a portable JSON plan that can be imported on another workstation. Settings includes an Authentication Provisioning Center that can create the app registration, service principal, certificate, Graph permissions and consent in one guided flow (dry run first), and certificate generation supports RSA 2048/3072/4096 and ECC P-256/P-384. Deployment now adds a six-phase production rollout: simulate, per-phase backup, separation-of-duties approval, an opt-in live executor behind automatic safety gates, and post-deployment validation. Live execution is off at every start and no live tenant was available to verify it. See the trackers for the precise boundary.
 
 The application is read-only by default and requires no administrator rights: certificates install per-user and data is stored in `%LOCALAPPDATA%\PurviewGovernanceCopilot`.
