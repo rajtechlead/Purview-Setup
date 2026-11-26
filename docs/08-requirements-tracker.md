@@ -18,7 +18,7 @@ Verified against commit `353bde2` on 25 November 2026 by reading the source, cou
 
 | Code | Meaning |
 | --- | --- |
-| **T** | Covered by an automated test (86 tests, all passing at audit time). |
+| **T** | Covered by an automated test (88 tests, all passing at audit time). |
 | **B** | Builds and is reachable from the composition root; behaviour not exercised end to end. |
 | **C** | Code exists but is unexercised here (no tenant, certificate, API key or admin rights). |
 | **D** | Documentation or project/manifest artifact only; nothing executes it here. |
@@ -141,7 +141,7 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 | ID | Requirement | Status | Proof | Evidence / gap |
 | --- | --- | --- | --- | --- |
 | MSP-01 | Manage multiple customer tenants with isolation and a central dashboard | **Delivered** | T | `tenant_profiles` stores each customer tenant with DPAPI-protected credentials; Settings saves and activates a tenant, activation clears in-session evidence, and the Dashboard Portfolio tab summarises each tenant's latest assessment. Test: `TenantProfiles_RoundTrip_WithProtectedSecrets`. |
-| MSP-02 | Cross-tenant reporting | **Partial** | T | Portfolio rows aggregate overall, security, compliance, risk, maturity and last-assessed date per tenant. No combined PDF/DOCX/XLSX export across tenants. Test: `Portfolio_UsesEachTenantsOwnLatestAssessment`. |
+| MSP-02 | Cross-tenant reporting | **Delivered** | T | Portfolio rows aggregate overall, security, compliance, risk, maturity and last-assessed date per tenant, and the Dashboard exports the whole portfolio to CSV (quoted/escaped, one aggregate row per customer, nothing below the aggregate crosses tenants). Tests: `Portfolio_UsesEachTenantsOwnLatestAssessment`, `PortfolioReportTests`. |
 | MSP-03 | Role-based administration and customer-level permissions | **Not delivered** | — | The app has no user model or roles; all saved tenants are reachable by the signed-in Windows user. RBAC exists only as tenant guidance in CPM controls. |
 
 ## J. Configuration-as-code
@@ -267,8 +267,8 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 
 | Status | Count | Share |
 | --- | --- | --- |
-| **Delivered** | 97 | 72% |
-| **Partial** | 29 | 22% |
+| **Delivered** | 98 | 73% |
+| **Partial** | 28 | 21% |
 | **Not delivered** | 8 | 6% |
 | **Total tracked** | 134 | 100% |
 
@@ -284,7 +284,7 @@ By section:
 | AI assistant and failover | 11 | 0 | 1 |
 | AI privacy guardrail | 11 | 1 | 0 |
 | Change management and safety | 4 | 3 | 0 |
-| Multi-tenant MSP | 1 | 1 | 1 |
+| Multi-tenant MSP | 2 | 0 | 1 |
 | Configuration-as-code | 2 | 0 | 1 |
 | Approval workflow | 2 | 0 | 0 |
 | Offline and regulated | 2 | 0 | 1 |
@@ -301,7 +301,7 @@ By section:
 
 Ranked by risk to the commercial claim, not by effort:
 
-1. **Per-customer RBAC and cross-tenant export (MSP-02, MSP-03)** — tenant switching, isolation and the portfolio view exist, but there are no user roles and no combined report.
+1. **Per-customer RBAC (MSP-03)** — tenant switching, isolation, the portfolio and its CSV export exist, but all saved tenants remain reachable by one Windows user.
 2. **Live deployment execution (DEP-05)** — by design, but the specification asks for apply and rollback; the reviewed script and reversal script exist, execution does not.
 3. **Security Copilot (AIA-02)** and **government clouds (OFF-03)**.
 4. **Config-as-code breadth (CAC-02)** — no ARM/Bicep/Terraform output, and existing tenant objects are not exported individually.
@@ -317,7 +317,7 @@ Ranked by risk to the commercial claim, not by effort:
 | Check | Result |
 | --- | --- |
 | `dotnet build PurviewGovernanceCopilot.sln -c Release` | Succeeded (local SDK 9.0.321) |
-| `dotnet test tests/PurviewCopilot.Tests -c Release` | 86 passed, 0 failed |
+| `dotnet test tests/PurviewCopilot.Tests -c Release` | 88 passed, 0 failed |
 | Catalog count (`grep -c 'Add("' ModuleCatalog.cs`) | 49 rules across 16 modules |
 | Exporter inventory | HTML, JSON, CSV, Markdown, PDF, DOCX, XLSX |
 | `ReportFormat` enum | `Html, Json, Csv, Markdown, Pdf, Docx, Xlsx` |

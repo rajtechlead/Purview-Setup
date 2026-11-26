@@ -272,7 +272,11 @@
                     <Border Style="{StaticResource Card}">
                         <StackPanel>
                             <TextBlock Text="Cross-tenant portfolio" Style="{StaticResource SectionHeader}" />
-                            <TextBlock Text="{Binding PortfolioHint}" Style="{StaticResource Muted}" Margin="0,0,0,10" />
+                            <TextBlock Text="{Binding PortfolioHint}" Style="{StaticResource Muted}" Margin="0,0,0,6" />
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                <Button Content="Export portfolio (CSV)" Command="{Binding ExportPortfolioCommand}" Margin="0,0,10,0" />
+                                <TextBlock Text="{Binding PortfolioExportStatus}" Style="{StaticResource Muted}" VerticalAlignment="Center" TextWrapping="Wrap" />
+                            </StackPanel>
 
                             <Grid Margin="0,0,0,6">
                                 <Grid.ColumnDefinitions>

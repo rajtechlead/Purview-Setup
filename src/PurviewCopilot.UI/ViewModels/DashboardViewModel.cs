@@ -1,7 +1,10 @@
 using System.Collections.ObjectModel;
+using System.IO;
+using System.Text;
 using System.Windows.Input;
 using PurviewCopilot.Application.Abstractions;
 using PurviewCopilot.Application.Monitoring;
+using PurviewCopilot.Application.Reporting;
 using PurviewCopilot.Application.Workspace;
 using PurviewCopilot.Domain;
 using PurviewCopilot.UI.Mvvm;
@@ -47,6 +50,7 @@ public sealed class DashboardViewModel : PageViewModel
     private string _governanceSummary = "No assessment.";
     private string _complianceSummary = "No assessment.";
     private string _portfolioHint = "Loading customer tenants…";
+    private string _portfolioExportStatus = string.Empty;
     private bool _hasData;
 
     public DashboardViewModel(GovernanceWorkspace workspace, IAssessmentStore store, ISettingsStore settings)
@@ -55,6 +59,7 @@ public sealed class DashboardViewModel : PageViewModel
         _store = store;
         _settings = settings;
         RefreshCommand = new AsyncRelayCommand(RefreshAsync);
+        ExportPortfolioCommand = new RelayCommand(ExportPortfolio);
     }
 
     public override string Title => "Executive Dashboard";
@@ -81,6 +86,7 @@ public sealed class DashboardViewModel : PageViewModel
     public string GovernanceSummary { get => _governanceSummary; private set => SetProperty(ref _governanceSummary, value); }
     public string ComplianceSummary { get => _complianceSummary; private set => SetProperty(ref _complianceSummary, value); }
     public string PortfolioHint { get => _portfolioHint; private set => SetProperty(ref _portfolioHint, value); }
+    public string PortfolioExportStatus { get => _portfolioExportStatus; private set => SetProperty(ref _portfolioExportStatus, value); }
     public bool HasData { get => _hasData; private set => SetProperty(ref _hasData, value); }
 
     public string FailCount => _workspace.Assessment?.Findings.Count(f => f.Status == FindingStatus.Fail).ToString() ?? "0";
@@ -88,6 +94,7 @@ public sealed class DashboardViewModel : PageViewModel
     public string RecommendationCount => _workspace.Assessment?.Recommendations.Count.ToString() ?? "0";
 
     public ICommand RefreshCommand { get; }
+    public ICommand ExportPortfolioCommand { get; }
 
     public override async Task RefreshAsync()
     {
@@ -201,6 +208,33 @@ public sealed class DashboardViewModel : PageViewModel
         Raise(nameof(FailCount));
         Raise(nameof(WarningCount));
         Raise(nameof(RecommendationCount));
+    }
+
+    private void ExportPortfolio()
+    {
+        if (Portfolio.Count == 0)
+        {
+            PortfolioExportStatus = "No customer tenants to export.";
+            return;
+        }
+
+        var dialog = new Microsoft.Win32.SaveFileDialog
+        {
+            Filter = "CSV (*.csv)|*.csv",
+            FileName = $"purview-portfolio-{DateTime.Now:yyyyMMdd}.csv"
+        };
+
+        if (dialog.ShowDialog() != true) return;
+
+        try
+        {
+            File.WriteAllText(dialog.FileName, PortfolioReport.BuildCsv(Portfolio.ToList()), new UTF8Encoding(true));
+            PortfolioExportStatus = $"Exported {Portfolio.Count} tenant(s) to {dialog.FileName}.";
+        }
+        catch (Exception ex)
+        {
+            PortfolioExportStatus = $"Portfolio export failed: {ex.Message}";
+        }
     }
 
     private async Task LoadPortfolioAsync()
