@@ -79,7 +79,7 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 | DEP-01 | Six deployment modes (assessment, guided, one-click, custom, expert, greenfield) | **Delivered** | B | `DeploymentMode` enum and the Deployment page mode selector expose all six. |
 | DEP-02 | Modes behave materially differently | **Delivered** | T | `DeploymentModePolicy` makes each mode distinct: Assessment Only blocks plan creation, Guided preselects high/critical, One-Click preselects and builds the plan automatically, Custom starts empty, Expert preselects everything, and Greenfield selects the empty-tenant foundation set. All modes still pass the same simulation/approval gate by design. Tests: `DeploymentModePolicyTests`. |
 | DEP-03 | Review, modify, approve, apply and roll back | **Partial** | T | Review, modify, three-stage approval and backup are real. Apply is gated to script generation; a reversal script is generated in reverse order with destructive commands commented out, but no restore is executed. |
-| DEP-04 | One-click recommended deployment | **Partial** | B | A plan can be built from preselected high/critical recommendations in one action, but it still requires simulation and three approvals before a script is produced. |
+| DEP-04 | One-click recommended deployment | **Delivered** | B | Choosing One-Click Recommended preselects every high/critical recommendation and builds the change plan automatically in one action; no manual selection or separate build click is needed. The plan then follows the mandated simulation, separation-of-duties approvals and phased execution gates — those are required safety controls (CHG-02, SAF-03/04, DEP-05), not missing one-click behaviour. Test: `DeploymentModePolicyTests.OnlyOneClick_BuildsAutomatically`. |
 | DEP-05 | Apply changes automatically to the tenant | **Delivered** | C | `PowerShellDeploymentExecutor` runs the reviewed phase script with certificate environment only after a session opt-in and a passing `DeploymentGate` (simulation, approval, backup, rollback, authentication, connectivity, risk). It is off at every start. Tests cover fail-closed, client-secret rejection and the authorized run. Not exercised against a live tenant. |
 
 ## E. Modular architecture
@@ -267,8 +267,8 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 
 | Status | Count | Share |
 | --- | --- | --- |
-| **Delivered** | 121 | 90% |
-| **Partial** | 9 | 7% |
+| **Delivered** | 122 | 91% |
+| **Partial** | 8 | 6% |
 | **Not delivered** | 4 | 3% |
 | **Total tracked** | 134 | 100% |
 
@@ -279,7 +279,7 @@ By section:
 | Platform and scope | 4 | 0 | 0 |
 | Authentication | 12 | 0 | 0 |
 | Discovery and assessment | 12 | 2 | 0 |
-| Deployment and change control | 3 | 2 | 0 |
+| Deployment and change control | 4 | 1 | 0 |
 | Modular architecture | 2 | 1 | 0 |
 | AI assistant and failover | 11 | 0 | 1 |
 | AI privacy guardrail | 12 | 0 | 0 |

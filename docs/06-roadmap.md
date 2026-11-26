@@ -50,6 +50,8 @@ Entra discovery: **Done (unverified live)**. Graph now returns directory-role co
 
 Customer-information detection: **Done**. Labelled customer/client/tenant names, company names and titled person names join tenant ids and SharePoint URLs in the `CustomerData` ruleset.
 
+One-click deployment: **Done**. Choosing One-Click builds the recommended plan immediately; the safety gates that follow are intentional and unchanged.
+
 Deployment modes: **Done**. `DeploymentModePolicy` gives each mode its own starting set and behaviour — Assessment Only cannot plan, One-Click builds the recommended plan automatically, Expert selects everything, Custom selects nothing — while every plan still passes simulation and approvals.
 
 Greenfield path: **Done**. `GreenfieldBaseline` detects an empty tenant from collected counts and selects a first-run foundation set in a safe order; the same mode on a configured tenant warns rather than claiming a baseline.
