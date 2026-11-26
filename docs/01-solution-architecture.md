@@ -97,7 +97,7 @@ CompositeTenantCollector
 TenantSnapshot  (normalized facts; modules never call the network)
    │
    ▼
-ModuleRegistry (16 StandardModule instances over 49 ControlRules)
+ModuleRegistry (16 StandardModule instances over 50 ControlRules)
    ├── AssessAsync   → Finding(Pass|Warning|Fail, severity, evidence, remediation, frameworks)
    └── RecommendAsync→ Recommendation(priority, effort, change risk, licences, operations)
    │
@@ -116,7 +116,7 @@ A module is a `ModuleDescriptor` (key, name, description, licences, frameworks) 
 
 Each module supports discovery (facts it consumes), assessment, recommendations, deployment (operations on its recommendations), validation (post-checks in the change pack), reporting (framework refs), rollback (backup/rollback steps) and monitoring (drift rules that reference its facts).
 
-49 controls currently cover: Information Protection, Sensitivity Labels, Auto Labelling, DLP, Endpoint DLP, Data Classification, Records Management, Data Lifecycle, Audit, Insider Risk, Communication Compliance, eDiscovery, DSPM, Compliance Manager (incl. identity controls), AI Governance and Copilot Governance.
+50 controls currently cover: Information Protection, Sensitivity Labels, Auto Labelling, DLP, Endpoint DLP, Data Classification, Records Management, Data Lifecycle, Audit, Insider Risk, Communication Compliance, eDiscovery, DSPM, Compliance Manager (incl. identity controls), AI Governance and Copilot Governance.
 
 ## 6. Deployment modes
 

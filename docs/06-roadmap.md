@@ -1,90 +1,63 @@
-# 06 — Future Roadmap
+# 06 — Roadmap and remaining work
 
-Ordered by risk reduction and by what the current build deliberately leaves out.
+Status source of truth: [08 — Requirements Tracker](08-requirements-tracker.md). This page explains sequencing and why anything is still open.
 
-## Phase 1.1 — Close the safety gaps
+**Current position (27 November 2026):** 123 delivered, 7 partial, 4 not delivered of 134 requirements. Build succeeds; 157 tests pass; MSI and unsigned MSIX are produced. No live tenant, signing certificate, Key Vault, webhook or AI key was available, so tenant-dependent paths remain unverified rather than claimed.
 
-**4 complete, 1 partial.** Updated 25 November 2026.
+## Completed phases
 
-| Item | Status | Why | Notes |
-| --- | --- | --- | --- |
-| Encrypted local store | **Done (payload-level)** | Assessment evidence sat in a plaintext SQLite file | Assessment, change-plan, approval and backup payloads are encrypted with DPAPI (`CurrentUser`) before they reach the file and decrypted on read; legacy plaintext rows still load and are encrypted on their next save. Tenant ids, timestamps and scores stay in columns for indexed queries, so SQLite pages and that metadata remain plaintext — SQLCipher page encryption is still open. Test: `AssessmentEvidence_IsEncryptedAtRest_AndStillLoads`. |
-| Signed builds and update channel | **Partial** | Enterprise deployment requires Authenticode | Settings → Updates checks an https manifest (`version`, `downloadUrl`, `sha256`), rejects non-https URLs and malformed hashes, and only then downloads the MSI — the file is written solely when its SHA-256 matches, and installation stays an explicit operator action. Still open: Authenticode signing (no certificate here), a published manifest, and automatic install. |
-| Hash-chained audit log | **Done** | Local DB is user-writable | Each row stores the SHA-256 of its canonical fields plus the previous hash, in insertion order. Legacy rows are backfilled on first open; `IAuditLog.VerifyAsync` recomputes the chain; Settings has a **Verify audit log integrity** button. Tamper detection is covered by tests. |
-| Provider health pre-check | **Done** | `IsHealthyAsync` existed but the failover loop did not consult it | Every candidate is probed with a 5-second timeout. Unhealthy providers are skipped and recorded as `Unhealthy`, and any failure puts that provider in a 2-minute cooldown so the next call goes straight to the fallback. |
-| Per-user secret store for lab mode | **Done** | Client secret landed in the settings document | `DpapiSecretProtector` uses crypt32 DPAPI with `CurrentUser` scope, so no key material sits beside the data and another profile cannot decrypt it. Values are transparently re-encrypted on save and decrypted on load; a profile change yields an empty secret rather than a crash. |
+### Phase 1.1 — Safety baseline
 
-## Phase 1.2 — Deployment depth
+Complete. DPAPI payload encryption, hash-chained audit log with Settings verification, provider health probing and cooldown, and DPAPI-protected lab secrets are implemented and tested. Database page encryption (SQLCipher) remains open and is tracked under Phase 2.
 
-**3 of 4 complete, 1 partial.** Updated 26 November 2026.
+### Phase 1.2 — Deployment depth
 
-- **Live executor profile** — **Done (unverified live)**. `PowerShellDeploymentExecutor` runs only after a session opt-in and a passing safety gate (simulation, per-phase backup, approval, rollback package, authentication, connectivity, risk), with certificate auth and no secrets in the script. Off at every start; no live tenant was available to verify post-conditions.
-- **Real operation payloads** — **Done**. `PurviewScriptLibrary` maps twelve controls to the cmdlets that actually configure them: `New-Label`, `New-LabelPolicy`, `New-AutoSensitivityLabelPolicy`/`Rule`, `New-DlpCompliancePolicy`/`Rule`, `Set-DlpCompliancePolicy`, `New-ComplianceTag`, `New-RetentionCompliancePolicy`/`Rule`, `Set-AdminAuditLogConfig` and `New-UnifiedAuditLogRetentionPolicy`. Every block is idempotent and checks current state first. Controls with no reliable cmdlet (DSPM, Endpoint DLP onboarding, Compliance Manager, AI governance, eDiscovery cases) are emitted as explicit `MANUAL` steps with the verification command instead of guessed syntax.
-- **Rollback execution** — **Partial**. A reversal script is generated in reverse operation order with destructive commands deliberately commented out and the pre-change backup named as the source of truth. Executing the restore and comparing post-rollback scores still requires the live executor.
-- **Configuration-as-code** — **Done**. Change plans export as a portable JSON package and as PowerShell, and import back with a new plan id that forces simulation and approval again. Deployment also exports existing labels, label/auto-label policies and rules, DLP, retention and compliance tags to JSON, and saves ARM, Bicep and Terraform templates for the Purview account (compliance policy is not ARM-deployable, so it stays JSON/PowerShell).
+Complete except automated tenant restore.
 
-## Phase 1.2A — Autonomous authentication and safe deployment
+- **Live executor** — done (unverified live): session opt-in, fail-closed by default, certificate-only, every phase gated by simulation, backup, separation-of-duties approval, rollback package, authentication, connectivity and risk acceptance.
+- **Real operation payloads** — done: twelve controls map to real idempotent cmdlets; unsupported controls are explicit `MANUAL` steps, never guessed syntax.
+- **Six-phase rollout and validation** — done: per-phase backup, approval, execution and post-deployment comparison of identity, audit, labels, DLP and retention.
+- **Configuration-as-code** — done: plan JSON export/import with forced re-approval, PowerShell generation, and ARM/Bicep/Terraform for the Azure Purview account.
+- **Object backups** — done (unverified live): read-only export of labels, label policies, auto-label rules, DLP, retention and compliance tags stored as an encrypted `objects/` backup.
+- **Rollback** — **partial (DEP-03, SAF-02)**: a reversal script and stored package exist, but no automated tenant restore executes. This needs a live tenant and a reviewed restore design; it is the top engineering gap in this phase.
 
-**In progress.** Updated 26 November 2026.
+### Phase 1.2A — Authentication provisioning
 
-- **Authentication Provisioning Center** — **Done (unverified live)**. Guided/one-click setup creates the app registration, enterprise application and service principal, certificate (RSA 2048/3072/4096 or ECC P-256/P-384; 6–120 months) or lab-only secret, owners, Graph role assignments and admin consent, then validates the token and organisation read. Dry run, mandatory separation of duties, 10-year acknowledgement, audit steps and a rollback script are included. No sovereign or commercial tenant was available to exercise the Graph calls.
-- **Certificate lifecycle** — **Done**. Generation/install/export/rotation plus ECDSA support, expiration warnings and public-key upload to the app registration.
-- **Client secret automation** — **Done**. Lab/test only, 3/6/12/24 months, DPAPI at rest through the settings store, with the production warning retained.
-- **Safe deployment execution and phased rollout** — **Done (unverified live)**. A six-phase plan (discovery, audit/monitoring, information protection, DLP, records, insider risk/AI) runs one phase at a time: simulate, per-phase backup, separation-of-duties approval, gated live execution, automatic post-deployment validation, and a blocked next phase until the previous one validates. Destructive phases need explicit risk acceptance.
-- **Backup depth** — **Done (unverified live)**. Phase backups contain the snapshot and phase operations; **Back up tenant objects** additionally stores the real label, label-policy, auto-label, DLP, retention and compliance-tag export as an encrypted `objects/` backup.
-- **Rollback execution** — **Partial**. Phase rollback marks the phase, names the backup and generates the reviewed reversal script, but there is no automated restore or post-restore re-read.
+Complete (unverified live). The Authentication Provisioning Center creates the app registration, service principal, certificate or lab secret, owners, least-privilege Graph roles and admin consent, validates the credential, produces a rollback script and saves the resulting settings. Dry run and separation of duties are mandatory. No tenant was available to exercise the Graph calls.
 
-## Phase 1.3 — Reporting and multi-tenant
+### Phase 1.3 — Reporting, MSP and monitoring
 
-Platform floor: **Done**. The manifest advertises Windows 10/11 only and startup refuses builds below 17763, so Windows 7/8/8.1 cannot run the app.
+Complete.
 
-MSIX packaging: **Done**. `installer/msix/Build-Msix.ps1` stages the publish output, supplies a full-trust manifest and assets, uses pinned SDK BuildTools and produces a hashed MSIX; signing is optional because no certificate exists here.
+- **Reporting** — six audience profiles (Full, Executive, Governance, Security, Compliance, Remediation); HTML, PDF, Markdown and JSON reflect the profile; CSV/XLSX remain raw data tables.
+- **Persona dashboards** — Executive, Security, Governance and Compliance tabs with risk heatmap, trend series, maturity trail and portfolio.
+- **MSP mode** — per-customer profiles with DPAPI-protected credentials and Viewer/Operator/Approver/Administrator access; portfolio and CSV export.
+- **Monitoring** — drift, alerts, HTTPS webhook, in-app schedule and a generated Task Scheduler job for headless `pgc assess`. There is no Windows service or native email/Teams connector; that is a convenience gap, not a missing requirement.
+- **Licence optimisation** — exact utilisation plus optional per-SKU pricing for monetary opportunity.
+- **Greenfield and mode differentiation** — empty-tenant detection and distinct behaviour for all six modes.
+- **Entra and workload discovery** — role/PIM/CA/service-principal signals plus Graph usage-report mailbox and OneDrive counts.
+- **Installer** — MSI and unsigned MSIX built, checked and hashed; MSIX signing is supported but no certificate exists.
 
-Installer rollback: **Done**. `Rollback-PurviewGovernanceCopilot.ps1` ships beside the app and restores a named previous MSI, with `-WhatIf`, version verification and msiexec logs.
+## Phase 2 — Remaining engineering
 
-Plugin modules: **Done**. `PluginModuleLoader` discovers external `IModule` assemblies from the user's plugins folder, isolates load failures and registers them as custom modules; the desktop and CLI both use the extended registry.
+Ordered by risk to a commercial claim.
 
-Security assurance: **Done**. SDL and SSDF practices are mapped to repository evidence in `docs/10-security-assurance.md`, `SECURITY.md` defines the bug bar, and CodeQL runs alongside the build, tests and dependency scan.
+1. **Code signing and update trust (SEC-11, SEC-16).** Owner supplies an Authenticode certificate; CI signs the EXE/MSI/MSIX; publish a hosted HTTPS manifest and decide whether automatic install is allowed. The hash-verified download path already exists. Owner action, not code-complete here.
+2. **Automated rollback restore (DEP-03, SAF-02).** Implement a reviewed restore of the exported object backup against a live tenant, execute it through the fail-closed executor, validate post-restore state and record the result. Blocked without a tenant; must not be faked.
+3. **DSPM and AI-governance discovery (DSC-08) and Defender/Compliance Manager ingestion (DSC-11).** DSPM enablement and Compliance Manager scores have no stable public API used here; Defender alerts/incidents can be added, but the compliance-score half remains blocked. Keep these reporting as warnings, not false passes.
+4. **Per-module lifecycle coverage (MOD-02).** Add per-module deployment, validation, rollback and monitoring mappings so every module exposes all eight stages independently rather than through tenant-wide checks.
+5. **Graph SDK and optional SQL Server (ARC-05, ARC-08).** The REST adapter is deliberate and tested; adopting the SDK is a dependency decision. SQL Server requires an additional store implementation and integration tests against a real instance.
+6. **SQLCipher page encryption (SEC-14).** Payloads are DPAPI-encrypted; database pages and indexed metadata are not. Adding SQLCipher changes the storage dependency and migration path.
+7. **WinUI 3 shell (ARC-02).** Not buildable in this environment. The Application layer is UI-agnostic, so a second shell remains feasible without rewriting domain logic.
+8. **Security Copilot (AIA-02).** No generally available tenant-licensed API surface was available to integrate; do not invent one.
 
-Workload discovery: **Done (unverified live)**. Mailbox and OneDrive counts come from Graph usage reports with `Reports.Read.All`; a missing permission degrades to a warning, not a guess.
+## Phase 3 — Product depth
 
-Entra discovery: **Done (unverified live)**. Graph now returns directory-role counts, active assignments, PIM eligibility, service principals with secrets and Conditional Access enabled/MFA counts, and the Compliance Manager rules use them.
-
-Customer-information detection: **Done**. Labelled customer/client/tenant names, company names and titled person names join tenant ids and SharePoint URLs in the `CustomerData` ruleset.
-
-One-click deployment: **Done**. Choosing One-Click builds the recommended plan immediately; the safety gates that follow are intentional and unchanged.
-
-Deployment modes: **Done**. `DeploymentModePolicy` gives each mode its own starting set and behaviour — Assessment Only cannot plan, One-Click builds the recommended plan automatically, Expert selects everything, Custom selects nothing — while every plan still passes simulation and approvals.
-
-Greenfield path: **Done**. `GreenfieldBaseline` detects an empty tenant from collected counts and selects a first-run foundation set in a safe order; the same mode on a configured tenant warns rather than claiming a baseline.
-
-**3 of 4 complete, 1 partial.** Updated 26 November 2026.
-
-- **Audience report types** — **Done**. Reports offers Full, Executive, Governance, Security, Compliance and Remediation profiles; HTML/PDF/Markdown filter findings and recommendations, and JSON carries the selected type.
-- **PDF, DOCX and XLSX** — **Done**. Dependency-free writers: a paginated PDF 1.4 document with base-14 fonts, and OOXML packages built directly with `ZipArchive` for DOCX (single document part) and XLSX (Scores, Findings, Frameworks sheets). Exported from Reports; covered by five tests including escaping and package validity.
-- **Risk heatmap, trends and persona dashboards** — **Done**. The dashboard has Executive, Security, Governance and Compliance tabs; the Security tab carries a module × severity heatmap of open findings; Executive charts the last twelve overall scores from stored assessments and shows the maturity trail and delta. Monitoring exports a Markdown trend report with overall/security/governance/compliance/risk direction.
-- **Multi-tenant MSP mode** — **Done**. Customer tenants persist in `tenant_profiles` with DPAPI-protected credentials; Settings saves/activates a tenant and clears in-session evidence. Per-customer access assignments (Viewer/Operator/Approver/Administrator) restrict which tenants appear, who may activate or edit them, and who may operate or approve a deployment. The Dashboard Portfolio and CSV export remain. Tests: `TenantAccessTests`.
-- **Licence cost model** — **Done**. Settings accepts optional monthly prices by SKU part number; unused and over-assigned seats on Monitoring then show a monthly dollar opportunity, while discovery still reports exact utilisation when no price is set. Tests: `LicensePriceTests`.
-- **Scheduled monitoring** — **Partial**. Monitoring has an in-app schedule (`MonitoringIntervalMinutes`, minimum 15 minutes, off by default) that re-runs the read-only assessment and rebuilds drift, alerts and licence signals; **Check now** runs the same path. Alerts are generated locally from drift, score drops and critical failures, listed on the Monitoring page, and can be delivered to an operator-supplied HTTPS webhook (Teams/Slack incoming webhooks work) either on demand or after a scheduled check. **Save Task Scheduler script** generates a PowerShell file that registers a daily headless `pgc assess` job and writes timestamped HTML reports, so checks are not limited to an open window. There is no Windows service or native email/Teams connector yet.
-
-## Phase 2 — AI and compliance depth
-
-- **Microsoft Security Copilot** integration where a tenant-licensed endpoint is available.
-- **Deeper AI governance**: prompt/response classification history, model inventory, ISO 42001 control mapping, agent governance.
-- **Compliance Manager API**: real improvement-action ingestion and score instead of a placeholder posture value.
-- **Defender integration**: exposure management signals and device risk feeding endpoint DLP readiness.
-- **Government clouds** — **Done**. A Cloud selector on the connection (`AuthConfiguration.Cloud`) routes the Entra authority and Graph scope, Graph v1.0/beta base URLs, the connection test and Security & Compliance PowerShell to commercial/GCC, GCC High (`graph.microsoft.us`) or DoD (`dod-graph.microsoft.us`, L5 compliance). Endpoints were checked against Microsoft Learn; no sovereign tenant was available to exercise them.
-- **Custom sensitive information types**: author and validate custom SITs as part of deployment.
-
-## Phase 3 — Platform
-
-- **Action centre** — **Done**. Assessment assigns an owner, due date, status (Open/InProgress/Blocked/Done) and notes to every open finding; records persist per tenant in `finding_actions`, notes are DPAPI-encrypted at rest, and the list shows how many findings have an assignment. Tests: `FindingActionTests`.
-
-- **WinUI 3 shell** consuming the same Application layer, with Windows 11 visuals and notification toasts.
-- **Headless CLI** — **Done**. `src/PurviewCopilot.Cli` builds `pgc` and reuses `GovernanceWorkspace`, the same SQLite evidence store and exporters. Commands: `pgc assess` (certificate or lab secret, or `--demo` for the sample tenant) with `--format`, `--out`, `--mode`, `--org`, `--by`, `--data-dir`; and `pgc verify-audit`. It is read-only, exits non-zero on failure and was run end to end with the demo tenant (JSON report plus a valid audit chain).
-- **Optional SQL Server** store for teams that want central evidence, implemented as additional ports.
-- **Plugin SDK**: load third-party `IModule` assemblies from a signed plugin directory with a manifest and permission declaration.
-- **Localization**: externalized strings, starting with the labels and report templates.
+- Custom sensitive information type authoring and validation.
+- Localisation of UI strings and report templates.
+- Signed plugin manifests with explicit permission declarations (the loader currently trusts the user's own plugin folder).
+- Windows service host for monitoring, with native email/Teams delivery.
+- High-fidelity UI designs and accessibility review against the implemented XAML.
 
 ## Explicitly out of scope
 

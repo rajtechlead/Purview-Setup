@@ -11,7 +11,7 @@ Designed and built by **Raj Raja** · Owned by **Belle-RajaCorp** · contact@bel
 | Area | Capability |
 | --- | --- |
 | Discovery | Microsoft Graph (identity, licensing, posture) + Security & Compliance PowerShell (labels, DLP, retention, audit, insider risk, eDiscovery) — **read-only** |
-| Assessment | 49 evidence-based controls across 16 Purview modules, deterministic scoring |
+| Assessment | 50 evidence-based controls across 16 Purview modules, deterministic scoring |
 | Scoring | Security, Governance, Compliance, Maturity, Risk, AI Governance, Copilot Readiness |
 | Planning | Recommended, guided, custom, expert and greenfield change plans with full change-management packs |
 | Safety | Pre-change backups, simulation (what-if), 3-stage approval (Security → Compliance → CAB), rollback packages |
@@ -65,10 +65,10 @@ src/
   PurviewCopilot.Cli/             # headless `pgc assess` / `pgc verify-audit`
 tests/
   PurviewCopilot.Tests/           # 157 automated tests
-docs/                             # architecture, design, security, guides, traceability
-installer/                        # WiX MSI project + MSIX manifest
-dist/                             # built MSI + SHA-256 (framework-dependent, unsigned)
-.github/workflows/ci.yml          # build, test, publish
+docs/                             # architecture, design, security, guides, trackers
+installer/                        # WiX MSI project + MSIX build script and assets
+dist/                             # built MSI and MSIX + SHA-256 (framework-dependent, unsigned)
+.github/workflows/                # CI build/test/publish and CodeQL
 ```
 
 ## Headless CLI
@@ -92,8 +92,8 @@ dotnet run --project src/PurviewCopilot.Cli -c Release -- verify-audit
 | [03 Security architecture](docs/03-security-architecture.md) | Auth, certificate lifecycle, AI privacy, threat model, security review |
 | [04 User guide](docs/04-user-guide.md) | Every screen, end to end |
 | [05 Admin guide](docs/05-admin-guide.md) | Deployment, Intune/MECM, install, upgrade, operations, troubleshooting |
-| [06 Roadmap](docs/06-roadmap.md) | Phase 2 and beyond |
-| [07 Requirements traceability](docs/07-requirements-traceability.md) | Spec → implementation status summary |
+| [06 Roadmap](docs/06-roadmap.md) | Completed phases and the remaining work with reasons |
+| [07 Requirements traceability](docs/07-requirements-traceability.md) | Index from specification areas to implementation and tests |
 | [08 Requirements tracker](docs/08-requirements-tracker.md) | Requirement-level tracker: 134 requirements with status, proof and gap |
 | [09 Deliverables tracker](docs/09-deliverables-tracker.md) | The 22 named deliverables, locations and limitations |
 | [10 Security assurance](docs/10-security-assurance.md) | SDL/SSDF mapping, threat model and release security sign-off |
@@ -101,6 +101,6 @@ dotnet run --project src/PurviewCopilot.Cli -c Release -- verify-audit
 
 ## Status
 
-Version **1.0.0** — buildable, tested and runnable. Assessment, scoring, planning, approval, backup, simulation, reporting, AI failover and privacy guard are implemented and covered by tests. The local audit log is hash-chained and verifiable from Settings, AI failover probes provider health and cools down failed providers, and the lab client secret is DPAPI-protected at rest. Deployment exports a reviewed PowerShell script built from real Purview cmdlets, a reversal script and a portable JSON plan that can be imported on another workstation. Settings includes an Authentication Provisioning Center that can create the app registration, service principal, certificate, Graph permissions and consent in one guided flow (dry run first), and certificate generation supports RSA 2048/3072/4096 and ECC P-256/P-384. Deployment now adds a six-phase production rollout: simulate, per-phase backup (including a full label/DLP/retention object export), separation-of-duties approval, an opt-in live executor behind automatic safety gates, and post-deployment validation. Live execution is off at every start and no live tenant was available to verify it. See the trackers for the precise boundary.
+Version **1.0.0** — 123 of 134 tracked requirements delivered, 7 partial and 4 not delivered; buildable, tested and runnable. Assessment, scoring, planning, approval, backup, simulation, reporting, AI failover and privacy guard are implemented and covered by tests. The local audit log is hash-chained and verifiable from Settings, AI failover probes provider health and cools down failed providers, and the lab client secret is DPAPI-protected at rest. Deployment exports a reviewed PowerShell script built from real Purview cmdlets, a reversal script and a portable JSON plan that can be imported on another workstation. Settings includes an Authentication Provisioning Center that can create the app registration, service principal, certificate, Graph permissions and consent in one guided flow (dry run first), and certificate generation supports RSA 2048/3072/4096 and ECC P-256/P-384. Deployment now adds a six-phase production rollout: simulate, per-phase backup (including a full label/DLP/retention object export), separation-of-duties approval, an opt-in live executor behind automatic safety gates, and post-deployment validation. Live execution is off at every start and no live tenant was available to verify it. See the trackers for the precise boundary.
 
 The application is read-only by default and requires no administrator rights: certificates install per-user and data is stored in `%LOCALAPPDATA%\PurviewGovernanceCopilot`.

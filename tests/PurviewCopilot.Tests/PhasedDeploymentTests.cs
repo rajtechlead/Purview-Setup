@@ -229,8 +229,6 @@ public class PhasedDeploymentTests
 
         public Task<ExecutionResult> ApplyAsync(ChangePlan plan, CancellationToken cancellationToken = default) =>
             throw new NotSupportedException();
-        public Task<ExecutionResult> RollbackAsync(ConfigurationBackup backup, CancellationToken cancellationToken = default) =>
-            throw new NotSupportedException();
         public string GenerateScript(ChangePlan plan) => string.Empty;
         public string GenerateRollbackScript(ChangePlan plan) => string.Empty;
     }

@@ -2,7 +2,7 @@
 
 The specification names 22 deliverables. This tracker records where each one lives, whether it exists in a usable form, and the honest limitation.
 
-**Result: 22 of 22 artifacts exist in the repository.** Two are weaker than the heading implies — the interface designs are text wireframes rather than high-fidelity screens, and the API specification covers consumed Graph/Exchange surfaces and internal contracts rather than an OpenAPI document. The product itself still has the 20 open requirements listed in [08 — Requirements Tracker](08-requirements-tracker.md); artifact completeness is not feature completeness.
+**Result: 22 of 22 artifacts exist in the repository.** Two are weaker than the heading implies — the interface designs are text wireframes rather than high-fidelity screens, and the API specification covers consumed Graph/Exchange surfaces and internal contracts rather than an OpenAPI document. Artifact completeness is not feature completeness: [08 — Requirements Tracker](08-requirements-tracker.md) currently records 123 delivered, 7 partial and 4 not delivered of 134 requirements.
 
 | # | Deliverable | Status | Where | Notes and limitations |
 | --- | --- | --- | --- | --- |
@@ -13,10 +13,10 @@ The specification names 22 deliverables. This tracker records where each one liv
 | 5 | Database Schema | **Delivered** | `docs/02` §1, `SqliteStore.cs` | Eight tables: assessments, change_plans, approvals, backups, audit_log, ai_usage, settings, baselines. |
 | 6 | API Specifications | **Delivered** | `docs/02` §2–3 | Graph v1.0/beta and Security & Compliance PowerShell surfaces consumed, plus internal port contracts. No OpenAPI/Swagger document, because the app exposes no inbound API. |
 | 7 | Authentication Architecture | **Delivered** | `docs/03` §2 | Certificate-first credential selection, managed identity, interactive, client secret; permission rationale. |
-| 8 | Certificate Management Architecture | **Delivered** | `docs/03` §2, `WindowsCertificateService.cs` | Generation, import/export, store integration, rotation, expiry monitoring, Key Vault store design (not yet wired — AUT-04). |
+| 8 | Certificate Management Architecture | **Delivered** | `docs/03` §2, `WindowsCertificateService.cs` | Generation, import/export, store integration, rotation, expiry monitoring and Key Vault upload/import wired through Settings (AUT-04; not exercised without a vault). |
 | 9 | AI Privacy Architecture | **Delivered** | `docs/03` §3, `Domain/Privacy/*` | Detector, four treatment modes, review gate, audit, cloud disable and offline mode. |
-| 10 | Module Architecture | **Delivered** | `docs/01` §5, `StandardModule.cs` | 16 modules over 49 rules, weights, descriptors, `IModule` extension seam. |
-| 11 | Source Code | **Delivered** | `src/` | 5 projects, 122 C# files, 12 XAML files; Release build succeeds. |
+| 10 | Module Architecture | **Delivered** | `docs/01` §5, `StandardModule.cs` | 16 modules over 50 rules, weights, descriptors, `IModule` extension seam. |
+| 11 | Source Code | **Delivered** | `src/` | 5 projects, 91 C# files, 12 XAML files; Release build succeeds. |
 | 12 | Installer Project | **Delivered** | `installer/`, `dist/` | WiX 5 project + `Package.wxs`, MSIX manifest and assets, `Build-Msix.ps1` with optional signing. `dist/PurviewGovernanceCopilot-1.0.0.msi` is built and ICE-validated and `dist/PurviewGovernanceCopilot-1.0.0.0.msix` is built and SHA-256 hashed; both are framework-dependent (need the .NET 9 Desktop Runtime) and unsigned. |
 | 13 | CI/CD Pipeline | **Delivered** | `.github/workflows/ci.yml`, `.github/workflows/codeql.yml` | Restore, Release build, tests with TRX upload, vulnerability scan, CodeQL security-and-quality analysis for C#, self-contained single-file publish, artifact upload, commented signing step. |
 | 14 | Threat Model | **Delivered** | `docs/03` §5 | STRIDE across trust boundaries with mitigations. |
@@ -29,11 +29,11 @@ The specification names 22 deliverables. This tracker records where each one liv
 | 21 | Operations Runbook | **Delivered** | `docs/05` §6 | Routine cadence, certificate rotation, backup/restore, drift review, incident steps, contacts. |
 | 22 | Future Roadmap | **Delivered** | `docs/06-roadmap.md` | Phases 1.1–3, explicitly out-of-scope items, and sequencing. |
 
-## Documentation consistency fixed during this audit
+## Documentation consistency
 
-- Control count corrected from 48 to 49 in `README.md`, `docs/01` and `docs/07`.
-- `docs/07` now points to this tracker and the requirement-level tracker as the authoritative status.
-- PDF export is described as not implemented; earlier text implied a browser-print workaround was a delivered format.
+- `docs/07` is an index only; status lives in `docs/08` and never in two places.
+- Control count is 50 in `README.md`, `docs/01`, `docs/08` and this tracker.
+- Generated WiX source/debug files and the abandoned tenant-rollout archive were removed from the repository.
 
 ## Cross-reference
 

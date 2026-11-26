@@ -2,7 +2,7 @@
 
 Requirement-level tracker for the **Purview Governance Copilot** specification. This document is the authoritative answer to "is everything delivered?" — it is deliberately stricter than the README and supersedes [07 — Requirements Traceability](07-requirements-traceability.md) where they differ.
 
-Verified against commit `353bde2` on 25 November 2026 by reading the source, counting catalog entries and running the test suite. Nothing below is marked **Delivered** on the strength of a document alone.
+Verified against the repository on 27 November 2026 by reading the source, counting catalog entries, building the solution and running the test suite. A **D** proof means the requirement is a documented procedure or project artifact; it is never used where executable behaviour is the requirement.
 
 ## How to read this
 
@@ -69,7 +69,7 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 | DSC-10 | Discover Entra users, roles, applications, service principals and Conditional Access | **Delivered** | C | Users, guests and groups; directory-role count, active role assignments, PIM eligibility and Global Administrators; app registrations and service principals with client secrets; Conditional Access total, enabled and MFA-enforcing counts. Read-only Graph GETs with per-call degradation; not run against a live tenant here (no tenant/certificate). CPM-02/05/06/07 consume the new signals. |
 | DSC-11 | Discover Defender integrations, security posture and compliance posture | **Partial** | C | Secure score is read from Graph. Defender product signals are not ingested and the Compliance Manager score is not collected, so `CPM-01` warns on an absent value. |
 | DSC-12 | Produce Security, Governance, Compliance, Purview Maturity, Risk, AI Governance and Copilot Readiness scores | **Delivered** | T | `ScoringEngine` + `ScoreSet` (seven scores plus maturity band); weighted modules, capped risk. Tests: `Compute_*`, `Risk_*`. |
-| DSC-13 | Assess all sixteen module areas automatically | **Delivered** | T | 49 `ControlRule`s in `ModuleCatalog` across 16 `StandardModule`s; `Catalog_CoversEveryModule_WithAtLeastTwoControls` enforces coverage. |
+| DSC-13 | Assess all sixteen module areas automatically | **Delivered** | T | 50 `ControlRule`s in `ModuleCatalog` across 16 `StandardModule`s; `Catalog_CoversEveryModule_WithAtLeastTwoControls` enforces coverage. |
 | DSC-14 | Evidence-based findings with remediation guidance | **Delivered** | T | Every rule emits pass/warn/fail with evidence text, remediation, framework references and licence requirements. |
 
 ## D. Deployment modes and change control
@@ -207,7 +207,7 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 | SEC-07 | Dependency scanning | **Delivered** | D | CI runs `dotnet list package --vulnerable --include-transitive`; two direct third-party dependencies. |
 | SEC-08 | Vulnerability scanning | **Delivered** | D | Same CI gate; no container or binary scanner because there is no container. |
 | SEC-09 | Threat modelling | **Delivered** | D | STRIDE model with trust boundaries in `docs/03` §5. |
-| SEC-10 | Audit logging | **Delivered** | T | Local audit log for assessments, approvals, AI decisions and executions; no tamper-evident chaining (see SEC-13). |
+| SEC-10 | Audit logging | **Delivered** | T | Local audit log for assessments, approvals, AI decisions and executions, protected by the SHA-256 chain described in SEC-13. |
 | SEC-11 | Code signing | **Not delivered** | D | Build script and CI support signing when a certificate is supplied; no certificate exists, so nothing is signed. |
 | SEC-12 | Secrets management | **Delivered** | T | Provider keys resolve from environment variables and are never persisted. The lab Entra client secret is DPAPI-protected (`CurrentUser`) in the settings document and decrypted transparently on load; legacy plaintext is encrypted on next save. Test: `Settings_ProtectsClientSecretAtRest`. |
 | SEC-13 | Tamper detection | **Delivered** | T | SHA-256 chain over insertion order with legacy backfill, `IAuditLog.VerifyAsync`, and a Settings verification button. Detects edited or deleted rows at the first affected entry. Tests: `AuditChain_VerifiesInOrder`, `AuditChain_DetectsTampering`. |
@@ -259,7 +259,7 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 | INS-04 | Intune deployment | **Delivered** | D | Documented Win32/MSI Intune commands in `docs/05` §4. |
 | INS-05 | MECM/SCCM deployment | **Delivered** | D | Documented application model steps in `docs/05` §4. |
 | INS-06 | Upgrade and rollback | **Delivered** | D | `MajorUpgrade` handles forward upgrades. `installer/Rollback-PurviewGovernanceCopilot.ps1` (shipped beside the app) finds the installed package, uninstalls it, installs a named previous MSI, verifies the registered version and writes verbose msiexec logs; `-WhatIf` previews the steps. Syntax-checked; not executed here because no install exists. |
-| INS-07 | Produced installer binaries | **Delivered** | B | `dist/PurviewGovernanceCopilot-1.0.0.msi` (1.8 MB, framework-dependent, with a SHA-256 file) is committed and passes `wix msi validate` ICE checks. Unsigned; no MSIX binary. |
+| INS-07 | Produced installer binaries | **Delivered** | B | `dist/PurviewGovernanceCopilot-1.0.0.msi` (1.9 MB) passes `wix msi validate`; `dist/PurviewGovernanceCopilot-1.0.0.0.msix` (2.2 MB) was built and round-tripped (manifest version, assets and executable verified). Both are framework-dependent and unsigned, each with a SHA-256 file. |
 
 ---
 
@@ -299,13 +299,24 @@ By section:
 
 ## What is genuinely missing
 
-Ranked by risk to the commercial claim, not by effort:
+Ranked by risk to the commercial claim, not by effort.
 
-1. **Security Copilot (AIA-02)** — no generally available tenant-licensed API to integrate here.
-2. **Code signing, MSIX packaging and a hosted update manifest (SEC-11, SEC-16, INS-02)** — the MSI is produced but unsigned, the updater has no published manifest, and there is no `.msix` build.
-3. **SQL Server support (ARC-08)** and **WinUI 3 (ARC-02)**.
-4. **DSPM, Compliance Manager and Defender data collection (DSC-08, DSC-11)**.
-5. **SQLCipher page encryption (SEC-14 metadata)** — sensitive payloads are encrypted, but database pages and tenant metadata are not.
+**Partial (7):**
+
+1. **Automated tenant restore (DEP-03, SAF-02)** — rollback packages and reviewed scripts exist; executing and validating a restore needs a live tenant.
+2. **DSPM/AI-governance discovery (DSC-08)** — enablement is not exposed by a stable public API used here, so controls report as gaps by default.
+3. **Defender and Compliance Manager ingestion (DSC-11)** — secure score is collected; no Compliance Manager score API is available and Defender alert/incident ingestion is not implemented.
+4. **Per-module lifecycle (MOD-02)** — modules share generic deployment, validation, rollback and monitoring paths rather than exposing all eight stages independently.
+5. **Code signing and hosted update manifest (SEC-16)** — update download is HTTPS + SHA-256 verified, but installation is manual, the MSI/MSIX are unsigned, and no manifest is published.
+6. **Microsoft Graph SDK (ARC-05)** — Graph is consumed through typed REST calls by design, not the SDK.
+7. **SQLCipher page encryption (SEC-14)** — payloads are DPAPI-encrypted; database pages and indexed metadata are not.
+
+**Not delivered (4):**
+
+1. **Security Copilot (AIA-02)** — no generally available tenant-licensed API to integrate.
+2. **Code signing itself (SEC-11)** — CI and installer support signing, but no certificate exists.
+3. **WinUI 3 shell (ARC-02)** — WPF was chosen because WinUI 3 could not be built or verified here; the Application layer is UI-agnostic.
+4. **Optional SQL Server store (ARC-08)** — no SQL Server port or implementation.
 
 ## Verification performed
 
@@ -313,12 +324,13 @@ Ranked by risk to the commercial claim, not by effort:
 | --- | --- |
 | `dotnet build PurviewGovernanceCopilot.sln -c Release` | Succeeded (local SDK 9.0.321) |
 | `dotnet test tests/PurviewCopilot.Tests -c Release` | 157 passed, 0 failed |
-| Catalog count (`grep -c 'Add("' ModuleCatalog.cs`) | 49 rules across 16 modules |
+| Catalog count (`grep -c 'Add("' ModuleCatalog.cs`) | 50 rules across 16 built-in modules |
 | Exporter inventory | HTML, JSON, CSV, Markdown, PDF, DOCX, XLSX |
 | `ReportFormat` enum | `Html, Json, Csv, Markdown, Pdf, Docx, Xlsx` |
 | Artefact search (`*.bicep`, `*.tf`, `*arm*.json`, `*.docx`, `*.xlsx`) | None found |
-| MSP / SQL Server / Terraform references in `src` | None found |
+| MSP / SQL Server references in `src` | MSP implemented; no SQL Server store |
 | Key Vault usage in `src/PurviewCopilot.UI` | Wired via `AppServices.KeyVaultFactory` and the Settings upload/import commands; not exercised (no vault) |
+| `dist/` contents | MSI, MSIX and SHA-256 files only; no generated WiX source/debug symbols |
 | Release executable smoke launch | Started and stayed alive; UI not visually inspected |
 
 Claims that could not be verified here: anything requiring a tenant, Entra app registration, certificate in a real store, Key Vault, AI provider keys, WiX toolset or a code-signing certificate. Those are marked **C** or **D** above rather than asserted as working.

@@ -183,7 +183,7 @@ public sealed class DashboardViewModel : PageViewModel
         var history = await _workspace.RefreshHistoryAsync(assessment.TenantId).ConfigureAwait(true);
 
         Trend.Clear();
-        var points = TrendSeries.Build(history, 12);
+        var points = TrendReport.Build(history, 12);
         foreach (var point in points)
         {
             Trend.Add(new TrendBar(

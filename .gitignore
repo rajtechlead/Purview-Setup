@@ -5,6 +5,10 @@ artifacts/
 *.user
 *.suo
 
+# Generated installer intermediates (keep only shipped MSI/MSIX and checksums)
+dist/*.wixpdb
+dist/*.wxs
+
 # Local .NET SDK installed for builds on this machine
 .dotnet/
 .dotnet-install.ps1

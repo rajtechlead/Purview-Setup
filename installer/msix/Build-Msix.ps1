@@ -92,7 +92,7 @@ try {
     }
 
     $hash = (Get-FileHash $msix -Algorithm SHA256).Hash.ToLowerInvariant()
-    "$hash  $(Split-Path $msix -Leaf)" | Set-Content "$msix.sha256" -Encoding ASCII
+    [IO.File]::WriteAllText("$msix.sha256", "$hash  $(Split-Path $msix -Leaf)`n", [Text.Encoding]::ASCII)
     Get-Item $msix | Select-Object FullName, Length
 }
 finally {

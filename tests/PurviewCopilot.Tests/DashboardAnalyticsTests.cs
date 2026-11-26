@@ -46,7 +46,7 @@ public class DashboardAnalyticsTests
             .Reverse()
             .ToList();
 
-        var trend = TrendSeries.Build(history, 12);
+        var trend = PurviewCopilot.Application.Reporting.TrendReport.Build(history, 12);
 
         Assert.Equal(12, trend.Count);
         Assert.Equal(start.AddDays(3), trend[0].RunUtc);

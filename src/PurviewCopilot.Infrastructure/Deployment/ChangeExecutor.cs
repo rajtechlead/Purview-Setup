@@ -1,5 +1,4 @@
 using System.Text;
-using System.Text.Json;
 using PurviewCopilot.Application.Abstractions;
 using PurviewCopilot.Domain;
 
@@ -78,23 +77,6 @@ public sealed class ChangeExecutor : IChangeExecutor
         return Task.FromResult(new ExecutionResult(true,
             "Change script prepared. Execution must be run by the operator with the generated script.",
             log.Append(script).ToList()));
-    }
-
-    public Task<ExecutionResult> RollbackAsync(ConfigurationBackup backup, CancellationToken cancellationToken = default)
-    {
-        using var document = JsonDocument.Parse(backup.PayloadJson);
-        var operations = document.RootElement.TryGetProperty("operations", out var ops) && ops.ValueKind == JsonValueKind.Array
-            ? ops.GetArrayLength()
-            : 0;
-
-        return Task.FromResult(new ExecutionResult(true,
-            $"Rollback package {backup.Label} validated ({operations} operation(s) to reverse).",
-            new[]
-            {
-                "Restore labels and policies from the backup payload.",
-                "Republish prior label policy version.",
-                "Re-run assessment and confirm the previous scores are restored."
-            }));
     }
 
     public string GenerateScript(ChangePlan plan) => BuildScript(plan);

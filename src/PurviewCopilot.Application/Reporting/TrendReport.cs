@@ -10,7 +10,8 @@ public sealed record TrendPoint(
     double Security,
     double Governance,
     double Compliance,
-    double Risk);
+    double Risk,
+    MaturityLevel Maturity);
 
 /// <summary>Time-series report over stored assessments, oldest to newest.</summary>
 public static class TrendReport
@@ -20,7 +21,8 @@ public static class TrendReport
             .OrderBy(r => r.RunUtc)
             .TakeLast(Math.Max(1, take))
             .Select(r => new TrendPoint(
-                r.RunUtc, r.Scores.Overall, r.Scores.Security, r.Scores.Governance, r.Scores.Compliance, r.Scores.Risk))
+                r.RunUtc, r.Scores.Overall, r.Scores.Security, r.Scores.Governance, r.Scores.Compliance,
+                r.Scores.Risk, r.Scores.MaturityLevel))
             .ToList();
 
     public static string BuildMarkdown(

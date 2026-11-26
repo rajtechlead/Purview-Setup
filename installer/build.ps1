@@ -5,7 +5,8 @@
 .DESCRIPTION
     Requires the .NET 9 SDK and WiX 5.0.2 (`dotnet tool install --global wix --version 5.0.2`).
     The install is framework-dependent, so targets need the .NET 9 Desktop Runtime.
-    The MSIX path is optional and requires a code-signing certificate.
+    The MSI and SHA-256 are copied to dist/. Build the optional MSIX separately with
+    installer/msix/Build-Msix.ps1 (it does not require a signing certificate).
 
 .PARAMETER Configuration
     Build configuration. Default Release.
@@ -54,4 +55,14 @@ if ($SigningCertificate) {
     }
 }
 
-Write-Host 'Build complete. Output in artifacts\.' -ForegroundColor Green
+Write-Host 'Copying MSI and checksum to dist...' -ForegroundColor Cyan
+$dist = Join-Path $root 'dist'
+New-Item -ItemType Directory -Path $dist -Force | Out-Null
+$msi = Get-ChildItem -Path (Join-Path $PSScriptRoot 'bin') -Filter '*.msi' -Recurse | Select-Object -First 1
+if (-not $msi) { throw 'MSI was not produced.' }
+$target = Join-Path $dist 'PurviewGovernanceCopilot-1.0.0.msi'
+Copy-Item $msi.FullName $target -Force
+$hash = (Get-FileHash $target -Algorithm SHA256).Hash.ToLowerInvariant()
+[IO.File]::WriteAllText("$target.sha256", "$hash  $(Split-Path $target -Leaf)`n", [Text.Encoding]::ASCII)
+
+Write-Host "Build complete. MSI: $target" -ForegroundColor Green

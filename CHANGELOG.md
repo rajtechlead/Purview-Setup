@@ -4,6 +4,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **Repository cleanup**: removed the stale duplicate status table from `docs/07` (now an index to the authoritative tracker), deleted generated WiX source/debug files from `dist/` and the abandoned tenant-rollout archive, consolidated two trend-series implementations into `TrendReport`, and removed the unused `IChangeExecutor.RollbackAsync` path that only returned a validation message. Trackers and roadmap now agree on the delivered/partial/blocked boundary.
+
 ### Added
 
 - **Tamper-evident audit log**: every entry stores the SHA-256 of its canonical fields plus the previous entry's hash. `IAuditLog.VerifyAsync` recomputes the chain in insertion order and names the first broken entry; existing databases are backfilled on first open. A **Verify audit log integrity** action is available in Settings.
