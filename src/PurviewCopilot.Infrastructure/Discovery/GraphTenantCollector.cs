@@ -90,9 +90,8 @@ public sealed class GraphTenantCollector : ITenantCollector
         await ReadServicePrincipalSecretsAsync(snapshot, token, graph, warnings, cancellationToken).ConfigureAwait(false);
         await ReadGlobalAdministratorsAsync(snapshot, token, graph, warnings, cancellationToken).ConfigureAwait(false);
 
-        // Purview-specific configuration is read through Security & Compliance PowerShell.
-        snapshot.ExchangeMailboxes = snapshot.UsersEnabled;
-        warnings.Add("Mailbox count is approximated by enabled users; confirm with Get-Mailbox -ResultSize Unlimited.");
+        // Usage reports give real workload counts; a missing Reports.Read.All degrades to zero with a warning.
+        await ReadWorkloadReportsAsync(snapshot, token, graph, warnings, cancellationToken).ConfigureAwait(false);
 
         snapshot.Warnings = warnings;
         return snapshot;
@@ -154,6 +153,21 @@ public sealed class GraphTenantCollector : ITenantCollector
         }
 
         snapshot.AppRegistrationsWithSecrets = withSecrets;
+    }
+
+    private async Task ReadWorkloadReportsAsync(TenantSnapshot snapshot, string token, string graph, List<string> warnings, CancellationToken cancellationToken)
+    {
+        var mailboxCsv = await GetTextAsync($"{graph}/reports/getMailboxUsageDetail(period='D7')", token, warnings, cancellationToken).ConfigureAwait(false);
+        if (mailboxCsv is not null)
+        {
+            snapshot.ExchangeMailboxes = WorkloadReportCsv.CountRows(mailboxCsv);
+        }
+
+        var oneDriveCsv = await GetTextAsync($"{graph}/reports/getOneDriveUsageAccountDetail(period='D7')", token, warnings, cancellationToken).ConfigureAwait(false);
+        if (oneDriveCsv is not null)
+        {
+            snapshot.OneDriveAccounts = WorkloadReportCsv.CountRows(oneDriveCsv);
+        }
     }
 
     private async Task ReadConditionalAccessAsync(TenantSnapshot snapshot, string token, string graphBeta, List<string> warnings, CancellationToken cancellationToken)
@@ -234,6 +248,37 @@ public sealed class GraphTenantCollector : ITenantCollector
         return document.RootElement.TryGetProperty("value", out var value) && value.ValueKind == JsonValueKind.Array
             ? value.GetArrayLength()
             : 0;
+    }
+
+    private async Task<string?> GetTextAsync(string url, string token, List<string> warnings, CancellationToken cancellationToken)
+    {
+        try
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, url);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/csv"));
+
+            using var response = await _http.SendAsync(request, cancellationToken).ConfigureAwait(false);
+            var body = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                warnings.Add(string.Format(CultureInfo.InvariantCulture,
+                    "Graph report {0} returned {1}: {2}", Shorten(url), (int)response.StatusCode, Shorten(body, 180)));
+                return null;
+            }
+
+            return body;
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            warnings.Add($"Graph report failed for {Shorten(url)}: {ex.Message}");
+            return null;
+        }
     }
 
     private async Task<JsonDocument?> GetJsonAsync(string url, string token, List<string> warnings, CancellationToken cancellationToken)

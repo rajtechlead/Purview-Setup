@@ -22,7 +22,8 @@ public sealed class GraphAuthenticationProvisioner : IAuthenticationProvisioning
         ("Directory.Read.All", "7ab1d382-f21e-4acd-a863-ba3e13f7da61"),
         ("Organization.Read.All", "498476ce-e0fe-48b0-b801-37ba7e2685c6"),
         ("SecurityEvents.Read.All", "64733abd-851e-478a-bffb-e47a14b18235"),
-        ("AuditLog.Read.All", "b0afded3-3588-46d8-8b3d-9842eff778da")
+        ("AuditLog.Read.All", "b0afded3-3588-46d8-8b3d-9842eff778da"),
+        ("Reports.Read.All", "230c1aed-a721-4c5d-9cb4-a90514e508ef")
     };
 
     private readonly EntraTokenProvider _tokens;

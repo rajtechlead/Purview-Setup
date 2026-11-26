@@ -42,7 +42,7 @@ No tenant yet? Open **Assessment → Load sample tenant**: the entire workspace 
 
 1. **Settings → Certificate lifecycle → Create** — generates a 4096-bit RSA self-signed certificate in `CurrentUser\My` and fills in the thumbprint.
 2. Register the certificate on an Entra app registration and grant:
-   - `Organization.Read.All`, `User.Read.All`, `Group.Read.All`, `Application.Read.All`, `RoleManagement.Read.Directory`, `Policy.Read.All`, `SecurityEvents.Read.All` (Graph application permissions)
+   - `Organization.Read.All`, `User.Read.All`, `Group.Read.All`, `Application.Read.All`, `RoleManagement.Read.Directory`, `Policy.Read.All`, `SecurityEvents.Read.All`, `Reports.Read.All` (Graph application permissions)
    - `Exchange.ManageAsApp` (Office 365 Exchange Online) with the service principal added to the **Compliance Administrator** role.
 3. Grant admin consent, then **Test connection**.
 4. **Assessment → Discover tenant**.
@@ -64,7 +64,7 @@ src/
   PurviewCopilot.UI/              # WPF shell, dashboards, pages (MVVM)
   PurviewCopilot.Cli/             # headless `pgc assess` / `pgc verify-audit`
 tests/
-  PurviewCopilot.Tests/           # 155 automated tests
+  PurviewCopilot.Tests/           # 157 automated tests
 docs/                             # architecture, design, security, guides, traceability
 installer/                        # WiX MSI project + MSIX manifest
 dist/                             # built MSI + SHA-256 (framework-dependent, unsigned)

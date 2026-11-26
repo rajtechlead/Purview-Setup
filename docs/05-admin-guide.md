@@ -42,6 +42,7 @@ Client-secret mode is accepted only when Environment is **Lab**, stores the secr
 2. **Certificates & secrets → Certificates → Upload certificate**: upload the `.cer` (public key) exported from the app's Settings page.
 3. **API permissions → Microsoft Graph → Application permissions**:
    - `Organization.Read.All`
+   - `Reports.Read.All` (mailbox and OneDrive usage counts)
    - `User.Read.All`
    - `Group.Read.All`
    - `Application.Read.All`

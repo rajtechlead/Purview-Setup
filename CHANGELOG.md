@@ -23,6 +23,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Binary report path**: `IReportExporter.RenderBytes` with a text default, and `GovernanceWorkspace.ExportReportAsync` now writes bytes so every format shares one audited export path.
 - **Persona dashboards, risk heatmap and trends**: Executive, Security, Governance and Compliance tabs; module × severity heatmap of open findings; the last twelve overall scores charted from stored assessments with maturity trail and delta.
 - **MSP tenancy**: a `tenant_profiles` registry with DPAPI-protected credentials, save/activate from Settings, in-session evidence cleared on activation, and a cross-tenant Portfolio tab built from each tenant's latest assessment.
+- **Real workload counts**: mailbox and OneDrive totals come from Graph usage reports with `Reports.Read.All` instead of being approximated from enabled users.
 - **Security assurance**: added `SECURITY.md` (disclosure, bug bar), `docs/10-security-assurance.md` (SDL phases, SSDF mapping, threat model, release sign-off) and a CodeQL C# workflow.
 - **Deeper Entra discovery**: role inventory, active assignments, PIM eligibility, service principals with secrets and Conditional Access enabled/MFA counts now feed the Compliance Manager rules.
 - **Customer-information guard**: the privacy detector now catches labelled customer/client/tenant names, organisation names with legal suffixes and titled person names, so they are masked or blocked like other customer data.

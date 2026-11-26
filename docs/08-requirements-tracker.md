@@ -18,7 +18,7 @@ Verified against commit `353bde2` on 25 November 2026 by reading the source, cou
 
 | Code | Meaning |
 | --- | --- |
-| **T** | Covered by an automated test (155 tests, all passing at audit time). |
+| **T** | Covered by an automated test (157 tests, all passing at audit time). |
 | **B** | Builds and is reachable from the composition root; behaviour not exercised end to end. |
 | **C** | Code exists but is unexercised here (no tenant, certificate, API key or admin rights). |
 | **D** | Documentation or project/manifest artifact only; nothing executes it here. |
@@ -65,7 +65,7 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 | DSC-06 | Discover insider risk and communication compliance | **Delivered** | C | `Get-InsiderRiskPolicy`, `Get-SupervisoryReviewPolicyV2`. |
 | DSC-07 | Discover eDiscovery | **Delivered** | C | `Get-ComplianceCase`; advanced eDiscovery capacity is inferred, not queried directly. |
 | DSC-08 | Discover DSPM and AI governance | **Partial** | C | Controls DSP-01…03 and AIG-01…03 exist, but DSPM and DSPM-for-AI enablement are not collected from any stable API, so they report as failures by default. |
-| DSC-09 | Discover Exchange Online, SharePoint Online, OneDrive, Teams, users and groups | **Partial** | C | Users, groups and site/team counts come from Graph. Mailbox and OneDrive counts are approximations from enabled users, and the collector says so in its evidence text. |
+| DSC-09 | Discover Exchange Online, SharePoint Online, OneDrive, Teams, users and groups | **Delivered** | C | Users, guests, groups, SharePoint site count and Teams count come from Graph. Mailbox and OneDrive account counts now come from the Graph usage reports (`getMailboxUsageDetail`, `getOneDriveUsageAccountDetail`) with `Reports.Read.All`; a missing permission degrades to zero with a warning instead of guessing from enabled users. CSV row counting is tested; reports were not run against a live tenant. |
 | DSC-10 | Discover Entra users, roles, applications, service principals and Conditional Access | **Delivered** | C | Users, guests and groups; directory-role count, active role assignments, PIM eligibility and Global Administrators; app registrations and service principals with client secrets; Conditional Access total, enabled and MFA-enforcing counts. Read-only Graph GETs with per-call degradation; not run against a live tenant here (no tenant/certificate). CPM-02/05/06/07 consume the new signals. |
 | DSC-11 | Discover Defender integrations, security posture and compliance posture | **Partial** | C | Secure score is read from Graph. Defender product signals are not ingested and the Compliance Manager score is not collected, so `CPM-01` warns on an absent value. |
 | DSC-12 | Produce Security, Governance, Compliance, Purview Maturity, Risk, AI Governance and Copilot Readiness scores | **Delivered** | T | `ScoringEngine` + `ScoreSet` (seven scores plus maturity band); weighted modules, capped risk. Tests: `Compute_*`, `Risk_*`. |
@@ -267,8 +267,8 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 
 | Status | Count | Share |
 | --- | --- | --- |
-| **Delivered** | 120 | 90% |
-| **Partial** | 10 | 7% |
+| **Delivered** | 121 | 90% |
+| **Partial** | 9 | 7% |
 | **Not delivered** | 4 | 3% |
 | **Total tracked** | 134 | 100% |
 
@@ -278,7 +278,7 @@ By section:
 | --- | --- | --- | --- |
 | Platform and scope | 4 | 0 | 0 |
 | Authentication | 12 | 0 | 0 |
-| Discovery and assessment | 11 | 3 | 0 |
+| Discovery and assessment | 12 | 2 | 0 |
 | Deployment and change control | 3 | 2 | 0 |
 | Modular architecture | 2 | 1 | 0 |
 | AI assistant and failover | 11 | 0 | 1 |
@@ -312,7 +312,7 @@ Ranked by risk to the commercial claim, not by effort:
 | Check | Result |
 | --- | --- |
 | `dotnet build PurviewGovernanceCopilot.sln -c Release` | Succeeded (local SDK 9.0.321) |
-| `dotnet test tests/PurviewCopilot.Tests -c Release` | 155 passed, 0 failed |
+| `dotnet test tests/PurviewCopilot.Tests -c Release` | 157 passed, 0 failed |
 | Catalog count (`grep -c 'Add("' ModuleCatalog.cs`) | 49 rules across 16 modules |
 | Exporter inventory | HTML, JSON, CSV, Markdown, PDF, DOCX, XLSX |
 | `ReportFormat` enum | `Html, Json, Csv, Markdown, Pdf, Docx, Xlsx` |
