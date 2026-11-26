@@ -130,6 +130,19 @@ Evidence handling: reports and backups can contain tenant identifiers. Keep them
 
 If any gate fails (simulation, approval, backup, rollback package, authentication, connectivity, risk), execution is blocked and the reason is listed. No bypass exists in the UI.
 
+### Customer access roles (MSP mode)
+
+When saving a customer tenant, the **Access** field takes `user=Role` assignments separated by semicolons:
+
+| Role | Can do |
+| --- | --- |
+| Viewer | See the tenant in the list and its portfolio row; cannot activate or deploy |
+| Operator | Activate the tenant, assess, plan and execute approved phases; cannot approve |
+| Approver | Everything an Operator can do plus phase approval |
+| Administrator | Manage the tenant record, assignments and all operations |
+
+The signed-in user is always retained as Administrator, and only an Administrator can change the tenant. Separation of duties still applies: the approver must be a different person from the operator, even with Administrator access. Profiles created before this feature remain limited to their recorded owner.
+
 ### Unattended runs (headless CLI)
 
 `src/PurviewCopilot.Cli` exposes the same pipeline for Task Scheduler or a CI job:

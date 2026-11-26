@@ -74,6 +74,7 @@ public sealed class SettingsViewModel : PageViewModel
     private string _status = "Settings loaded.";
     private string _auditStatus = "Audit chain not verified in this session.";
     private string _tenantDisplayName = string.Empty;
+    private string _tenantAccessText = $"{Environment.UserName}=Administrator";
     private string _updateManifestUrl = string.Empty;
     private string _updateStatus = "No update check has run.";
     private string _keyVaultUri = string.Empty;
@@ -166,6 +167,7 @@ public sealed class SettingsViewModel : PageViewModel
     public string Status { get => _status; private set => SetProperty(ref _status, value); }
     public string AuditStatus { get => _auditStatus; private set => SetProperty(ref _auditStatus, value); }
     public string TenantDisplayName { get => _tenantDisplayName; set => SetProperty(ref _tenantDisplayName, value); }
+    public string TenantAccessText { get => _tenantAccessText; set => SetProperty(ref _tenantAccessText, value); }
     public string UpdateManifestUrl { get => _updateManifestUrl; set => SetProperty(ref _updateManifestUrl, value); }
     public string UpdateStatus { get => _updateStatus; private set => SetProperty(ref _updateStatus, value); }
     public string KeyVaultUri { get => _keyVaultUri; set => SetProperty(ref _keyVaultUri, value); }
@@ -193,6 +195,11 @@ public sealed class SettingsViewModel : PageViewModel
         {
             if (SetProperty(ref _selectedTenant, value))
             {
+                if (value is not null)
+                {
+                    TenantAccessText = TenantAccessPolicy.Format(value.Access);
+                }
+
                 (ActivateTenantCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged();
             }
         }
@@ -642,10 +649,12 @@ public sealed class SettingsViewModel : PageViewModel
         Busy = true;
         try
         {
-            var profile = await _workspace.SaveTenantAsync(TenantDisplayName, BuildAuth(), Environment.UserName)
+            var access = TenantAccessPolicy.ParseAssignments(TenantAccessText, Environment.UserName);
+            var profile = await _workspace.SaveTenantAsync(TenantDisplayName, BuildAuth(), Environment.UserName, access)
                 .ConfigureAwait(true);
 
             TenantDisplayName = profile.DisplayName;
+            TenantAccessText = TenantAccessPolicy.Format(profile.Access);
             TenantProfiles.Clear();
             foreach (var item in await _workspace.LoadTenantProfilesAsync().ConfigureAwait(true))
             {

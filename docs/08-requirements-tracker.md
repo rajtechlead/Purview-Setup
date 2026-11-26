@@ -18,7 +18,7 @@ Verified against commit `353bde2` on 25 November 2026 by reading the source, cou
 
 | Code | Meaning |
 | --- | --- |
-| **T** | Covered by an automated test (124 tests, all passing at audit time). |
+| **T** | Covered by an automated test (129 tests, all passing at audit time). |
 | **B** | Builds and is reachable from the composition root; behaviour not exercised end to end. |
 | **C** | Code exists but is unexercised here (no tenant, certificate, API key or admin rights). |
 | **D** | Documentation or project/manifest artifact only; nothing executes it here. |
@@ -142,7 +142,7 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 | --- | --- | --- | --- | --- |
 | MSP-01 | Manage multiple customer tenants with isolation and a central dashboard | **Delivered** | T | `tenant_profiles` stores each customer tenant with DPAPI-protected credentials; Settings saves and activates a tenant, activation clears in-session evidence, and the Dashboard Portfolio tab summarises each tenant's latest assessment. Test: `TenantProfiles_RoundTrip_WithProtectedSecrets`. |
 | MSP-02 | Cross-tenant reporting | **Delivered** | T | Portfolio rows aggregate overall, security, compliance, risk, maturity and last-assessed date per tenant, and the Dashboard exports the whole portfolio to CSV (quoted/escaped, one aggregate row per customer, nothing below the aggregate crosses tenants). Tests: `Portfolio_UsesEachTenantsOwnLatestAssessment`, `PortfolioReportTests`. |
-| MSP-03 | Role-based administration and customer-level permissions | **Not delivered** | — | The app has no user model or roles; all saved tenants are reachable by the signed-in Windows user. RBAC exists only as tenant guidance in CPM controls. |
+| MSP-03 | Role-based administration and customer-level permissions | **Delivered** | T | `TenantProfile.Access` stores per-customer Windows identities with Viewer/Operator/Approver/Administrator roles; Settings edits `user=Role` assignments and always retains the owner as Administrator. Tenant lists, activation (Operator+), save (Administrator), portfolio and deployment operator/approver checks are enforced. Legacy profiles without assignments remain limited to their recorded owner. Tests: `TenantAccessTests`. |
 
 ## J. Configuration-as-code
 
@@ -267,8 +267,8 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 
 | Status | Count | Share |
 | --- | --- | --- |
-| **Delivered** | 106 | 79% |
-| **Partial** | 23 | 17% |
+| **Delivered** | 107 | 80% |
+| **Partial** | 22 | 16% |
 | **Not delivered** | 5 | 4% |
 | **Total tracked** | 134 | 100% |
 
@@ -284,7 +284,7 @@ By section:
 | AI assistant and failover | 11 | 0 | 1 |
 | AI privacy guardrail | 11 | 1 | 0 |
 | Change management and safety | 6 | 1 | 0 |
-| Multi-tenant MSP | 2 | 0 | 1 |
+| Multi-tenant MSP | 3 | 0 | 0 |
 | Configuration-as-code | 3 | 0 | 0 |
 | Approval workflow | 2 | 0 | 0 |
 | Offline and regulated | 3 | 0 | 0 |
@@ -301,19 +301,18 @@ By section:
 
 Ranked by risk to the commercial claim, not by effort:
 
-1. **Per-customer RBAC (MSP-03)** — tenant switching, isolation, the portfolio and its CSV export exist, but all saved tenants remain reachable by one Windows user.
-2. **Security Copilot (AIA-02)** — no generally available tenant-licensed API to integrate here.
-3. **Code signing, MSIX packaging and a hosted update manifest (SEC-11, SEC-16, INS-02)** — the MSI is produced but unsigned, the updater has no published manifest, and there is no `.msix` build.
-4. **SQL Server support (ARC-08)** and **WinUI 3 (ARC-02)**.
-5. **DSPM, Compliance Manager and Defender data collection (DSC-08, DSC-11)**.
-6. **SQLCipher page encryption and per-customer RBAC (SEC-14 metadata, MSP-03)** — sensitive payloads are now encrypted, but database pages and tenant metadata are not, and all saved tenants remain reachable by one Windows user.
+1. **Security Copilot (AIA-02)** — no generally available tenant-licensed API to integrate here.
+2. **Code signing, MSIX packaging and a hosted update manifest (SEC-11, SEC-16, INS-02)** — the MSI is produced but unsigned, the updater has no published manifest, and there is no `.msix` build.
+3. **SQL Server support (ARC-08)** and **WinUI 3 (ARC-02)**.
+4. **DSPM, Compliance Manager and Defender data collection (DSC-08, DSC-11)**.
+5. **SQLCipher page encryption (SEC-14 metadata)** — sensitive payloads are encrypted, but database pages and tenant metadata are not.
 
 ## Verification performed
 
 | Check | Result |
 | --- | --- |
 | `dotnet build PurviewGovernanceCopilot.sln -c Release` | Succeeded (local SDK 9.0.321) |
-| `dotnet test tests/PurviewCopilot.Tests -c Release` | 124 passed, 0 failed |
+| `dotnet test tests/PurviewCopilot.Tests -c Release` | 129 passed, 0 failed |
 | Catalog count (`grep -c 'Add("' ModuleCatalog.cs`) | 49 rules across 16 modules |
 | Exporter inventory | HTML, JSON, CSV, Markdown, PDF, DOCX, XLSX |
 | `ReportFormat` enum | `Html, Json, Csv, Markdown, Pdf, Docx, Xlsx` |

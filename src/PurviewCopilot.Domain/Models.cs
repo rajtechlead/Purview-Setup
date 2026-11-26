@@ -300,11 +300,15 @@ public sealed record AuditChainStatus(
     string Message);
 
 /// <summary>A customer tenant managed from this workstation (MSP mode).</summary>
+public sealed record TenantAccess(string Identity, UserRole Role);
+
 public sealed record TenantProfile(
     string TenantId,
     string DisplayName,
     AuthConfiguration Auth,
-    DateTimeOffset UpdatedUtc);
+    DateTimeOffset UpdatedUtc,
+    string? Owner = null,
+    IReadOnlyList<TenantAccess>? Access = null);
 
 public sealed record DriftItem(
     string Id,

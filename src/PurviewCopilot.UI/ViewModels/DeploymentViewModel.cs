@@ -169,6 +169,7 @@ public sealed class DeploymentViewModel : PageViewModel
     {
         var settings = await _settings.LoadAsync().ConfigureAwait(true);
         Mode = settings.DefaultMode;
+        await _workspace.LoadTenantProfilesAsync().ConfigureAwait(true);
 
         Candidates.Clear();
         var assessment = _workspace.Assessment;
@@ -224,6 +225,13 @@ public sealed class DeploymentViewModel : PageViewModel
             return;
         }
 
+        var profile = ActiveTenantProfile();
+        if (profile is not null && !TenantAccessPolicy.CanOperate(profile, Actor))
+        {
+            PhaseStatusText = "This user's customer role does not permit deployment operations.";
+            return;
+        }
+
         Busy = true;
         try
         {
@@ -249,6 +257,14 @@ public sealed class DeploymentViewModel : PageViewModel
     private async Task ApprovePhaseAsync()
     {
         if (_phaseExecution is null) return;
+
+        var profile = ActiveTenantProfile();
+        if (profile is not null && (!TenantAccessPolicy.CanOperate(profile, Actor) ||
+                                    !TenantAccessPolicy.CanApprove(profile, PhaseApprover)))
+        {
+            PhaseStatusText = "The operator needs Operator and the approver needs Approver access to this customer tenant.";
+            return;
+        }
 
         Busy = true;
         try
@@ -276,6 +292,13 @@ public sealed class DeploymentViewModel : PageViewModel
         if (tenant is null)
         {
             PhaseStatusText = "No tenant snapshot is available.";
+            return;
+        }
+
+        var profile = ActiveTenantProfile();
+        if (profile is not null && !TenantAccessPolicy.CanOperate(profile, Actor))
+        {
+            PhaseStatusText = "This user's customer role does not permit deployment execution.";
             return;
         }
 
@@ -354,6 +377,9 @@ public sealed class DeploymentViewModel : PageViewModel
             RefreshPhaseCommands();
         }
     }
+
+    private TenantProfile? ActiveTenantProfile() =>
+        _workspace.TenantProfiles.FirstOrDefault(p => p.TenantId == _workspace.Tenant?.TenantId);
 
     private void RefreshPhaseCommands()
     {

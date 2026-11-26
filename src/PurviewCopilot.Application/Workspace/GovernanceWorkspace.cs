@@ -89,15 +89,26 @@ public sealed class GovernanceWorkspace
 
     public async Task<IReadOnlyList<TenantProfile>> LoadTenantProfilesAsync(CancellationToken cancellationToken = default)
     {
-        TenantProfiles = await _tenantProfileStore.ListAsync(cancellationToken).ConfigureAwait(false);
+        var profiles = await _tenantProfileStore.ListAsync(cancellationToken).ConfigureAwait(false);
+        TenantProfiles = profiles
+            .Where(p => TenantAccessPolicy.CanAccess(p, Environment.UserName))
+            .ToList();
         return TenantProfiles;
     }
 
     /// <summary>Saves the current connection as a customer tenant; credentials stay tenant-scoped.</summary>
+    public Task<TenantProfile> SaveTenantAsync(
+        string displayName,
+        AuthConfiguration auth,
+        string actor,
+        CancellationToken cancellationToken = default) =>
+        SaveTenantAsync(displayName, auth, actor, null, cancellationToken);
+
     public async Task<TenantProfile> SaveTenantAsync(
         string displayName,
         AuthConfiguration auth,
         string actor,
+        IReadOnlyList<TenantAccess>? access,
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(auth.TenantId))
@@ -106,11 +117,20 @@ public sealed class GovernanceWorkspace
         if (string.IsNullOrWhiteSpace(auth.ClientId))
             throw new InvalidOperationException("An application (client) id is required before saving a customer tenant.");
 
+        var existing = TenantProfiles.FirstOrDefault(p => p.TenantId == auth.TenantId.Trim()) ??
+                       (await _tenantProfileStore.ListAsync(cancellationToken).ConfigureAwait(false))
+                       .FirstOrDefault(p => p.TenantId == auth.TenantId.Trim());
+
+        if (existing is not null && !TenantAccessPolicy.CanManage(existing, actor))
+            throw new InvalidOperationException("Only an Administrator of this customer tenant can change it.");
+
         var profile = new TenantProfile(
             auth.TenantId.Trim(),
             string.IsNullOrWhiteSpace(displayName) ? auth.TenantId.Trim() : displayName.Trim(),
             auth,
-            _clock.UtcNow);
+            _clock.UtcNow,
+            existing?.Owner ?? actor,
+            TenantAccessPolicy.Normalize(access ?? existing?.Access, actor));
 
         await _tenantProfileStore.SaveAsync(profile, cancellationToken).ConfigureAwait(false);
 
@@ -131,6 +151,9 @@ public sealed class GovernanceWorkspace
         string actor,
         CancellationToken cancellationToken = default)
     {
+        if (!TenantAccessPolicy.CanOperate(profile, actor))
+            throw new InvalidOperationException("This role cannot activate a customer tenant; Operator or higher is required.");
+
         var settings = await _settings.LoadAsync(cancellationToken).ConfigureAwait(false);
         settings.Auth = profile.Auth;
         await _settings.SaveAsync(settings, cancellationToken).ConfigureAwait(false);

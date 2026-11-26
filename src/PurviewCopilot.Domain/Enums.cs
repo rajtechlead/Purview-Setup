@@ -144,6 +144,14 @@ public enum CloudEnvironment
     Dod
 }
 
+public enum UserRole
+{
+    Viewer = 0,
+    Operator,
+    Approver,
+    Administrator
+}
+
 public enum CertificateAlgorithm
 {
     Rsa2048 = 0,

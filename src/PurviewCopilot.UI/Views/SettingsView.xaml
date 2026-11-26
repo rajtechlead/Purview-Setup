@@ -247,6 +247,11 @@
                     <Button Content="Save current connection" Command="{Binding SaveTenantCommand}" Margin="0,0,8,0" />
                     <Button Content="Activate selected" Style="{StaticResource PrimaryButton}" Command="{Binding ActivateTenantCommand}" />
                 </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                    <TextBlock Text="Access" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                    <TextBox Width="560" Text="{Binding TenantAccessText}"
+                             ToolTip="user=Role; ... — Viewer, Operator, Approver or Administrator. The signed-in user is always retained as Administrator." />
+                </StackPanel>
                 <ListBox ItemsSource="{Binding TenantProfiles}" SelectedItem="{Binding SelectedTenant}" MaxHeight="180"
                          Background="{StaticResource SurfaceAltBrush}">
                     <ListBox.ItemTemplate>
