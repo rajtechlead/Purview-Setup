@@ -18,7 +18,7 @@ Verified against commit `353bde2` on 25 November 2026 by reading the source, cou
 
 | Code | Meaning |
 | --- | --- |
-| **T** | Covered by an automated test (143 tests, all passing at audit time). |
+| **T** | Covered by an automated test (146 tests, all passing at audit time). |
 | **B** | Builds and is reachable from the composition root; behaviour not exercised end to end. |
 | **C** | Code exists but is unexercised here (no tenant, certificate, API key or admin rights). |
 | **D** | Documentation or project/manifest artifact only; nothing executes it here. |
@@ -33,7 +33,7 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 | --- | --- | --- | --- | --- |
 | PLT-01 | Windows 10/11 and Server 2019/2022/2025 only; EOL operating systems excluded | **Delivered** | T | `app.manifest` declares only the Windows 10/11 GUID (Windows 7/8/8.1 removed) and `PlatformSupport` refuses builds below 17763 before any data is opened. Tests: `PlatformSupportTests`. |
 | PLT-02 | Single-pane workspace covering assessment, deployment, governance, monitoring, reporting, optimisation and lifecycle | **Delivered** | B | Nine pages: Dashboard, Assessment, Deployment, Monitoring, Reports, AI Assistant, Settings, Help, About (`src/PurviewCopilot.UI/Views`). |
-| PLT-03 | Support both greenfield and existing deployments | **Partial** | B | All six modes exist, but Greenfield differs only in recommendation preselection; there is no distinct first-run baseline or empty-tenant path. |
+| PLT-03 | Support both greenfield and existing deployments | **Delivered** | T | Empty tenants are detected from collected evidence (no labels, label policy, auto-labelling, DLP, retention policy or retention label). Greenfield then preselects a first-run foundation set (SEN-01, IPT-01/02, AUT-01, DLP-01, DLM-01, AUD-02) and the plan summary reads as a baseline deployment; on a configured tenant the mode warns and does not pretend it is empty. Tests: `GreenfieldBaselineTests`. |
 | PLT-04 | Design grounded in Microsoft Learn, Purview, Entra, Graph, Security Copilot, CIS, NIST, OWASP, ISO 27001, SOC 2, HIPAA, GDPR and PCI-DSS guidance | **Delivered** | D | Framework references are attached per control (`ModuleCatalog.cs`) and reviewed in `docs/03`. No in-app live retrieval of Microsoft guidance. |
 
 ## B. Authentication
@@ -267,8 +267,8 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 
 | Status | Count | Share |
 | --- | --- | --- |
-| **Delivered** | 112 | 84% |
-| **Partial** | 18 | 13% |
+| **Delivered** | 113 | 84% |
+| **Partial** | 17 | 13% |
 | **Not delivered** | 4 | 3% |
 | **Total tracked** | 134 | 100% |
 
@@ -276,7 +276,7 @@ By section:
 
 | Section | Delivered | Partial | Not delivered |
 | --- | --- | --- | --- |
-| Platform and scope | 3 | 1 | 0 |
+| Platform and scope | 4 | 0 | 0 |
 | Authentication | 12 | 0 | 0 |
 | Discovery and assessment | 10 | 4 | 0 |
 | Deployment and change control | 2 | 3 | 0 |
@@ -312,7 +312,7 @@ Ranked by risk to the commercial claim, not by effort:
 | Check | Result |
 | --- | --- |
 | `dotnet build PurviewGovernanceCopilot.sln -c Release` | Succeeded (local SDK 9.0.321) |
-| `dotnet test tests/PurviewCopilot.Tests -c Release` | 143 passed, 0 failed |
+| `dotnet test tests/PurviewCopilot.Tests -c Release` | 146 passed, 0 failed |
 | Catalog count (`grep -c 'Add("' ModuleCatalog.cs`) | 49 rules across 16 modules |
 | Exporter inventory | HTML, JSON, CSV, Markdown, PDF, DOCX, XLSX |
 | `ReportFormat` enum | `Html, Json, Csv, Markdown, Pdf, Docx, Xlsx` |

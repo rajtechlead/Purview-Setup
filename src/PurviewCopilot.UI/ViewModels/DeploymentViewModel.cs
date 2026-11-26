@@ -135,7 +135,17 @@ public sealed class DeploymentViewModel : PageViewModel
     public string PhaseStatusText { get => _phaseStatusText; private set => SetProperty(ref _phaseStatusText, value); }
     public string PhaseLog { get => _phaseLog; private set => SetProperty(ref _phaseLog, value); }
 
-    public DeploymentMode Mode { get => _mode; set => SetProperty(ref _mode, value); }
+    public DeploymentMode Mode
+    {
+        get => _mode;
+        set
+        {
+            if (SetProperty(ref _mode, value))
+            {
+                ApplyModePreselection();
+            }
+        }
+    }
     public string Actor { get => _actor; set => SetProperty(ref _actor, value); }
     public string ApproverComment { get => _approverComment; set => SetProperty(ref _approverComment, value); }
     public string Status { get => _status; private set => SetProperty(ref _status, value); }
@@ -181,10 +191,41 @@ public sealed class DeploymentViewModel : PageViewModel
 
         foreach (var recommendation in assessment.Recommendations.Take(80))
         {
-            Candidates.Add(new SelectableRecommendation(recommendation, recommendation.Priority >= Severity.High));
+            Candidates.Add(new SelectableRecommendation(recommendation, false));
         }
 
-        Status = $"{Candidates.Count} recommendation(s) available. High and critical items are preselected.";
+        ApplyModePreselection();
+    }
+
+    private void ApplyModePreselection()
+    {
+        var tenant = _workspace.Tenant;
+        var greenfield = Mode == DeploymentMode.Greenfield && tenant is not null && GreenfieldBaseline.IsGreenfield(tenant);
+
+        foreach (var candidate in Candidates)
+        {
+            candidate.IsSelected = greenfield
+                ? GreenfieldBaseline.IsFoundation(candidate.Recommendation.Id)
+                : candidate.Priority >= Severity.High;
+        }
+
+        if (Candidates.Count == 0)
+        {
+            return;
+        }
+
+        if (Mode == DeploymentMode.Greenfield && !greenfield)
+        {
+            Status = "Greenfield expects an empty tenant; existing labels or policies were found, so foundation items are still available but nothing was preselected as a first-run baseline.";
+        }
+        else if (greenfield)
+        {
+            Status = "Greenfield tenant detected. The first-run baseline preselects labels, label policy, auto-labelling, DLP, retention and audit retention in a safe starting order.";
+        }
+        else
+        {
+            Status = $"{Candidates.Count} recommendation(s) available. High and critical items are preselected.";
+        }
     }
 
     private async Task BackupObjectsAsync()

@@ -35,9 +35,12 @@ public sealed class ChangePlanBuilder
         var highPriority = recommendations.Count(r => r.Priority >= Severity.High);
         var modules = recommendations.Select(r => r.Module).Distinct().OrderBy(m => m.ToString()).ToList();
 
+        var greenfield = mode == DeploymentMode.Greenfield;
         var impact = new ChangeImpact(
             ExecutiveSummary:
-                $"This plan applies {operations.Count} configuration change(s) across {modules.Count} Purview module(s) to raise governance maturity and close {highPriority} high-or-critical gap(s). Changes are reversible and validated after application.",
+                greenfield
+                    ? $"Baseline deployment for an empty tenant: this plan applies {operations.Count} foundational configuration change(s) across {modules.Count} Purview module(s) in a safe starting order. Changes are reversible and validated after application."
+                    : $"This plan applies {operations.Count} configuration change(s) across {modules.Count} Purview module(s) to raise governance maturity and close {highPriority} high-or-critical gap(s). Changes are reversible and validated after application.",
             TechnicalSummary:
                 $"Modules: {string.Join(", ", modules)}. Operations: {string.Join("; ", operations.Select(o => $"{o.Action} {o.Target}"))}.",
             BusinessImpact:
