@@ -84,6 +84,10 @@ public class ScoringAndModuleTests
         }
 
         Assert.True(ModuleCatalog.All.Count >= 45);
+
+        // Findings are keyed by control id, so a duplicate id would merge two controls' remediation.
+        var duplicates = ModuleCatalog.All.GroupBy(r => r.Id).Where(g => g.Count() > 1).Select(g => g.Key).ToList();
+        Assert.Empty(duplicates);
     }
 
     [Fact]

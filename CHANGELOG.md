@@ -4,6 +4,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Duplicate compliance control id**: two Compliance Manager controls both used `CPM-07`, so findings from "Service principals avoid client secrets" and "Secure score is actively managed" collided when remediation actions were keyed by finding id. The client-secret controls are now `CPM-06` (service principals) and `CPM-07` (app registrations), the secure-score control is `CPM-08`, and `Catalog_CoversEveryModule_WithAtLeastTwoControls` fails if a control id is ever duplicated again.
+
 ### Changed
 
 - **Per-module lifecycle**: deployment validation now re-evaluates each touched module's own rules before and after a phase, not just tenant-wide counters, and every drift signal carries its module so monitoring is attributable. This closes MOD-02; the remaining DSPM/Defender evidence gaps are tracked separately under DSC-08/DSC-11.

@@ -272,19 +272,19 @@ public static class ModuleCatalog
             "Move Purview and Entra admin roles to eligible, time-bound assignments with approval.",
             new[] { "ISO 27001 A.8.2", "CIS v8 5.4" }, new[] { "Entra ID P2" });
 
-        Add("CPM-07", ModuleKey.ComplianceManager, "Service principals avoid client secrets", Severity.High,
+        Add("CPM-06", ModuleKey.ComplianceManager, "Service principals avoid client secrets", Severity.High,
             s => s.ServicePrincipalsWithSecrets == 0 ? Pass("No service principal relies on a client secret.")
                 : Warn($"{s.ServicePrincipalsWithSecrets} service principal(s) use client secrets."),
             "Replace service-principal secrets with certificates or federated credentials, starting with privileged apps.",
             new[] { "ISO 27001 A.8.24", "NIST CSF PR.AC-1" }, new[] { "Entra ID P1" });
 
-        Add("CPM-06", ModuleKey.ComplianceManager, "App registrations avoid client secrets", Severity.High,
+        Add("CPM-07", ModuleKey.ComplianceManager, "App registrations avoid client secrets", Severity.High,
             s => s.AppRegistrationsWithSecrets == 0 ? Pass("No app registration relies on a client secret.")
                 : Warn($"{s.AppRegistrationsWithSecrets} app registration(s) use client secrets."),
             "Migrate to certificate credentials and rotate certificates before expiry.",
             new[] { "ISO 27001 A.8.24", "OWASP ASVS 2.10.4" }, new[] { "Entra ID" });
 
-        Add("CPM-07", ModuleKey.ComplianceManager, "Secure score is actively managed", Severity.Medium,
+        Add("CPM-08", ModuleKey.ComplianceManager, "Secure score is actively managed", Severity.Medium,
             s => s.SecureScorePercent >= 70 ? Pass($"Secure score is {s.SecureScorePercent:0.#}%.")
                 : Warn($"Secure score is {s.SecureScorePercent:0.#}% (target 70%)."),
             "Prioritise secure score actions that protect identity and data, not points for their own sake.",

@@ -2,7 +2,7 @@
 
 Status source of truth: [08 — Requirements Tracker](08-requirements-tracker.md). This page explains sequencing and why anything is still open.
 
-**Current position (27 November 2026):** 124 delivered, 6 partial, 4 not delivered of 134 requirements. Build succeeds; 157 tests pass; MSI and unsigned MSIX are produced. No live tenant, signing certificate, Key Vault, webhook or AI key was available, so tenant-dependent paths remain unverified rather than claimed.
+**Current position (26 November 2026):** 124 delivered, 6 partial, 4 not delivered of 134 requirements. Build succeeds; 157 tests pass; MSI and unsigned MSIX are produced. No live tenant, signing certificate, Key Vault, webhook or AI key was available, so tenant-dependent paths remain unverified rather than claimed.
 
 ## Completed phases
 
