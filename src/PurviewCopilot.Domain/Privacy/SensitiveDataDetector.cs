@@ -30,6 +30,15 @@ public static class SensitiveDataDetector
         new("SHAREPOINT_URL", SensitiveCategory.CustomerData,
             new Regex(@"https://[A-Za-z0-9-]+\.sharepoint\.com/[^\s""'<>]*", RegexOptions.Compiled | RegexOptions.IgnoreCase, Timeout)),
 
+        new("CUSTOMER_LABEL", SensitiveCategory.CustomerData,
+            new Regex(@"(?im)\b(?:customer|client|tenant|organisation|organization)\s*(?:name)?\s*[:=]\s*[A-Z][^.\r\n,;]{2,60}", RegexOptions.Compiled, Timeout)),
+
+        new("COMPANY_NAME", SensitiveCategory.CustomerData,
+            new Regex(@"\b[A-Z][A-Za-z0-9&.'-]+(?:\s+[A-Z][A-Za-z0-9&.'-]+){0,4}\s+(?:Ltd|Limited|Inc|LLC|PLC|GmbH|AG|Pty|Corp|Corporation|Company|S\.A\.)\b", RegexOptions.Compiled, Timeout)),
+
+        new("PERSON_NAME", SensitiveCategory.CustomerData,
+            new Regex(@"\b(?:Mr|Mrs|Ms|Miss|Dr|Prof)\.?\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2}\b", RegexOptions.Compiled, Timeout)),
+
         new("BEARER_TOKEN", SensitiveCategory.Secret,
             new Regex(@"\bBearer\s+[A-Za-z0-9\-._~+/]{16,}=*", RegexOptions.Compiled, Timeout)),
 

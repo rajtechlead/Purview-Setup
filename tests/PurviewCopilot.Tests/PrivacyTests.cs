@@ -37,6 +37,25 @@ public class PrivacyTests
     }
 
     [Fact]
+    public void Detect_FindsCustomerOrganisationsAndPeople()
+    {
+        var matches = SensitiveDataDetector.Detect(
+            "Customer: Contoso Ltd. Contact Mr. Alex Morgan about the project.");
+
+        Assert.Contains(matches, m => m.Category == SensitiveCategory.CustomerData);
+        Assert.Contains(matches, m => m.RuleId == "CUSTOMER_LABEL");
+        Assert.Contains(matches, m => m.RuleId == "PERSON_NAME");
+    }
+
+    [Fact]
+    public void Detect_DoesNotTreatOrdinaryProseAsCustomerData()
+    {
+        var matches = SensitiveDataDetector.Detect("Which DLP policies should be enforced first?");
+
+        Assert.DoesNotContain(matches, m => m.Category == SensitiveCategory.CustomerData);
+    }
+
+    [Fact]
     public void Detect_DoesNotDuplicateOverlappingMatches()
     {
         var matches = SensitiveDataDetector.Detect("admin@contoso.onmicrosoft.com");

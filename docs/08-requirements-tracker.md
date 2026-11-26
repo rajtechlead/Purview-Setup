@@ -18,7 +18,7 @@ Verified against commit `353bde2` on 25 November 2026 by reading the source, cou
 
 | Code | Meaning |
 | --- | --- |
-| **T** | Covered by an automated test (153 tests, all passing at audit time). |
+| **T** | Covered by an automated test (155 tests, all passing at audit time). |
 | **B** | Builds and is reachable from the composition root; behaviour not exercised end to end. |
 | **C** | Code exists but is unexercised here (no tenant, certificate, API key or admin rights). |
 | **D** | Documentation or project/manifest artifact only; nothing executes it here. |
@@ -115,7 +115,7 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 | PRV-02 | Detect sensitive information | **Delivered** | T | SSN, card, IBAN and contextual patterns; overlap de-duplication tested. |
 | PRV-03 | Detect secrets and credentials | **Delivered** | T | JWT, bearer token, AWS access key, PEM private key, connection-string secret, `password=` style assignments. |
 | PRV-04 | Detect tenant identifiers | **Delivered** | T | Tenant GUID and `*.onmicrosoft.com` domains; SharePoint URLs. |
-| PRV-05 | Detect customer information | **Partial** | T | Detects tenant domain, GUID and SharePoint URL, but no person/company-name or free-text customer-data classifier. |
+| PRV-05 | Detect customer information | **Delivered** | T | Detects tenant domain/GUID, SharePoint URLs, labelled customer/client/tenant/organisation values, organisation names with legal suffixes (Ltd, Inc, LLC, GmbH, Pty, Corp and similar) and titled person names (Mr, Ms, Dr, Prof). All are `CustomerData`, so the configured mask/tokenize/redact/block mode covers them; ordinary prose is not flagged. Tests: `PrivacyTests`. |
 | PRV-06 | Redaction, masking, tokenization and anonymization | **Delivered** | T | Four modes; tokens are stable and locally reversible; masking retains only the last four characters. |
 | PRV-07 | Classification and prompt sanitization | **Delivered** | T | Matches are classified by kind and the prompt is rebuilt from sanitized text before send. |
 | PRV-08 | No raw tenant data, PII or sensitive configuration sent externally | **Delivered** | T | `CopilotService.PrepareAsync` gates every outbound prompt; assessment context is sanitized with the same detector. Blocked prompts never reach a provider. |
@@ -267,8 +267,8 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 
 | Status | Count | Share |
 | --- | --- | --- |
-| **Delivered** | 116 | 87% |
-| **Partial** | 14 | 10% |
+| **Delivered** | 117 | 87% |
+| **Partial** | 13 | 10% |
 | **Not delivered** | 4 | 3% |
 | **Total tracked** | 134 | 100% |
 
@@ -282,7 +282,7 @@ By section:
 | Deployment and change control | 3 | 2 | 0 |
 | Modular architecture | 2 | 1 | 0 |
 | AI assistant and failover | 11 | 0 | 1 |
-| AI privacy guardrail | 11 | 1 | 0 |
+| AI privacy guardrail | 12 | 0 | 0 |
 | Change management and safety | 6 | 1 | 0 |
 | Multi-tenant MSP | 3 | 0 | 0 |
 | Configuration-as-code | 3 | 0 | 0 |
@@ -312,7 +312,7 @@ Ranked by risk to the commercial claim, not by effort:
 | Check | Result |
 | --- | --- |
 | `dotnet build PurviewGovernanceCopilot.sln -c Release` | Succeeded (local SDK 9.0.321) |
-| `dotnet test tests/PurviewCopilot.Tests -c Release` | 153 passed, 0 failed |
+| `dotnet test tests/PurviewCopilot.Tests -c Release` | 155 passed, 0 failed |
 | Catalog count (`grep -c 'Add("' ModuleCatalog.cs`) | 49 rules across 16 modules |
 | Exporter inventory | HTML, JSON, CSV, Markdown, PDF, DOCX, XLSX |
 | `ReportFormat` enum | `Html, Json, Csv, Markdown, Pdf, Docx, Xlsx` |
