@@ -274,6 +274,16 @@
 
         <Border Style="{StaticResource Card}" Margin="0,14,0,0">
             <StackPanel>
+                <TextBlock Text="Licence price list (optional)" Style="{StaticResource SectionHeader}" />
+                <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,6"
+                           Text="Monthly price per seat, keyed by SKU part number, so unused and over-assigned seats show a monetary opportunity. Leave empty to keep amounts at zero." />
+                <TextBox Text="{Binding LicensePricesText}" Height="52" AcceptsReturn="True" TextWrapping="Wrap"
+                         ToolTip="SPE_E5=57; SPE_E3=36" />
+            </StackPanel>
+        </Border>
+
+        <Border Style="{StaticResource Card}" Margin="0,14,0,0">
+            <StackPanel>
                 <TextBlock Text="Updates" Style="{StaticResource SectionHeader}" />
                 <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,8"
                            Text="Point at an https update manifest ({ version, downloadUrl, sha256 }). Downloads are verified against the manifest hash and saved for you to install; code signing is still recommended for enterprise rollout." />

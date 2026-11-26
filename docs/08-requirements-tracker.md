@@ -18,7 +18,7 @@ Verified against commit `353bde2` on 25 November 2026 by reading the source, cou
 
 | Code | Meaning |
 | --- | --- |
-| **T** | Covered by an automated test (140 tests, all passing at audit time). |
+| **T** | Covered by an automated test (143 tests, all passing at audit time). |
 | **B** | Builds and is reachable from the composition root; behaviour not exercised end to end. |
 | **C** | Code exists but is unexercised here (no tenant, certificate, API key or admin rights). |
 | **D** | Documentation or project/manifest artifact only; nothing executes it here. |
@@ -171,7 +171,7 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 
 | ID | Requirement | Status | Proof | Evidence / gap |
 | --- | --- | --- | --- | --- |
-| LIC-01 | Analyse utilisation, unused licences, overspend and missing prerequisites | **Partial** | T | Exact utilisation, unused seats, over-assignment, E3→E5 gaps, Copilot prerequisites and SKU sprawl. Monetary opportunity is always 0 because no price list is embedded. |
+| LIC-01 | Analyse utilisation, unused licences, overspend and missing prerequisites | **Delivered** | T | Exact utilisation, unused seats, over-assignment, E3→E5 gaps, Copilot prerequisites and SKU sprawl. Settings accepts an optional monthly price per SKU; unused and over-assigned seats then carry a monthly opportunity amount (zero when no price is set). Tests: `LicensePriceTests`. |
 | LIC-02 | Optimisation recommendations | **Delivered** | T | `LicenseOptimizer` insights with severity, rationale and action; surfaced on Monitoring. |
 
 ## N. Continuous monitoring
@@ -267,8 +267,8 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 
 | Status | Count | Share |
 | --- | --- | --- |
-| **Delivered** | 111 | 83% |
-| **Partial** | 19 | 14% |
+| **Delivered** | 112 | 84% |
+| **Partial** | 18 | 13% |
 | **Not delivered** | 4 | 3% |
 | **Total tracked** | 134 | 100% |
 
@@ -288,7 +288,7 @@ By section:
 | Configuration-as-code | 3 | 0 | 0 |
 | Approval workflow | 2 | 0 | 0 |
 | Offline and regulated | 3 | 0 | 0 |
-| Licence optimisation | 1 | 1 | 0 |
+| Licence optimisation | 2 | 0 | 0 |
 | Continuous monitoring | 4 | 0 | 0 |
 | Reporting | 6 | 0 | 0 |
 | Security engineering | 12 | 3 | 1 |
@@ -312,7 +312,7 @@ Ranked by risk to the commercial claim, not by effort:
 | Check | Result |
 | --- | --- |
 | `dotnet build PurviewGovernanceCopilot.sln -c Release` | Succeeded (local SDK 9.0.321) |
-| `dotnet test tests/PurviewCopilot.Tests -c Release` | 140 passed, 0 failed |
+| `dotnet test tests/PurviewCopilot.Tests -c Release` | 143 passed, 0 failed |
 | Catalog count (`grep -c 'Add("' ModuleCatalog.cs`) | 49 rules across 16 modules |
 | Exporter inventory | HTML, JSON, CSV, Markdown, PDF, DOCX, XLSX |
 | `ReportFormat` enum | `Html, Json, Csv, Markdown, Pdf, Docx, Xlsx` |

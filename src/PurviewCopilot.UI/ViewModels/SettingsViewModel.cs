@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.IO;
 using System.Windows.Input;
 using Microsoft.Win32;
@@ -75,6 +76,7 @@ public sealed class SettingsViewModel : PageViewModel
     private string _auditStatus = "Audit chain not verified in this session.";
     private string _tenantDisplayName = string.Empty;
     private string _tenantAccessText = $"{Environment.UserName}=Administrator";
+    private string _licensePricesText = string.Empty;
     private string _updateManifestUrl = string.Empty;
     private string _updateStatus = "No update check has run.";
     private string _keyVaultUri = string.Empty;
@@ -168,6 +170,7 @@ public sealed class SettingsViewModel : PageViewModel
     public string AuditStatus { get => _auditStatus; private set => SetProperty(ref _auditStatus, value); }
     public string TenantDisplayName { get => _tenantDisplayName; set => SetProperty(ref _tenantDisplayName, value); }
     public string TenantAccessText { get => _tenantAccessText; set => SetProperty(ref _tenantAccessText, value); }
+    public string LicensePricesText { get => _licensePricesText; set => SetProperty(ref _licensePricesText, value); }
     public string UpdateManifestUrl { get => _updateManifestUrl; set => SetProperty(ref _updateManifestUrl, value); }
     public string UpdateStatus { get => _updateStatus; private set => SetProperty(ref _updateStatus, value); }
     public string KeyVaultUri { get => _keyVaultUri; set => SetProperty(ref _keyVaultUri, value); }
@@ -250,6 +253,7 @@ public sealed class SettingsViewModel : PageViewModel
         OfflineMode = _settings.OfflineMode;
         RequirePromptReview = _settings.RequirePromptReview;
         UpdateManifestUrl = _settings.UpdateManifestUrl ?? string.Empty;
+        LicensePricesText = string.Join("; ", _settings.LicensePrices.Select(p => $"{p.Key}={p.Value.ToString(CultureInfo.InvariantCulture)}"));
         KeyVaultUri = _settings.KeyVaultUri ?? string.Empty;
         KeyVaultSecretName = string.IsNullOrWhiteSpace(_settings.KeyVaultSecretName) ? "purview-copilot-cert" : _settings.KeyVaultSecretName;
 
@@ -294,6 +298,7 @@ public sealed class SettingsViewModel : PageViewModel
             _settings.OfflineMode = OfflineMode;
             _settings.RequirePromptReview = RequirePromptReview;
             _settings.UpdateManifestUrl = string.IsNullOrWhiteSpace(UpdateManifestUrl) ? null : UpdateManifestUrl.Trim();
+            _settings.LicensePrices = ParseLicensePrices(LicensePricesText);
             _settings.KeyVaultUri = string.IsNullOrWhiteSpace(KeyVaultUri) ? null : KeyVaultUri.Trim();
             _settings.KeyVaultSecretName = string.IsNullOrWhiteSpace(KeyVaultSecretName) ? null : KeyVaultSecretName.Trim();
 
@@ -633,6 +638,25 @@ public sealed class SettingsViewModel : PageViewModel
         }
 
         Status = "Auto-switch order updated. Save settings to apply it; providers are tried top to bottom.";
+    }
+
+    private static Dictionary<string, double> ParseLicensePrices(string text)
+    {
+        var prices = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var entry in text.Split(new[] { ';', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            var parts = entry.Split('=', 2, StringSplitOptions.TrimEntries);
+            if (parts.Length != 2 || string.IsNullOrWhiteSpace(parts[0]) ||
+                !double.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out var price) || price < 0)
+            {
+                throw new InvalidOperationException($"Price entry '{entry}' must be SKU=price, for example SPE_E5=57.");
+            }
+
+            prices[parts[0]] = price;
+        }
+
+        return prices;
     }
 
     private AuthConfiguration BuildAuth() => new(

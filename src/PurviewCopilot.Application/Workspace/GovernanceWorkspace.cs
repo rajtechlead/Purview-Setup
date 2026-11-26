@@ -74,6 +74,9 @@ public sealed class GovernanceWorkspace
     public IReadOnlyList<LicenseInsight> LicenseInsights =>
         _lastCollected is null ? Array.Empty<LicenseInsight>() : LicenseOptimizer.Analyze(_lastCollected);
 
+    public IReadOnlyList<LicenseInsight> AnalyzeLicenses(IReadOnlyDictionary<string, double>? monthlyPrices) =>
+        _lastCollected is null ? Array.Empty<LicenseInsight>() : LicenseOptimizer.Analyze(_lastCollected, monthlyPrices);
+
     public IReadOnlyList<DriftItem> Drift =>
         _baseline is null || _lastCollected is null
             ? Array.Empty<DriftItem>()

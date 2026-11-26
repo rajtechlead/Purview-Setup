@@ -243,6 +243,10 @@ public sealed record AppSettings
     public string? AlertWebhookUrl { get; set; }
 
     public bool DemoDataEnabled { get; set; }
+
+    /// <summary>Optional monthly price per seat, keyed by SKU part number, for licence opportunity values.</summary>
+    public Dictionary<string, double> LicensePrices { get; set; } = new();
+
     public List<AiProviderDescriptor> Providers { get; set; } = new();
 
     public static AppSettings CreateDefault()

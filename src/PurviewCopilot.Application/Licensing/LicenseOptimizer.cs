@@ -16,9 +16,15 @@ public sealed record LicenseInsight(
 /// </summary>
 public static class LicenseOptimizer
 {
-    public static IReadOnlyList<LicenseInsight> Analyze(TenantSnapshot snapshot)
+    public static IReadOnlyList<LicenseInsight> Analyze(
+        TenantSnapshot snapshot,
+        IReadOnlyDictionary<string, double>? monthlyPricePerSeat = null)
     {
         var insights = new List<LicenseInsight>();
+        var prices = monthlyPricePerSeat ?? new Dictionary<string, double>();
+
+        double Opportunity(string partNumber, int seats) =>
+            prices.TryGetValue(partNumber, out var price) ? Math.Round(Math.Max(0, seats) * price, 2) : 0;
 
         if (snapshot.Licenses.Count == 0)
         {
@@ -38,7 +44,7 @@ public static class LicenseOptimizer
                 $"Unused capacity in {sku.PartNumber}",
                 $"{sku.Enabled - sku.Consumed} of {sku.Enabled} seats are unassigned.",
                 "Reclaim or right-size the subscription at renewal; confirm no planned onboarding depends on the seats.",
-                Severity.Low, 0));
+                Severity.Low, Opportunity(sku.PartNumber, sku.Enabled - sku.Consumed)));
         }
 
         var oversubscribed = snapshot.Licenses.Where(l => l.Consumed > l.Enabled).ToList();
@@ -49,7 +55,7 @@ public static class LicenseOptimizer
                 $"{sku.PartNumber} is over-assigned",
                 $"{sku.Consumed} assigned against {sku.Enabled} enabled seats.",
                 "Resolve the assignment inconsistency before the next true-up to avoid billing surprises.",
-                Severity.High, 0));
+                Severity.High, Opportunity(sku.PartNumber, sku.Consumed - sku.Enabled)));
         }
 
         var hasE3 = snapshot.HasLicenseContaining("E3") || snapshot.HasLicenseContaining("G3") || snapshot.HasLicenseContaining("A3");

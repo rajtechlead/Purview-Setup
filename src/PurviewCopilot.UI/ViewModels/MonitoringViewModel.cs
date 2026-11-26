@@ -88,12 +88,14 @@ public sealed class MonitoringViewModel : PageViewModel
         Licenses.Clear();
         Alerts.Clear();
 
+        var settings = await _settings.LoadAsync().ConfigureAwait(true);
+
         foreach (var item in _workspace.Drift)
         {
             Drift.Add(item);
         }
 
-        foreach (var insight in _workspace.LicenseInsights)
+        foreach (var insight in _workspace.AnalyzeLicenses(settings.LicensePrices))
         {
             LicenseInsights.Add(insight);
         }
@@ -120,7 +122,6 @@ public sealed class MonitoringViewModel : PageViewModel
             Alerts.Add(alert);
         }
 
-        var settings = await _settings.LoadAsync().ConfigureAwait(true);
         IntervalMinutes = settings.MonitoringIntervalMinutes;
         AlertWebhookUrl = settings.AlertWebhookUrl ?? string.Empty;
         ConfigureSchedule(settings.MonitoringIntervalMinutes);
