@@ -23,6 +23,15 @@ Ordered by risk reduction and by what the current build deliberately leaves out.
 - **Rollback execution** — **Partial**. A reversal script is generated in reverse operation order with destructive commands deliberately commented out and the pre-change backup named as the source of truth. Executing the restore and comparing post-rollback scores still requires the live executor.
 - **Configuration-as-code** — **Done**. Change plans export as a portable JSON package and as PowerShell, and import back with a new plan id that forces simulation and approval again. Deployment also exports existing labels, label/auto-label policies and rules, DLP, retention and compliance tags to JSON, and saves ARM, Bicep and Terraform templates for the Purview account (compliance policy is not ARM-deployable, so it stays JSON/PowerShell).
 
+## Phase 1.2A — Autonomous authentication and safe deployment
+
+**In progress.** Updated 26 November 2026.
+
+- **Authentication Provisioning Center** — **Done (unverified live)**. Guided/one-click setup creates the app registration, enterprise application and service principal, certificate (RSA 2048/3072/4096 or ECC P-256/P-384; 6–120 months) or lab-only secret, owners, Graph role assignments and admin consent, then validates the token and organisation read. Dry run, mandatory separation of duties, 10-year acknowledgement, audit steps and a rollback script are included. No sovereign or commercial tenant was available to exercise the Graph calls.
+- **Certificate lifecycle** — **Done**. Generation/install/export/rotation plus ECDSA support, expiration warnings and public-key upload to the app registration.
+- **Client secret automation** — **Done**. Lab/test only, 3/6/12/24 months, DPAPI at rest through the settings store, with the production warning retained.
+- **Safe deployment execution, phased rollout, what-if gates and object-level backups** — **Next** in this workstream.
+
 ## Phase 1.3 — Reporting and multi-tenant
 
 **2 of 4 complete, 2 partial.** Updated 25 November 2026.

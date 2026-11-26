@@ -4,6 +4,7 @@ using System.Windows.Input;
 using Microsoft.Win32;
 using PurviewCopilot.Application.Abstractions;
 using PurviewCopilot.Application.Ai;
+using PurviewCopilot.Application.Auth;
 using PurviewCopilot.Application.Updates;
 using PurviewCopilot.Application.Workspace;
 using PurviewCopilot.Domain;
@@ -52,6 +53,8 @@ public sealed class SettingsViewModel : PageViewModel
     private readonly IAuditLog _auditLog;
     private readonly UpdateChecker _updates;
     private readonly Func<string, AuthConfiguration, IKeyVaultCertificateStore> _keyVaultFactory;
+    private readonly AuthenticationProvisioningService _authProvisioning;
+    private string _provisionRollback = string.Empty;
     private AppSettings _settings = AppSettings.CreateDefault();
     private UpdateManifest? _updateManifest;
 
@@ -78,6 +81,18 @@ public sealed class SettingsViewModel : PageViewModel
     private string _keyVaultStatus = "Key Vault is optional; the Windows store remains the default.";
     private TenantProfile? _selectedTenant;
     private bool _busy;
+    private string _provisionDisplayName = "Purview Governance Copilot";
+    private string _provisionOwners = string.Empty;
+    private string _provisionApprover = string.Empty;
+    private string _provisionApproverRole = "Change Manager";
+    private CertificateAlgorithm _provisionAlgorithm = CertificateAlgorithm.Rsa4096;
+    private int _provisionMonths = 12;
+    private int _provisionSecretMonths = 12;
+    private ProvisioningEnvironment _provisionEnvironment = ProvisioningEnvironment.Production;
+    private bool _provisionDryRun = true;
+    private bool _provisionAcknowledge;
+    private string _provisionStatus = "No provisioning run in this session.";
+    private string _provisionSteps = string.Empty;
 
     public SettingsViewModel(
         GovernanceWorkspace workspace,
@@ -86,7 +101,8 @@ public sealed class SettingsViewModel : PageViewModel
         ConnectionVerifier verifier,
         IAuditLog auditLog,
         UpdateChecker updates,
-        Func<string, AuthConfiguration, IKeyVaultCertificateStore> keyVaultFactory)
+        Func<string, AuthConfiguration, IKeyVaultCertificateStore> keyVaultFactory,
+        AuthenticationProvisioningService authProvisioning)
     {
         _workspace = workspace;
         _settingsStore = settingsStore;
@@ -95,7 +111,10 @@ public sealed class SettingsViewModel : PageViewModel
         _auditLog = auditLog;
         _updates = updates;
         _keyVaultFactory = keyVaultFactory;
+        _authProvisioning = authProvisioning;
 
+        ProvisionCommand = new AsyncRelayCommand(ProvisionAsync, () => !Busy);
+        SaveProvisionRollbackCommand = new RelayCommand(SaveProvisionRollback);
         SaveCommand = new AsyncRelayCommand(SaveAsync, () => !Busy);
         CreateCertificateCommand = new RelayCommand(CreateCertificate);
         ImportCertificateCommand = new RelayCommand(ImportCertificate);
@@ -120,6 +139,11 @@ public sealed class SettingsViewModel : PageViewModel
 
     public IReadOnlyList<AuthMode> AuthModes { get; } = Enum.GetValues<AuthMode>();
     public IReadOnlyList<CloudEnvironment> CloudEnvironments { get; } = Enum.GetValues<CloudEnvironment>();
+    public IReadOnlyList<CertificateAlgorithm> CertificateAlgorithms { get; } = Enum.GetValues<CertificateAlgorithm>();
+    public IReadOnlyList<int> CertificateValidityMonths { get; } = AuthenticationProvisioningService.SupportedValidityMonths;
+    public IReadOnlyList<int> SecretValidityMonths { get; } = AuthenticationProvisioningService.SupportedSecretMonths;
+    public IReadOnlyList<ProvisioningEnvironment> ProvisioningEnvironments { get; } = Enum.GetValues<ProvisioningEnvironment>();
+    public IReadOnlyList<string> ApproverRoles { get; } = SeparationOfDuties.RecommendedApproverRoles;
     public IReadOnlyList<AiRedactionMode> RedactionModes { get; } = Enum.GetValues<AiRedactionMode>();
 
     public ObservableCollection<CertificateInfo> Certificates { get; } = new();
@@ -149,6 +173,19 @@ public sealed class SettingsViewModel : PageViewModel
     public string KeyVaultStatus { get => _keyVaultStatus; private set => SetProperty(ref _keyVaultStatus, value); }
     public bool Busy { get => _busy; private set => SetProperty(ref _busy, value); }
 
+    public string ProvisionDisplayName { get => _provisionDisplayName; set => SetProperty(ref _provisionDisplayName, value); }
+    public string ProvisionOwners { get => _provisionOwners; set => SetProperty(ref _provisionOwners, value); }
+    public string ProvisionApprover { get => _provisionApprover; set => SetProperty(ref _provisionApprover, value); }
+    public string ProvisionApproverRole { get => _provisionApproverRole; set => SetProperty(ref _provisionApproverRole, value); }
+    public CertificateAlgorithm ProvisionAlgorithm { get => _provisionAlgorithm; set => SetProperty(ref _provisionAlgorithm, value); }
+    public int ProvisionMonths { get => _provisionMonths; set => SetProperty(ref _provisionMonths, value); }
+    public int ProvisionSecretMonths { get => _provisionSecretMonths; set => SetProperty(ref _provisionSecretMonths, value); }
+    public ProvisioningEnvironment ProvisionEnvironment { get => _provisionEnvironment; set => SetProperty(ref _provisionEnvironment, value); }
+    public bool ProvisionDryRun { get => _provisionDryRun; set => SetProperty(ref _provisionDryRun, value); }
+    public bool ProvisionAcknowledge { get => _provisionAcknowledge; set => SetProperty(ref _provisionAcknowledge, value); }
+    public string ProvisionStatus { get => _provisionStatus; private set => SetProperty(ref _provisionStatus, value); }
+    public string ProvisionSteps { get => _provisionSteps; private set => SetProperty(ref _provisionSteps, value); }
+
     public TenantProfile? SelectedTenant
     {
         get => _selectedTenant;
@@ -172,6 +209,8 @@ public sealed class SettingsViewModel : PageViewModel
         }
     }
 
+    public ICommand ProvisionCommand { get; }
+    public ICommand SaveProvisionRollbackCommand { get; }
     public ICommand SaveCommand { get; }
     public ICommand CreateCertificateCommand { get; }
     public ICommand ImportCertificateCommand { get; }
@@ -265,6 +304,107 @@ public sealed class SettingsViewModel : PageViewModel
         finally
         {
             Busy = false;
+        }
+    }
+
+    private async Task ProvisionAsync()
+    {
+        if (AuthMode is not (AuthMode.Certificate or AuthMode.ClientSecret))
+        {
+            ProvisionStatus = "Select certificate or client-secret authentication before provisioning.";
+            return;
+        }
+
+        if (ProvisionDryRun)
+        {
+            ProvisionStatus = "Dry run selected. Checking the request without changing the tenant...";
+        }
+
+        Busy = true;
+        try
+        {
+            var owners = ProvisionOwners
+                .Split(new[] { ';', ',', ' ' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+            var result = await _authProvisioning.ProvisionAsync(new ProvisioningRequest(
+                TenantId.Trim(),
+                ProvisionDisplayName.Trim(),
+                AuthMode,
+                ProvisionAlgorithm,
+                ProvisionMonths,
+                ProvisionSecretMonths,
+                ProvisionEnvironment,
+                owners,
+                ProvisionDryRun,
+                ProvisionAcknowledge,
+                BuildAuth(),
+                Environment.UserName,
+                ProvisionApprover.Trim(),
+                ProvisionApproverRole)).ConfigureAwait(true);
+
+            _provisionRollback = result.RollbackScript;
+            ProvisionSteps = string.Join(Environment.NewLine,
+                result.Steps.Select(s => $"{s.Status.ToUpperInvariant(),-8} {s.Name}: {s.Detail}"));
+            ProvisionStatus = result.Summary;
+
+            if (result.Succeeded && result.Auth is not null)
+            {
+                AuthMode = result.Auth.Mode;
+                ClientId = result.Auth.ClientId;
+                Thumbprint = result.Auth.CertificateThumbprint ?? string.Empty;
+                ClientSecret = result.Auth.ClientSecret ?? string.Empty;
+                Cloud = result.Auth.Cloud;
+
+                _settings.Auth = result.Auth;
+                await _settingsStore.SaveAsync(_settings).ConfigureAwait(true);
+
+                try
+                {
+                    await _workspace.SaveTenantAsync(ProvisionDisplayName, result.Auth, Environment.UserName).ConfigureAwait(true);
+                    ProvisionStatus += " Settings saved and the tenant registered.";
+                }
+                catch (Exception ex)
+                {
+                    ProvisionStatus += $" Settings saved, but the tenant profile was not: {ex.Message}";
+                }
+
+                LoadCertificates();
+            }
+        }
+        catch (Exception ex)
+        {
+            ProvisionStatus = $"Provisioning failed: {ex.Message}";
+        }
+        finally
+        {
+            Busy = false;
+        }
+    }
+
+    private void SaveProvisionRollback()
+    {
+        if (string.IsNullOrWhiteSpace(_provisionRollback))
+        {
+            ProvisionStatus = "Run provisioning first to generate a rollback script.";
+            return;
+        }
+
+        var dialog = new SaveFileDialog
+        {
+            Filter = "PowerShell script (*.ps1)|*.ps1",
+            FileName = "purview-authentication-rollback.ps1"
+        };
+
+        if (dialog.ShowDialog() != true) return;
+
+        try
+        {
+            File.WriteAllText(dialog.FileName, _provisionRollback);
+            ProvisionStatus = $"Rollback script saved to {dialog.FileName}. It is destructive; review it first.";
+        }
+        catch (Exception ex)
+        {
+            ProvisionStatus = $"Rollback script save failed: {ex.Message}";
         }
     }
 

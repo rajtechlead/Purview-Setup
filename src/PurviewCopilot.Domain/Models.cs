@@ -328,6 +328,54 @@ public sealed record CertificateInfo(
     public bool IsExpiringSoon(int thresholdDays = 30) => DaysUntilExpiry <= thresholdDays;
 }
 
+/// <summary>
+/// Request to create everything the app needs to authenticate: app registration, service
+/// principal, credential, owners, Graph permissions and admin consent.
+/// </summary>
+public sealed record ProvisioningRequest(
+    string TenantId,
+    string DisplayName,
+    AuthMode Mode,
+    CertificateAlgorithm Algorithm,
+    int CertificateMonths,
+    int SecretMonths,
+    ProvisioningEnvironment Environment,
+    IReadOnlyList<string> Owners,
+    bool DryRun,
+    bool AcknowledgeLongLivedCertificate,
+    AuthConfiguration BootstrapAuth,
+    string Operator,
+    string Approver,
+    string ApproverRole);
+
+public sealed record ProvisioningStep(string Name, string Status, string Detail);
+
+public sealed record ProvisioningResult(
+    bool Succeeded,
+    string Summary,
+    string? ApplicationId,
+    string? ObjectId,
+    string? ServicePrincipalId,
+    string? Thumbprint,
+    AuthConfiguration? Auth,
+    string RollbackScript,
+    IReadOnlyList<ProvisioningStep> Steps);
+
+/// <summary>One controlled phase of a deployment; operations are partitioned by module.</summary>
+public sealed record DeploymentPhaseDefinition(DeploymentPhase Phase, string Name, string Description, IReadOnlyList<ModuleKey> Modules);
+
+public sealed record PhaseExecution(
+    Guid Id,
+    Guid PlanId,
+    DeploymentPhase Phase,
+    PhaseStatus Status,
+    string ApprovedBy,
+    string ApproverRole,
+    DateTimeOffset UpdatedUtc,
+    IReadOnlyList<string> Log);
+
+public sealed record DeploymentGateResult(bool Blocked, IReadOnlyList<string> Reasons);
+
 public sealed record AuthConfiguration(
     AuthMode Mode,
     string TenantId,

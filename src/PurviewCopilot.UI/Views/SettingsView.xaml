@@ -52,6 +52,61 @@
             </StackPanel>
         </Border>
 
+        <Border Style="{StaticResource Card}" Margin="0,0,0,14">
+            <StackPanel>
+                <TextBlock Text="Authentication Provisioning Center" Style="{StaticResource SectionHeader}" />
+                <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,8"
+                           Text="Creates the app registration, enterprise application and service principal, certificate or lab secret, owners, least-privilege Graph permissions and admin consent, then validates sign-in. Start with Dry run. The current connection is used as the administrator bootstrap. Operators cannot approve their own request." />
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="140" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="140" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Display name" Style="{StaticResource Muted}" VerticalAlignment="Center" />
+                    <TextBox Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="3" Text="{Binding ProvisionDisplayName}" Margin="0,4" />
+
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Certificate lifetime" Style="{StaticResource Muted}" VerticalAlignment="Center" />
+                    <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding CertificateValidityMonths}" SelectedItem="{Binding ProvisionMonths}" Margin="0,4,16,4" />
+                    <TextBlock Grid.Row="1" Grid.Column="2" Text="Algorithm" Style="{StaticResource Muted}" VerticalAlignment="Center" />
+                    <ComboBox Grid.Row="1" Grid.Column="3" ItemsSource="{Binding CertificateAlgorithms}" SelectedItem="{Binding ProvisionAlgorithm}" Margin="0,4" />
+
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Secret lifetime" Style="{StaticResource Muted}" VerticalAlignment="Center" />
+                    <ComboBox Grid.Row="2" Grid.Column="1" ItemsSource="{Binding SecretValidityMonths}" SelectedItem="{Binding ProvisionSecretMonths}" Margin="0,4,16,4" />
+                    <TextBlock Grid.Row="2" Grid.Column="2" Text="Environment" Style="{StaticResource Muted}" VerticalAlignment="Center" />
+                    <ComboBox Grid.Row="2" Grid.Column="3" ItemsSource="{Binding ProvisioningEnvironments}" SelectedItem="{Binding ProvisionEnvironment}" Margin="0,4" />
+
+                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Owners (UPN/GUID)" Style="{StaticResource Muted}" VerticalAlignment="Center" />
+                    <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding ProvisionOwners}" Margin="0,4,16,4" ToolTip="Separate multiple owners with semicolons." />
+                    <TextBlock Grid.Row="3" Grid.Column="2" Text="Approver / role" Style="{StaticResource Muted}" VerticalAlignment="Center" />
+                    <StackPanel Grid.Row="3" Grid.Column="3" Orientation="Horizontal">
+                        <TextBox Width="120" Text="{Binding ProvisionApprover}" Margin="0,4,6,4" />
+                        <ComboBox Width="150" ItemsSource="{Binding ApproverRoles}" SelectedItem="{Binding ProvisionApproverRole}" Margin="0,4" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="4" Orientation="Horizontal" Margin="0,8,0,0">
+                        <CheckBox Content="Dry run" IsChecked="{Binding ProvisionDryRun}" VerticalAlignment="Center" Margin="0,0,14,0" />
+                        <CheckBox Content="I acknowledge a 10-year certificate" IsChecked="{Binding ProvisionAcknowledge}" VerticalAlignment="Center" Margin="0,0,14,0" />
+                        <Button Content="Provision authentication" Style="{StaticResource PrimaryButton}" Command="{Binding ProvisionCommand}" Margin="0,0,8,0" />
+                        <Button Content="Save rollback script" Command="{Binding SaveProvisionRollbackCommand}" />
+                    </StackPanel>
+                </Grid>
+
+                <TextBlock Text="{Binding ProvisionStatus}" FontSize="12" Foreground="{StaticResource AccentBrush}" TextWrapping="Wrap" Margin="0,8,0,4" />
+                <TextBlock Text="{Binding ProvisionSteps}" Style="{StaticResource Muted}" TextWrapping="Wrap" FontFamily="Consolas" FontSize="11" />
+            </StackPanel>
+        </Border>
+
         <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />

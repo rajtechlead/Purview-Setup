@@ -144,6 +144,47 @@ public enum CloudEnvironment
     Dod
 }
 
+public enum CertificateAlgorithm
+{
+    Rsa2048 = 0,
+    Rsa3072,
+    Rsa4096,
+    EccP256,
+    EccP384
+}
+
+public enum ProvisioningEnvironment
+{
+    Production = 0,
+    Lab
+}
+
+/// <summary>Ordered delivery phases for a production change plan.</summary>
+public enum DeploymentPhase
+{
+    Discovery = 1,
+    MonitoringAndAudit,
+    InformationProtection,
+    DataLossPrevention,
+    RecordsManagement,
+    InsiderRiskAndAi
+}
+
+public enum PhaseStatus
+{
+    NotStarted = 0,
+    Simulated,
+    AwaitingApproval,
+    Approved,
+    BackedUp,
+    Executing,
+    Executed,
+    Validated,
+    Failed,
+    Paused,
+    RolledBack
+}
+
 public enum ActionStatus
 {
     Open = 0,

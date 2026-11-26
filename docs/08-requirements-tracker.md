@@ -18,7 +18,7 @@ Verified against commit `353bde2` on 25 November 2026 by reading the source, cou
 
 | Code | Meaning |
 | --- | --- |
-| **T** | Covered by an automated test (101 tests, all passing at audit time). |
+| **T** | Covered by an automated test (109 tests, all passing at audit time). |
 | **B** | Builds and is reachable from the composition root; behaviour not exercised end to end. |
 | **C** | Code exists but is unexercised here (no tenant, certificate, API key or admin rights). |
 | **D** | Documentation or project/manifest artifact only; nothing executes it here. |
@@ -40,18 +40,18 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 
 | ID | Requirement | Status | Proof | Evidence / gap |
 | --- | --- | --- | --- | --- |
-| AUT-01 | Entra app registration with certificate authentication as the default | **Delivered** | C | `EntraTokenProvider` builds `ClientCertificateCredential`; certificate is the default `AuthMode`. App registration itself is a documented manual step (`docs/05` §3). |
-| AUT-02 | Certificate auto-generation | **Delivered** | C | `WindowsCertificateService.CreateSelfSigned` (4096-bit RSA, CurrentUser\My), invoked from Settings. |
+| AUT-01 | Entra app registration with certificate authentication as the default | **Delivered** | C | `EntraTokenProvider` builds `ClientCertificateCredential`; certificate is the default `AuthMode`. **Authentication Provisioning Center** in Settings creates the single-tenant app registration with Graph `requiredResourceAccess` through `GraphAuthenticationProvisioner`. Not exercised against a live tenant. |
+| AUT-02 | Certificate auto-generation | **Delivered** | T | `WindowsCertificateService` generates RSA 2048/3072/4096 and ECC P-256/P-384 certificates for 6, 12, 24, 36, 60 or 120 months, installs to CurrentUser\My, exports the public DER and uploads it as Graph `keyCredentials`. A 10-year certificate requires explicit acknowledgement. Tests: `ProvisioningTests.RealCertificateCreation_SupportsRsaAndEcc`. |
 | AUT-03 | Certificate import and export (PFX) | **Delivered** | C | `ImportFromPfx` / `ExportToPfx` plus Settings commands. |
 | AUT-04 | Azure Key Vault integration | **Delivered** | C | `AppServices.KeyVaultFactory` builds `KeyVaultCertificateStore` with the signed-in auth credential; Settings has vault URI/secret fields plus **Upload current certificate** and **Import from Key Vault** (temporary PFX written, imported, deleted). Uses the PFX password field. Not exercised here: no vault or Key Vault permission. |
 | AUT-05 | Windows Certificate Store integration | **Delivered** | C | Install, remove, list and `FindByThumbprint` against CurrentUser\My. |
 | AUT-06 | Certificate rotation | **Delivered** | C | `Rotate` creates a replacement and returns the new thumbprint; the operator must update the app registration, as prompted in the UI. |
 | AUT-07 | Expiration monitoring | **Delivered** | B | Settings surfaces certificates expiring inside 30 days (`CertificateExpiryWarningDays`). Warning-only; no scheduled notification. |
-| AUT-08 | Automated validation | **Partial** | C | Thumbprint validation and an organisation/Graph connection test exist. No automated validation that the app registration, permissions or admin consent are correct. |
+| AUT-08 | Automated validation | **Delivered** | C | Provisioning validates the request, separation of duties, lifetime/environment rules, creates the app/SP/key/role assignments, then acquires a token and reads `/organization` with the new credential before reporting success. Dry run performs every check without a tenant change. Not exercised against a live tenant. |
 | AUT-09 | Managed identity (secondary) | **Delivered** | B | `AuthMode.ManagedIdentity`, system- or user-assigned client id. |
 | AUT-10 | Interactive sign-in (secondary) | **Delivered** | B | `InteractiveBrowserCredential` with the loopback redirect. |
 | AUT-11 | Client secret, lab/testing only (secondary) | **Delivered** | B | `AuthMode.ClientSecret`; the secret is DPAPI-protected in the settings document and in tenant profiles, and resolves from memory at call time. |
-| AUT-12 | Guided wizard: app registration → permissions → consent → certificate → service principal → connectivity → security validation | **Partial** | D | Settings provides certificate and connection actions; `docs/05` §3 is a manual checklist. There is no stepped wizard, no app-registration creation, no consent automation, no service-principal creation and no security-validation step. |
+| AUT-12 | Guided wizard: app registration → permissions → consent → certificate → service principal → connectivity → security validation | **Delivered** | C | Settings has an **Authentication Provisioning Center** (one-click and guided fields: display name, certificate lifetime/algorithm, lab secret lifetime, environment, owners, approver/role) with dry run, step-by-step output, a generated rollback script and automatic settings/tenant-profile save on success. It creates the app, service principal, certificate/secret, owners, least-privilege Graph role assignments, delegated admin consent and validates the resulting credential. Live tenant execution is unverified. |
 
 ## C. Discovery and assessment
 
@@ -267,9 +267,9 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 
 | Status | Count | Share |
 | --- | --- | --- |
-| **Delivered** | 101 | 75% |
-| **Partial** | 26 | 19% |
-| **Not delivered** | 7 | 5% |
+| **Delivered** | 103 | 77% |
+| **Partial** | 25 | 19% |
+| **Not delivered** | 6 | 4% |
 | **Total tracked** | 134 | 100% |
 
 By section:
@@ -277,7 +277,7 @@ By section:
 | Section | Delivered | Partial | Not delivered |
 | --- | --- | --- | --- |
 | Platform and scope | 2 | 2 | 0 |
-| Authentication | 10 | 2 | 0 |
+| Authentication | 12 | 0 | 0 |
 | Discovery and assessment | 10 | 4 | 0 |
 | Deployment and change control | 1 | 3 | 1 |
 | Modular architecture | 1 | 2 | 0 |
@@ -304,18 +304,17 @@ Ranked by risk to the commercial claim, not by effort:
 1. **Per-customer RBAC (MSP-03)** — tenant switching, isolation, the portfolio and its CSV export exist, but all saved tenants remain reachable by one Windows user.
 2. **Live deployment execution (DEP-05)** — by design, but the specification asks for apply and rollback; the reviewed script and reversal script exist, execution does not.
 3. **Security Copilot (AIA-02)** — no generally available tenant-licensed API to integrate here.
-4. **Guided onboarding wizard (AUT-12)** — certificate and connection actions exist, but there is no stepped app-registration/consent wizard.
-5. **Code signing, MSIX packaging and a hosted update manifest (SEC-11, SEC-16, INS-02)** — the MSI is produced but unsigned, the updater has no published manifest, and there is no `.msix` build.
-6. **SQL Server support (ARC-08)** and **WinUI 3 (ARC-02)**.
-7. **DSPM, Compliance Manager and Defender data collection (DSC-08, DSC-11)**.
-8. **SQLCipher page encryption and per-customer RBAC (SEC-14 metadata, MSP-03)** — sensitive payloads are now encrypted, but database pages and tenant metadata are not, and all saved tenants remain reachable by one Windows user.
+4. **Code signing, MSIX packaging and a hosted update manifest (SEC-11, SEC-16, INS-02)** — the MSI is produced but unsigned, the updater has no published manifest, and there is no `.msix` build.
+5. **SQL Server support (ARC-08)** and **WinUI 3 (ARC-02)**.
+6. **DSPM, Compliance Manager and Defender data collection (DSC-08, DSC-11)**.
+7. **SQLCipher page encryption and per-customer RBAC (SEC-14 metadata, MSP-03)** — sensitive payloads are now encrypted, but database pages and tenant metadata are not, and all saved tenants remain reachable by one Windows user.
 
 ## Verification performed
 
 | Check | Result |
 | --- | --- |
 | `dotnet build PurviewGovernanceCopilot.sln -c Release` | Succeeded (local SDK 9.0.321) |
-| `dotnet test tests/PurviewCopilot.Tests -c Release` | 101 passed, 0 failed |
+| `dotnet test tests/PurviewCopilot.Tests -c Release` | 109 passed, 0 failed |
 | Catalog count (`grep -c 'Add("' ModuleCatalog.cs`) | 49 rules across 16 modules |
 | Exporter inventory | HTML, JSON, CSV, Markdown, PDF, DOCX, XLSX |
 | `ReportFormat` enum | `Html, Json, Csv, Markdown, Pdf, Docx, Xlsx` |

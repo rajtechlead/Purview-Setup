@@ -87,6 +87,15 @@ public interface ITenantProfileStore
 public interface ICertificateService
 {
     CertificateInfo CreateSelfSigned(string subject, int validMonths, bool installToStore);
+
+    CertificateInfo CreateSelfSigned(
+        string subject,
+        int validMonths,
+        bool installToStore,
+        CertificateAlgorithm algorithm);
+
+    /// <summary>Base64 of the DER public certificate, as Graph keyCredentials expects.</summary>
+    string ExportPublicDerBase64(string thumbprint);
     CertificateInfo ImportFromPfx(string path, string? password, bool installToStore);
     void ExportToPfx(string thumbprint, string path, string? password);
     void Install(string thumbprint);
@@ -94,6 +103,34 @@ public interface ICertificateService
     CertificateInfo? FindByThumbprint(string thumbprint);
     IReadOnlyList<CertificateInfo> List();
     CertificateInfo Rotate(string subject, int validMonths, bool installToStore);
+}
+
+/// <summary>Creates and configures the Entra application used for app-only authentication.</summary>
+public interface IAuthenticationProvisioningGateway
+{
+    Task<(string ApplicationId, string ObjectId)> CreateApplicationAsync(
+        string displayName, AuthConfiguration bootstrap, CancellationToken cancellationToken = default);
+
+    Task<string> CreateServicePrincipalAsync(
+        string applicationId, AuthConfiguration bootstrap, CancellationToken cancellationToken = default);
+
+    Task AddCertificateAsync(
+        string objectId, string publicCertificateBase64, AuthConfiguration bootstrap, CancellationToken cancellationToken = default);
+
+    Task<string> AddSecretAsync(
+        string objectId, string displayName, int months, AuthConfiguration bootstrap, CancellationToken cancellationToken = default);
+
+    Task AddOwnerAsync(
+        string objectId, string owner, AuthConfiguration bootstrap, CancellationToken cancellationToken = default);
+
+    Task GrantGraphAdminConsentAsync(
+        string servicePrincipalId, AuthConfiguration bootstrap, CancellationToken cancellationToken = default);
+
+    Task<(bool Ok, string Message)> ValidateAsync(
+        AuthConfiguration auth, CancellationToken cancellationToken = default);
+
+    Task DeleteApplicationAsync(
+        string objectId, string servicePrincipalId, AuthConfiguration bootstrap, CancellationToken cancellationToken = default);
 }
 
 public interface IKeyVaultCertificateStore

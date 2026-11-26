@@ -3,6 +3,7 @@ using System.Net.Http;
 using PurviewCopilot.Application.Abstractions;
 using PurviewCopilot.Application.Ai;
 using PurviewCopilot.Application.Assessment;
+using PurviewCopilot.Application.Auth;
 using PurviewCopilot.Application.Monitoring;
 using PurviewCopilot.Application.Deployment;
 using PurviewCopilot.Application.Modules;
@@ -31,6 +32,7 @@ public sealed class AppServices
         CopilotService copilot,
         IAiUsageStore usage,
         ConnectionVerifier verifier,
+        AuthenticationProvisioningService authProvisioning,
         UpdateChecker updates,
         Func<string, AuthConfiguration, IKeyVaultCertificateStore> keyVaultFactory,
         AlertNotifier alerts,
@@ -42,6 +44,7 @@ public sealed class AppServices
         Copilot = copilot;
         Usage = usage;
         Verifier = verifier;
+        AuthProvisioning = authProvisioning;
         Updates = updates;
         KeyVaultFactory = keyVaultFactory;
         Alerts = alerts;
@@ -54,6 +57,7 @@ public sealed class AppServices
     public CopilotService Copilot { get; }
     public IAiUsageStore Usage { get; }
     public ConnectionVerifier Verifier { get; }
+    public AuthenticationProvisioningService AuthProvisioning { get; }
     public UpdateChecker Updates { get; }
     public Func<string, AuthConfiguration, IKeyVaultCertificateStore> KeyVaultFactory { get; }
     public AlertNotifier Alerts { get; }
@@ -111,7 +115,9 @@ public sealed class AppServices
             exporters, settings, executor, store, clock);
 
         var verifier = new ConnectionVerifier(tokens, http);
+        var provisioner = new GraphAuthenticationProvisioner(tokens, verifier, http);
+        var authProvisioning = new AuthenticationProvisioningService(provisioner, certificates, store, clock);
 
-        return new AppServices(workspace, store, certificates, copilot, store, verifier, updates, keyVault, alerts, clock);
+        return new AppServices(workspace, store, certificates, copilot, store, verifier, authProvisioning, updates, keyVault, alerts, clock);
     }
 }

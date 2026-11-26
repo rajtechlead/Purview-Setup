@@ -15,28 +15,28 @@ public sealed class WindowsCertificateService : ICertificateService
     public const string DefaultSubject = "CN=Purview Governance Copilot";
     private const string AppSubjectMarker = "Purview Governance Copilot";
 
-    public CertificateInfo CreateSelfSigned(string subject, int validMonths, bool installToStore)
+    public CertificateInfo CreateSelfSigned(string subject, int validMonths, bool installToStore) =>
+        CreateSelfSigned(subject, validMonths, installToStore, CertificateAlgorithm.Rsa4096);
+
+    public CertificateInfo CreateSelfSigned(
+        string subject,
+        int validMonths,
+        bool installToStore,
+        CertificateAlgorithm algorithm)
     {
-        if (validMonths is < 1 or > 36)
-            throw new ArgumentOutOfRangeException(nameof(validMonths), "Validity must be between 1 and 36 months.");
+        if (validMonths is < 1 or > 120)
+            throw new ArgumentOutOfRangeException(nameof(validMonths), "Validity must be between 1 and 120 months.");
 
-        using var rsa = RSA.Create(4096);
-        var request = new CertificateRequest(
-            string.IsNullOrWhiteSpace(subject) ? DefaultSubject : subject,
-            rsa,
-            HashAlgorithmName.SHA256,
-            RSASignaturePadding.Pkcs1);
+        var name = string.IsNullOrWhiteSpace(subject) ? DefaultSubject : subject;
+        var notBefore = DateTimeOffset.UtcNow.AddDays(-1);
+        var notAfter = DateTimeOffset.UtcNow.AddMonths(validMonths);
 
-        request.CertificateExtensions.Add(new X509BasicConstraintsExtension(false, false, 0, false));
-        request.CertificateExtensions.Add(new X509KeyUsageExtension(
-            X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.KeyEncipherment, critical: false));
-        request.CertificateExtensions.Add(new X509EnhancedKeyUsageExtension(
-            new OidCollection { new Oid("1.3.6.1.5.5.7.3.2") }, critical: false));
-        request.CertificateExtensions.Add(new X509SubjectKeyIdentifierExtension(request.PublicKey, false));
-
-        using var certificate = request.CreateSelfSigned(
-            DateTimeOffset.UtcNow.AddDays(-1),
-            DateTimeOffset.UtcNow.AddMonths(validMonths));
+        using var certificate = algorithm switch
+        {
+            CertificateAlgorithm.EccP256 => CreateEcc(name, ECCurve.NamedCurves.nistP256, HashAlgorithmName.SHA256, notBefore, notAfter),
+            CertificateAlgorithm.EccP384 => CreateEcc(name, ECCurve.NamedCurves.nistP384, HashAlgorithmName.SHA384, notBefore, notAfter),
+            _ => CreateRsa(name, algorithm, notBefore, notAfter)
+        };
 
         if (installToStore)
         {
@@ -44,6 +44,47 @@ public sealed class WindowsCertificateService : ICertificateService
         }
 
         return ToInfo(certificate, installToStore ? @"CurrentUser\My" : "Ephemeral");
+    }
+
+    public string ExportPublicDerBase64(string thumbprint)
+    {
+        using var certificate = LoadCertificate(thumbprint);
+        return Convert.ToBase64String(certificate.Export(X509ContentType.Cert));
+    }
+
+    private static X509Certificate2 CreateRsa(
+        string subject, CertificateAlgorithm algorithm, DateTimeOffset notBefore, DateTimeOffset notAfter)
+    {
+        var bits = algorithm switch
+        {
+            CertificateAlgorithm.Rsa2048 => 2048,
+            CertificateAlgorithm.Rsa3072 => 3072,
+            _ => 4096
+        };
+
+        using var rsa = RSA.Create(bits);
+        var request = new CertificateRequest(subject, rsa, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+        AddExtensions(request);
+        return request.CreateSelfSigned(notBefore, notAfter);
+    }
+
+    private static X509Certificate2 CreateEcc(
+        string subject, ECCurve curve, HashAlgorithmName hash, DateTimeOffset notBefore, DateTimeOffset notAfter)
+    {
+        using var ecdsa = ECDsa.Create(curve);
+        var request = new CertificateRequest(subject, ecdsa, hash);
+        AddExtensions(request);
+        return request.CreateSelfSigned(notBefore, notAfter);
+    }
+
+    private static void AddExtensions(CertificateRequest request)
+    {
+        request.CertificateExtensions.Add(new X509BasicConstraintsExtension(false, false, 0, false));
+        request.CertificateExtensions.Add(new X509KeyUsageExtension(
+            X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.KeyEncipherment, critical: false));
+        request.CertificateExtensions.Add(new X509EnhancedKeyUsageExtension(
+            new OidCollection { new Oid("1.3.6.1.5.5.7.3.2") }, critical: false));
+        request.CertificateExtensions.Add(new X509SubjectKeyIdentifierExtension(request.PublicKey, false));
     }
 
     public CertificateInfo ImportFromPfx(string path, string? password, bool installToStore)
@@ -168,9 +209,35 @@ public sealed class WindowsCertificateService : ICertificateService
         using var store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
         store.Open(OpenFlags.ReadWrite);
 
-        var withoutPrivateKey = X509CertificateLoader.LoadCertificate(certificate.RawData);
-        var withKey = withoutPrivateKey.CopyWithPrivateKey(certificate.GetRSAPrivateKey()!);
-        store.Add(withKey);
+        using var withoutPrivateKey = X509CertificateLoader.LoadCertificate(certificate.RawData);
+
+        if (certificate.GetRSAPrivateKey() is { } rsa)
+        {
+            using var withRsa = withoutPrivateKey.CopyWithPrivateKey(rsa);
+            store.Add(withRsa);
+            return;
+        }
+
+        if (certificate.GetECDsaPrivateKey() is { } ecdsa)
+        {
+            using var withEcc = withoutPrivateKey.CopyWithPrivateKey(ecdsa);
+            store.Add(withEcc);
+            return;
+        }
+
+        throw new InvalidOperationException("The certificate has no usable RSA or ECDSA private key.");
+    }
+
+    private static X509Certificate2 LoadCertificate(string thumbprint)
+    {
+        using var store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
+        store.Open(OpenFlags.ReadOnly);
+
+        return store.Certificates
+                   .Find(X509FindType.FindByThumbprint, Normalize(thumbprint), validOnly: false)
+                   .Cast<X509Certificate2>()
+                   .FirstOrDefault()
+               ?? throw new InvalidOperationException($"Certificate {thumbprint} was not found in CurrentUser\\My.");
     }
 
     private X509Certificate2 RequireWithPrivateKey(string thumbprint) => LoadForAuthentication(thumbprint);
