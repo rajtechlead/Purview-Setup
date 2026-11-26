@@ -33,6 +33,7 @@ public sealed class AppServices
         IAiUsageStore usage,
         ConnectionVerifier verifier,
         AuthenticationProvisioningService authProvisioning,
+        ModuleRegistry registry,
         PhasedDeploymentService phasedDeployment,
         ILiveDeploymentExecutor liveExecutor,
         ObjectBackupService objectBackups,
@@ -48,6 +49,7 @@ public sealed class AppServices
         Usage = usage;
         Verifier = verifier;
         AuthProvisioning = authProvisioning;
+        Registry = registry;
         PhasedDeployment = phasedDeployment;
         LiveExecutor = liveExecutor;
         ObjectBackups = objectBackups;
@@ -64,6 +66,7 @@ public sealed class AppServices
     public IAiUsageStore Usage { get; }
     public ConnectionVerifier Verifier { get; }
     public AuthenticationProvisioningService AuthProvisioning { get; }
+    public ModuleRegistry Registry { get; }
     public PhasedDeploymentService PhasedDeployment { get; }
     public ILiveDeploymentExecutor LiveExecutor { get; }
     public ObjectBackupService ObjectBackups { get; }
@@ -134,7 +137,7 @@ public sealed class AppServices
         var provisioner = new GraphAuthenticationProvisioner(tokens, verifier, http);
         var authProvisioning = new AuthenticationProvisioningService(provisioner, certificates, store, clock);
 
-        return new AppServices(workspace, store, certificates, copilot, store, verifier, authProvisioning,
+        return new AppServices(workspace, store, certificates, copilot, store, verifier, authProvisioning, registry,
             phasedDeployment, liveExecutor, objectBackups, updates, keyVault, alerts, clock);
     }
 }

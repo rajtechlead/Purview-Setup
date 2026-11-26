@@ -6,6 +6,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **Per-module lifecycle**: deployment validation now re-evaluates each touched module's own rules before and after a phase, not just tenant-wide counters, and every drift signal carries its module so monitoring is attributable. This closes MOD-02; the remaining DSPM/Defender evidence gaps are tracked separately under DSC-08/DSC-11.
 - **Repository cleanup**: removed the stale duplicate status table from `docs/07` (now an index to the authoritative tracker), deleted generated WiX source/debug files from `dist/` and the abandoned tenant-rollout archive, consolidated two trend-series implementations into `TrendReport`, and removed the unused `IChangeExecutor.RollbackAsync` path that only returned a validation message. Trackers and roadmap now agree on the delivered/partial/blocked boundary.
 
 ### Added

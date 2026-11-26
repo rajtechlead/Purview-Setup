@@ -87,7 +87,7 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 | ID | Requirement | Status | Proof | Evidence / gap |
 | --- | --- | --- | --- | --- |
 | MOD-01 | Sixteen independent modules | **Delivered** | T | `ModuleRegistry` builds all 16 with descriptors, licences, frameworks and weights; `Registry_ExposesSixteenModules_AndWeightsArePositive`. |
-| MOD-02 | Every module supports discovery, assessment, recommendations, deployment, validation, reporting, rollback and monitoring | **Partial** | B | Discovery, assessment, recommendations and reporting are per-module. Deployment operations are generic descriptors (`Purview/<module>/<control>`), validation is advisory text per plan, and rollback/monitoring are tenant-wide rather than per module. |
+| MOD-02 | Every module supports discovery, assessment, recommendations, deployment, validation, reporting, rollback and monitoring | **Delivered** | T | Each `IModule` owns its discovery rules, assessment, recommendations, module-tagged deployment operations, findings/report rows and rollback traversal; `DeploymentValidation.Validate(..., modules)` now compares each touched module's own rule evidence before/after and `DriftItem.Module` tags every monitoring signal. Tests: `PhasedDeploymentTests.Validation_DetectsAReducedControlSet`. Collector coverage for DSPM/Defender remains tracked under DSC-08/DSC-11, not as a lifecycle gap. |
 | MOD-03 | Plugin architecture | **Delivered** | T | `IModule` + registry is the extension seam; `PluginModuleLoader` discovers public `IModule` implementations with a parameterless constructor from `%LOCALAPPDATA%\PurviewGovernanceCopilot\plugins`, loads each assembly in its own context, skips broken assemblies with a message and keys plugins as `ModuleKey.Custom` so they cannot impersonate a built-in. Wired into the desktop and CLI registries. Loading runs local third-party code, so the folder is the user's own profile and is documented as a trust boundary. Tests: `PluginModuleTests`. |
 
 ## F. AI assistant and failover
@@ -267,8 +267,8 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 
 | Status | Count | Share |
 | --- | --- | --- |
-| **Delivered** | 123 | 92% |
-| **Partial** | 7 | 5% |
+| **Delivered** | 124 | 93% |
+| **Partial** | 6 | 4% |
 | **Not delivered** | 4 | 3% |
 | **Total tracked** | 134 | 100% |
 
@@ -280,7 +280,7 @@ By section:
 | Authentication | 12 | 0 | 0 |
 | Discovery and assessment | 12 | 2 | 0 |
 | Deployment and change control | 4 | 1 | 0 |
-| Modular architecture | 2 | 1 | 0 |
+| Modular architecture | 3 | 0 | 0 |
 | AI assistant and failover | 11 | 0 | 1 |
 | AI privacy guardrail | 12 | 0 | 0 |
 | Change management and safety | 6 | 1 | 0 |
@@ -301,15 +301,15 @@ By section:
 
 Ranked by risk to the commercial claim, not by effort.
 
-**Partial (7):**
+**Partial (6):**
 
 1. **Automated tenant restore (DEP-03, SAF-02)** — rollback packages and reviewed scripts exist; executing and validating a restore needs a live tenant.
 2. **DSPM/AI-governance discovery (DSC-08)** — enablement is not exposed by a stable public API used here, so controls report as gaps by default.
 3. **Defender and Compliance Manager ingestion (DSC-11)** — secure score is collected; no Compliance Manager score API is available and Defender alert/incident ingestion is not implemented.
-4. **Per-module lifecycle (MOD-02)** — modules share generic deployment, validation, rollback and monitoring paths rather than exposing all eight stages independently.
-5. **Code signing and hosted update manifest (SEC-16)** — update download is HTTPS + SHA-256 verified, but installation is manual, the MSI/MSIX are unsigned, and no manifest is published.
-6. **Microsoft Graph SDK (ARC-05)** — Graph is consumed through typed REST calls by design, not the SDK.
-7. **SQLCipher page encryption (SEC-14)** — payloads are DPAPI-encrypted; database pages and indexed metadata are not.
+4. **Code signing and hosted update manifest (SEC-16)** — update download is HTTPS + SHA-256 verified, but installation is manual, the MSI/MSIX are unsigned, and no manifest is published.
+5. **Microsoft Graph SDK (ARC-05)** — Graph is consumed through typed REST calls by design, not the SDK.
+
+**Hardening beyond the current requirement text (not counted as partial):** SQLCipher page encryption — payloads are DPAPI-encrypted, but database pages and indexed metadata are not (SEC-14 remains delivered for the stated requirement).
 
 **Not delivered (4):**
 

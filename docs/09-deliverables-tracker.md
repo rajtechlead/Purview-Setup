@@ -2,7 +2,7 @@
 
 The specification names 22 deliverables. This tracker records where each one lives, whether it exists in a usable form, and the honest limitation.
 
-**Result: 22 of 22 artifacts exist in the repository.** Two are weaker than the heading implies — the interface designs are text wireframes rather than high-fidelity screens, and the API specification covers consumed Graph/Exchange surfaces and internal contracts rather than an OpenAPI document. Artifact completeness is not feature completeness: [08 — Requirements Tracker](08-requirements-tracker.md) currently records 123 delivered, 7 partial and 4 not delivered of 134 requirements.
+**Result: 22 of 22 artifacts exist in the repository.** Two are weaker than the heading implies — the interface designs are text wireframes rather than high-fidelity screens, and the API specification covers consumed Graph/Exchange surfaces and internal contracts rather than an OpenAPI document. Artifact completeness is not feature completeness: [08 — Requirements Tracker](08-requirements-tracker.md) currently records 124 delivered, 6 partial and 4 not delivered of 134 requirements.
 
 | # | Deliverable | Status | Where | Notes and limitations |
 | --- | --- | --- | --- | --- |

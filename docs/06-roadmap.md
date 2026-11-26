@@ -2,7 +2,7 @@
 
 Status source of truth: [08 — Requirements Tracker](08-requirements-tracker.md). This page explains sequencing and why anything is still open.
 
-**Current position (27 November 2026):** 123 delivered, 7 partial, 4 not delivered of 134 requirements. Build succeeds; 157 tests pass; MSI and unsigned MSIX are produced. No live tenant, signing certificate, Key Vault, webhook or AI key was available, so tenant-dependent paths remain unverified rather than claimed.
+**Current position (27 November 2026):** 124 delivered, 6 partial, 4 not delivered of 134 requirements. Build succeeds; 157 tests pass; MSI and unsigned MSIX are produced. No live tenant, signing certificate, Key Vault, webhook or AI key was available, so tenant-dependent paths remain unverified rather than claimed.
 
 ## Completed phases
 
@@ -37,6 +37,7 @@ Complete.
 - **Greenfield and mode differentiation** — empty-tenant detection and distinct behaviour for all six modes.
 - **Entra and workload discovery** — role/PIM/CA/service-principal signals plus Graph usage-report mailbox and OneDrive counts.
 - **Installer** — MSI and unsigned MSIX built, checked and hashed; MSIX signing is supported but no certificate exists.
+- **Per-module lifecycle** — complete: discovery rules, assessment, recommendations, module-tagged deployment operations, module-scoped validation, reporting, rollback traversal and module-tagged drift signals. The depth of DSPM/Defender evidence is tracked separately under DSC-08/DSC-11.
 
 ## Phase 2 — Remaining engineering
 
@@ -45,11 +46,10 @@ Ordered by risk to a commercial claim.
 1. **Code signing and update trust (SEC-11, SEC-16).** Owner supplies an Authenticode certificate; CI signs the EXE/MSI/MSIX; publish a hosted HTTPS manifest and decide whether automatic install is allowed. The hash-verified download path already exists. Owner action, not code-complete here.
 2. **Automated rollback restore (DEP-03, SAF-02).** Implement a reviewed restore of the exported object backup against a live tenant, execute it through the fail-closed executor, validate post-restore state and record the result. Blocked without a tenant; must not be faked.
 3. **DSPM and AI-governance discovery (DSC-08) and Defender/Compliance Manager ingestion (DSC-11).** DSPM enablement and Compliance Manager scores have no stable public API used here; Defender alerts/incidents can be added, but the compliance-score half remains blocked. Keep these reporting as warnings, not false passes.
-4. **Per-module lifecycle coverage (MOD-02).** Add per-module deployment, validation, rollback and monitoring mappings so every module exposes all eight stages independently rather than through tenant-wide checks.
-5. **Graph SDK and optional SQL Server (ARC-05, ARC-08).** The REST adapter is deliberate and tested; adopting the SDK is a dependency decision. SQL Server requires an additional store implementation and integration tests against a real instance.
-6. **SQLCipher page encryption (SEC-14).** Payloads are DPAPI-encrypted; database pages and indexed metadata are not. Adding SQLCipher changes the storage dependency and migration path.
-7. **WinUI 3 shell (ARC-02).** Not buildable in this environment. The Application layer is UI-agnostic, so a second shell remains feasible without rewriting domain logic.
-8. **Security Copilot (AIA-02).** No generally available tenant-licensed API surface was available to integrate; do not invent one.
+4. **Graph SDK and optional SQL Server (ARC-05, ARC-08).** The REST adapter is deliberate and tested; adopting the SDK is a dependency decision. SQL Server requires an additional store implementation and integration tests against a real instance.
+5. **SQLCipher page encryption (SEC-14).** Payloads are DPAPI-encrypted; database pages and indexed metadata are not. Adding SQLCipher changes the storage dependency and migration path.
+6. **WinUI 3 shell (ARC-02).** Not buildable in this environment. The Application layer is UI-agnostic, so a second shell remains feasible without rewriting domain logic.
+7. **Security Copilot (AIA-02).** No generally available tenant-licensed API surface was available to integrate; do not invent one.
 
 ## Phase 3 — Product depth
 

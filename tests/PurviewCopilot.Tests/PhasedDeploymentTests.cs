@@ -1,6 +1,7 @@
 using PurviewCopilot.Application.Abstractions;
 using PurviewCopilot.Application.Auth;
 using PurviewCopilot.Application.Deployment;
+using PurviewCopilot.Application.Modules;
 using PurviewCopilot.Domain;
 using PurviewCopilot.Infrastructure.Deployment;
 using Xunit;
@@ -133,10 +134,12 @@ public class PhasedDeploymentTests
         var before = new TenantSnapshot { TenantId = "t", SensitivityLabelCount = 5, LabelPolicyCount = 2 };
         var after = new TenantSnapshot { TenantId = "t", SensitivityLabelCount = 3, LabelPolicyCount = 2 };
 
-        var report = DeploymentValidation.Validate(plan, before, after);
+        var report = DeploymentValidation.Validate(plan, before, after, new ModuleRegistry().Modules);
 
         Assert.False(report.Passed);
         Assert.Contains(report.Checks, c => c.Name.Contains("labels", StringComparison.OrdinalIgnoreCase) && !c.Passed);
+        Assert.Contains(report.Checks, c =>
+            c.Module == ModuleKey.SensitivityLabels && c.Name.Contains("evidence did not regress", StringComparison.Ordinal) && !c.Passed);
     }
 
     [Fact]

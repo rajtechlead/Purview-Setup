@@ -6,6 +6,7 @@ using PurviewCopilot.Application.Abstractions;
 using PurviewCopilot.Application.Approvals;
 using PurviewCopilot.Application.Auth;
 using PurviewCopilot.Application.Deployment;
+using PurviewCopilot.Application.Modules;
 using PurviewCopilot.Application.Workspace;
 using PurviewCopilot.Domain;
 using PurviewCopilot.Infrastructure.Auth;
@@ -43,6 +44,7 @@ public sealed class DeploymentViewModel : PageViewModel
     private readonly GovernanceWorkspace _workspace;
     private readonly ISettingsStore _settings;
     private readonly IClock _clock;
+    private readonly ModuleRegistry _modules;
     private readonly PhasedDeploymentService _phased;
     private readonly ILiveDeploymentExecutor _liveExecutor;
     private readonly ObjectBackupService _objectBackups;
@@ -70,6 +72,7 @@ public sealed class DeploymentViewModel : PageViewModel
         GovernanceWorkspace workspace,
         ISettingsStore settings,
         IClock clock,
+        ModuleRegistry modules,
         PhasedDeploymentService phased,
         ILiveDeploymentExecutor liveExecutor,
         ObjectBackupService objectBackups,
@@ -78,6 +81,7 @@ public sealed class DeploymentViewModel : PageViewModel
         _workspace = workspace;
         _settings = settings;
         _clock = clock;
+        _modules = modules;
         _phased = phased;
         _liveExecutor = liveExecutor;
         _objectBackups = objectBackups;
@@ -367,7 +371,7 @@ public sealed class DeploymentViewModel : PageViewModel
             {
                 var before = tenant;
                 await _workspace.AssessAsync(settings.Auth, settings.DefaultMode).ConfigureAwait(true);
-                var report = DeploymentValidation.Validate(Plan, before, _workspace.Tenant!);
+                var report = DeploymentValidation.Validate(Plan, before, _workspace.Tenant!, _modules.Modules);
                 PhaseExecution = await _phased.RecordValidationAsync(PhaseExecution, report, Actor).ConfigureAwait(true);
                 PhaseStatusText = $"{result.Summary} {report.Summary}";
             }

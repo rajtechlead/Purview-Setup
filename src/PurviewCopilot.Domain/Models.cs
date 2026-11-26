@@ -322,7 +322,8 @@ public sealed record DriftItem(
     string BaselineValue,
     string CurrentValue,
     Severity Severity,
-    string RecommendedAction);
+    string RecommendedAction,
+    ModuleKey Module);
 
 public sealed record CertificateInfo(
     string Thumbprint,

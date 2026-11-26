@@ -23,7 +23,7 @@ public class MonitoringAlertTests
         var drift = new[]
         {
             new DriftItem("DRF-001", DriftKind.Security, "Unified audit log was disabled",
-                "True", "False", Severity.Critical, "Re-enable audit immediately.")
+                "True", "False", Severity.Critical, "Re-enable audit immediately.", ModuleKey.Audit)
         };
 
         var alerts = AlertBuilder.Build(null, null, drift, At);
