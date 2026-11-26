@@ -102,7 +102,8 @@ Create an MSI application from the WiX output; use the same detection method. De
 
 - **Deployment rollback**: every phase is backed up before execution. Use **Mark rolled back** for the phase, export the reviewed reversal script from the plan, and restore the named backup. Re-run the assessment afterwards; validation compares labels, DLP, retention and audit against the pre-phase snapshot.
 - **Upgrade**: MSI uses `MajorUpgrade` (same UpgradeCode, higher version). Install over the existing version; settings and database remain in `%LOCALAPPDATA%`.
-- **Rollback**: uninstall the new version and reinstall the previous MSI. The database schema is additive and created idempotently; older builds tolerate newer tables because they only query known ones.
+- **Rollback**: run `Rollback-PurviewGovernanceCopilot.ps1 -PreviousMsi <path>` from an elevated PowerShell prompt. It finds every installed copy, uninstalls it with `msiexec`, installs the named previous MSI, and verifies the registered version. Add `-WhatIf` to review the steps. Both msiexec runs write verbose logs to `%TEMP%`; exit code 3010 means a restart is required. The database schema is additive and created idempotently; older builds tolerate newer tables because they only query known ones. The script ships beside the application in the install directory.
+- **Manual rollback**: if the script is unavailable, uninstall the current version from Apps & features, then install the previous MSI and confirm the displayed version.
 - **Back up before upgrade**: copy `%LOCALAPPDATA%\PurviewGovernanceCopilot` (database plus generated scripts).
 
 ## 6. Operations runbook

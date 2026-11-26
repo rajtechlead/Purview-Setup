@@ -258,7 +258,7 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 | INS-03 | Silent install | **Delivered** | D | `msiexec /i ... /qn` documented and used by the WiX package properties; not executed in this environment. |
 | INS-04 | Intune deployment | **Delivered** | D | Documented Win32/MSI Intune commands in `docs/05` §4. |
 | INS-05 | MECM/SCCM deployment | **Delivered** | D | Documented application model steps in `docs/05` §4. |
-| INS-06 | Upgrade and rollback | **Partial** | D | `MajorUpgrade` handles forward upgrades. Rollback means reinstalling the previous MSI; there is no automatic downgrade path. |
+| INS-06 | Upgrade and rollback | **Delivered** | D | `MajorUpgrade` handles forward upgrades. `installer/Rollback-PurviewGovernanceCopilot.ps1` (shipped beside the app) finds the installed package, uninstalls it, installs a named previous MSI, verifies the registered version and writes verbose msiexec logs; `-WhatIf` previews the steps. Syntax-checked; not executed here because no install exists. |
 | INS-07 | Produced installer binaries | **Delivered** | B | `dist/PurviewGovernanceCopilot-1.0.0.msi` (1.8 MB, framework-dependent, with a SHA-256 file) is committed and passes `wix msi validate` ICE checks. Unsigned; no MSIX binary. |
 
 ---
@@ -267,8 +267,8 @@ Status and proof are independent: a requirement can be **Delivered** with proof 
 
 | Status | Count | Share |
 | --- | --- | --- |
-| **Delivered** | 113 | 84% |
-| **Partial** | 17 | 13% |
+| **Delivered** | 114 | 85% |
+| **Partial** | 16 | 12% |
 | **Not delivered** | 4 | 3% |
 | **Total tracked** | 134 | 100% |
 
@@ -295,7 +295,7 @@ By section:
 | Architecture and technology | 7 | 1 | 2 |
 | User experience | 6 | 0 | 0 |
 | Help and About | 3 | 0 | 0 |
-| Installer | 5 | 2 | 0 |
+| Installer | 6 | 1 | 0 |
 
 ## What is genuinely missing
 

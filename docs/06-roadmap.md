@@ -38,6 +38,8 @@ Ordered by risk reduction and by what the current build deliberately leaves out.
 
 Platform floor: **Done**. The manifest advertises Windows 10/11 only and startup refuses builds below 17763, so Windows 7/8/8.1 cannot run the app.
 
+Installer rollback: **Done**. `Rollback-PurviewGovernanceCopilot.ps1` ships beside the app and restores a named previous MSI, with `-WhatIf`, version verification and msiexec logs.
+
 Greenfield path: **Done**. `GreenfieldBaseline` detects an empty tenant from collected counts and selects a first-run foundation set in a safe order; the same mode on a configured tenant warns rather than claiming a baseline.
 
 **3 of 4 complete, 1 partial.** Updated 26 November 2026.

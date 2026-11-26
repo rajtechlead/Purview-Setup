@@ -9,6 +9,7 @@
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
   </PropertyGroup>
   <ItemGroup>
+    <Content Include="..\..\installer\Rollback-PurviewGovernanceCopilot.ps1" Link="Rollback-PurviewGovernanceCopilot.ps1" CopyToOutputDirectory="PreserveNewest" />
     <ProjectReference Include="..\PurviewCopilot.Application\PurviewCopilot.Application.csproj" />
     <ProjectReference Include="..\PurviewCopilot.Infrastructure\PurviewCopilot.Infrastructure.csproj" />
   </ItemGroup>
