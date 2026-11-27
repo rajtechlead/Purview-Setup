@@ -12,6 +12,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Durable approvals and shared audit**: approvals survive restarts, bind to the plan hash, expire after seven days and refuse self-approval; the audit is a per-tenant SHA-256 chain with a verification endpoint.
 - **Service operations**: `installer/Install-CollaborationService.ps1` registers the Windows service with restart-on-failure and `-WhatIf`; CI now runs the service test suite.
 
+### Added (automated restore)
+
+- **Backups can be turned back into an executable restore.** `RollbackPlanner` checks that a backup belongs to the plan's tenant, uses a supported schema, parses, covers every operation and contains the object export when a deletion must be recreated; missing coverage, irreversible work and absent exports make it unready instead of silently partial. `PowerShellRollbackExecutor` fails closed unless live execution is enabled, certificate auth is present, the tenant matches and the plan is ready. Eight tests cover the paths; execution is proven against a fake runner only.
+
 ### Added (decision pack)
 
 - **Three scoped options with the evidence a change board needs.** `DecisionPackBuilder` derives Minimum (critical only), Recommended (critical/high/medium) and Enhanced (all) from the recommendations, then adds phases, module owners, acceptance criteria, licence costs (prices only when supplied) and rollback limits, including irreversible operations by id. `DecisionPackRenderer` exports Markdown. Wiring it to a report type or CLI command is still open.
