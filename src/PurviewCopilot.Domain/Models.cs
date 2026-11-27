@@ -35,7 +35,8 @@ public sealed record ChangeOperation(
     string Target,
     string PayloadJson,
     bool IsDestructive,
-    bool RequiresSimulation);
+    bool RequiresSimulation,
+    Reversibility Reversibility = Reversibility.Reversible);
 
 /// <summary>Impact assessment attached to a change plan (change-management pack).</summary>
 public sealed record ChangeImpact(
@@ -63,6 +64,11 @@ public sealed record ChangePlan(
     bool SimulationRequired)
 {
     public int DestructiveOperationCount => Operations.Count(o => o.IsDestructive);
+
+    public int IrreversibleOperationCount => Operations.Count(o => o.Reversibility == Reversibility.Irreversible);
+
+    public IReadOnlyList<string> IrreversibleOperationIds =>
+        Operations.Where(o => o.Reversibility == Reversibility.Irreversible).Select(o => o.Id).ToArray();
 }
 
 /// <summary>Immutable backup captured before a plan is applied.</summary>

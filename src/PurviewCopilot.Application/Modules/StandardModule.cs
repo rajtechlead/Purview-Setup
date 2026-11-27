@@ -68,7 +68,12 @@ public sealed class StandardModule : IModule
                     tenant = snapshot.TenantId
                 }),
                 IsDestructive: false,
-                RequiresSimulation: true);
+                RequiresSimulation: true,
+                // A new policy can be removed again; an update overwrites existing configuration and
+                // relies on the pre-phase backup to be restored.
+                Reversibility: finding.Status == FindingStatus.Fail
+                    ? Reversibility.Reversible
+                    : Reversibility.Restorable);
 
             recommendations.Add(new Recommendation(
                 Id: $"REC-{finding.Id}",

@@ -60,6 +60,17 @@ public enum DeploymentMode
     Greenfield
 }
 
+/// <summary>
+/// How far an operation can be undone. A backup restores updated configuration; a deletion cannot
+/// be reconstructed from configuration alone and needs an explicit risk decision.
+/// </summary>
+public enum Reversibility
+{
+    Reversible = 0,
+    Restorable,
+    Irreversible
+}
+
 public enum OperationAction
 {
     NoOp = 0,

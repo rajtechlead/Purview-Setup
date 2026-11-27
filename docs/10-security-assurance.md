@@ -58,7 +58,7 @@ Complete for each release and keep the record with the build.
 | Check | Result for this build |
 | --- | --- |
 | Release build succeeds | Pass — 0 errors |
-| Full test suite | Pass — 303 tests (297 pass, 6 Windows-only skipped) |
+| Full test suite | Pass — 308 tests (302 pass, 6 Windows-only skipped) |
 | Dependency vulnerability scan | Pass — no known vulnerable direct or transitive package at build time |
 | CodeQL workflow present and green | Configured (`.github/workflows/codeql.yml`); first run happens on push to GitHub |
 | Secrets or private keys in the tree | None found; `.gitignore` excludes local data and environment files |

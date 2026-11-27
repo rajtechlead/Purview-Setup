@@ -9,7 +9,7 @@ here; no requirement count or status is duplicated elsewhere. Last verified **27
 | Production target | .NET 10 LTS (supported to 2028-11-14) |
 | Branch state | `main` |
 | Requirements tracked | 157 (135 migrated, 22 added for the current master prompt) |
-| Automated tests | 303 total: 297 pass, 6 Windows-only DPAPI tests skipped on non-Windows hosts |
+| Automated tests | 308 total: 302 pass, 6 Windows-only DPAPI tests skipped on non-Windows hosts |
 | Release decision | **Not releasable.** Gates G5, G6, G12 and G13 in [07](07-release-gates.md) fail; G4, G10 and G11 are open. |
 
 ## Baseline audit — 27 November 2026
@@ -119,7 +119,7 @@ dashboard does not count Implemented, Simulated or Partial as complete.
 | Area | Health | Note |
 | --- | --- | --- |
 | Build | Green | Domain, Application and Infrastructure build in Release on .NET 10; WPF requires Windows |
-| Tests | Green | 297 pass, 6 skipped on non-Windows, 0 fail |
+| Tests | Green | 302 pass, 6 skipped on non-Windows, 0 fail |
 | Dependencies | Green | No vulnerable packages; audit advisories are build errors |
 | Security | Amber | Strong local controls; unsigned binaries, no SBOM, no live verification |
 | Coverage | Amber | Shared service delivered; SSO, desktop wiring and Data Map are absent |

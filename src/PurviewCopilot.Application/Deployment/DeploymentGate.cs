@@ -34,6 +34,13 @@ public static class DeploymentGate
         if (!authorization.AuthenticationValidated) reasons.Add("Authentication has not been validated.");
         if (!authorization.ConnectivityOk) reasons.Add("Tenant connectivity has not been validated.");
         if (plan.DestructiveOperationCount > 0 && !authorization.RiskAccepted) reasons.Add("Destructive operations require explicit risk acceptance.");
+
+        if (plan.IrreversibleOperationCount > 0 && !authorization.RiskAccepted)
+        {
+            reasons.Add(
+                "Irreversible operations require explicit risk acceptance: " +
+                $"{string.Join(", ", plan.IrreversibleOperationIds)}.");
+        }
         if (!authorization.WhatIfAcknowledged) reasons.Add("The operator has not acknowledged the what-if report.");
 
         if (!authorization.DriftRecheckPerformed)
