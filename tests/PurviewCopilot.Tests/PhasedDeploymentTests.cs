@@ -35,6 +35,7 @@ public class PhasedDeploymentTests
         var blocked = DeploymentGate.Evaluate(plan, execution, new DeploymentAuthorization(
             false, false, false, false, false, false, false, false));
 
+
         Assert.True(blocked.Blocked);
         Assert.Contains(blocked.Reasons, r => r.Contains("Simulation", StringComparison.Ordinal));
         Assert.Contains(blocked.Reasons, r => r.Contains("approval", StringComparison.OrdinalIgnoreCase));
@@ -50,7 +51,45 @@ public class PhasedDeploymentTests
         var result = DeploymentGate.Evaluate(
             Plan(Operation("a", ModuleKey.Audit)),
             Execution(PhaseStatus.Approved),
+            new DeploymentAuthorization(true, true, true, true, true, true, true, true,
+                DriftRecheckPerformed: true));
+
+        Assert.False(result.Blocked);
+    }
+
+    [Fact]
+    public void Gate_BlocksWhenTheDriftRecheckWasNotPerformed()
+    {
+        var result = DeploymentGate.Evaluate(
+            Plan(Operation("a", ModuleKey.Audit)),
+            Execution(PhaseStatus.Approved) with { BaselineFingerprint = "baseline" },
             new DeploymentAuthorization(true, true, true, true, true, true, true, true));
+
+        Assert.True(result.Blocked);
+        Assert.Contains(result.Reasons, r => r.Contains("re-checked for drift", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Gate_BlocksWhenTheTenantChangedSinceTheApproval()
+    {
+        var result = DeploymentGate.Evaluate(
+            Plan(Operation("a", ModuleKey.Audit)),
+            Execution(PhaseStatus.Approved) with { BaselineFingerprint = "baseline" },
+            new DeploymentAuthorization(true, true, true, true, true, true, true, true,
+                DriftRecheckPerformed: true, CurrentFingerprint: "changed"));
+
+        Assert.True(result.Blocked);
+        Assert.Contains(result.Reasons, r => r.Contains("stale", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Gate_AllowsExecutionWhenTheFingerprintIsUnchanged()
+    {
+        var result = DeploymentGate.Evaluate(
+            Plan(Operation("a", ModuleKey.Audit)),
+            Execution(PhaseStatus.Approved) with { BaselineFingerprint = "same" },
+            new DeploymentAuthorization(true, true, true, true, true, true, true, true,
+                DriftRecheckPerformed: true, CurrentFingerprint: "same"));
 
         Assert.False(result.Blocked);
     }
@@ -100,6 +139,9 @@ public class PhasedDeploymentTests
         Assert.Single(store.Backups);
         Assert.Contains("pre-phase/MonitoringAndAudit", store.Backups[0].Label, StringComparison.Ordinal);
         Assert.Equal(1, executor.Simulations);
+        Assert.Equal(
+            TenantSnapshotFingerprint.Compute(new TenantSnapshot { TenantId = "t" }),
+            execution.BaselineFingerprint);
     }
 
     [Fact]
@@ -205,7 +247,7 @@ public class PhasedDeploymentTests
             DateTimeOffset.UtcNow, Array.Empty<string>());
 
     private static DeploymentAuthorization Authorization() =>
-        new(true, true, true, true, true, true, true, true);
+        new(true, true, true, true, true, true, true, true, DriftRecheckPerformed: true);
 
     private static ChangeOperation Operation(string id, ModuleKey module) =>
         new(id, module, OperationAction.Update, id, "{}", false, true);

@@ -68,7 +68,7 @@ src/
   PurviewCopilot.Cli/             # headless `pgc assess` / `pgc verify-audit`
 tests/
   PurviewCopilot.Tests/           # desktop tests (6 Windows-only DPAPI tests skipped elsewhere)
-  PurviewCopilot.Service.Tests/   # store and HTTP API tests (208 tests in total)
+  PurviewCopilot.Service.Tests/   # store and HTTP API tests (216 tests in total)
 docs/                             # architecture, design, security, guides, trackers
 installer/                        # WiX MSI project + MSIX build script and assets
 dist/                             # built MSI and MSIX + SHA-256 (framework-dependent, unsigned)

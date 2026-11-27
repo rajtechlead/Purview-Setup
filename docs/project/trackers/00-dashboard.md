@@ -9,7 +9,7 @@ here; no requirement count or status is duplicated elsewhere. Last verified **27
 | Production target | .NET 10 LTS (supported to 2028-11-14) |
 | Branch state | `main` |
 | Requirements tracked | 157 (135 migrated, 22 added for the current master prompt) |
-| Automated tests | 208 total: 202 pass, 6 Windows-only DPAPI tests skipped on non-Windows hosts |
+| Automated tests | 216 total: 210 pass, 6 Windows-only DPAPI tests skipped on non-Windows hosts |
 | Release decision | **Not releasable.** Gates G5, G6, G12 and G13 in [07](07-release-gates.md) fail; G4, G10 and G11 are open. |
 
 ## Baseline audit — 27 November 2026
@@ -59,9 +59,9 @@ here; no requirement count or status is duplicated elsewhere. Last verified **27
 - **No Data Map / Unified Catalog, Adaptive Protection, Information Barriers, PAM or Data Security
   Investigations** (`DSC-15`, `DSC-16`). DSPM and DSPM for AI evidence is unavailable from a stable
   API used here (`R-06`).
-- **Approval hardening.** Plan-hash binding, a 7-day expiry and self-approval refusal are now
-  enforced and tested. Configurable quorum and a pre-execution drift recheck remain open
-  (`CHG-03`, `CHG-04`).
+- **Approval hardening.** Plan-hash binding, a 7-day expiry, self-approval refusal and a
+  pre-execution drift recheck are enforced and tested (`CHG-04`). Configurable multi-approver
+  quorum remains open under `CHG-03`.
 - **Release engineering.** No Authenticode signing, no SBOM, no provenance, no plugin signing
   (`SEC-11`, `SEC-17`, `SEC-18`). Installers in `dist/` are unsigned and framework-dependent.
 - **Documentation drift corrected.** README claimed Windows 10/11 blanket support and .NET 9; the
@@ -90,6 +90,7 @@ simulations. They are recorded as `Simulated`, never as `Live-verified`.
 | M1 | .NET 10 LTS, dependency advisory, lifecycle platform gate | Complete | Commit `a879e87`; `PLT-05`, `PLT-07` |
 | M2 | Canonical tracker suite and documentation reset | Complete | This directory; `PLT-06` |
 | M2.1 | Approval hardening: plan hash, expiry, self-approval block | Complete | `ChangePlanHasher`, `WorkflowTests`; quorum remains open under `CHG-03` |
+| M2.2 | Pre-execution drift recheck and stale-approval invalidation | Complete | `DeploymentDriftRecheck`, `TenantSnapshotFingerprint`, `DeploymentDriftRecheckTests` |
 | M3 | Self-hosted multi-user service, central store, server RBAC | In progress — service delivered and tested; SQL Server and desktop wiring pending | `SRV-01`–`SRV-05`, `SRV-07`; [service doc](../../11-collaboration-service.md) |
 | M4 | Entra SSO (WAM), seven app roles, provisioning hand-off | Not started | `IDN-01`–`IDN-07` |
 | M5 | Approval hardening: plan hash, expiry, quorum, drift recheck | Not started | `CHG-03`, `CHG-04` |
@@ -100,11 +101,11 @@ simulations. They are recorded as `Simulated`, never as `Live-verified`.
 
 | Status | Count | Share |
 | --- | --- | --- |
-| Tested | 62 | 39% |
+| Tested | 63 | 40% |
 | Implemented (build-verified or documented) | 47 | 30% |
 | Simulated (code + tests, no live verification) | 19 | 12% |
 | Partial | 16 | 10% |
-| Unsupported | 12 | 8% |
+| Unsupported | 11 | 7% |
 | Blocked | 1 | 1% |
 | **Total** | **157** | |
 
@@ -116,7 +117,7 @@ dashboard does not count Implemented, Simulated or Partial as complete.
 | Area | Health | Note |
 | --- | --- | --- |
 | Build | Green | Domain, Application and Infrastructure build in Release on .NET 10; WPF requires Windows |
-| Tests | Green | 202 pass, 6 skipped on non-Windows, 0 fail |
+| Tests | Green | 210 pass, 6 skipped on non-Windows, 0 fail |
 | Dependencies | Green | No vulnerable packages; audit advisories are build errors |
 | Security | Amber | Strong local controls; unsigned binaries, no SBOM, no live verification |
 | Coverage | Amber | Shared service delivered; SSO, desktop wiring and Data Map are absent |

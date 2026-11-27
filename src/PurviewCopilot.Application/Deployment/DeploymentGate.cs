@@ -11,7 +11,9 @@ public sealed record DeploymentAuthorization(
     bool AuthenticationValidated,
     bool ConnectivityOk,
     bool RiskAccepted,
-    bool WhatIfAcknowledged);
+    bool WhatIfAcknowledged,
+    bool DriftRecheckPerformed = false,
+    string CurrentFingerprint = "");
 
 public sealed record DeploymentGateResult(bool Blocked, IReadOnlyList<string> Reasons)
 {
@@ -33,6 +35,16 @@ public static class DeploymentGate
         if (!authorization.ConnectivityOk) reasons.Add("Tenant connectivity has not been validated.");
         if (plan.DestructiveOperationCount > 0 && !authorization.RiskAccepted) reasons.Add("Destructive operations require explicit risk acceptance.");
         if (!authorization.WhatIfAcknowledged) reasons.Add("The operator has not acknowledged the what-if report.");
+
+        if (!authorization.DriftRecheckPerformed)
+        {
+            reasons.Add("The tenant has not been re-checked for drift since the phase was approved.");
+        }
+        else if (!string.IsNullOrEmpty(execution.BaselineFingerprint) &&
+                 !string.Equals(execution.BaselineFingerprint, authorization.CurrentFingerprint, StringComparison.OrdinalIgnoreCase))
+        {
+            reasons.Add("The tenant changed since the phase was simulated; the approval is stale. Simulate, back up and approve again.");
+        }
 
         if (execution.Status is PhaseStatus.Failed or PhaseStatus.Paused or PhaseStatus.RolledBack)
             reasons.Add($"The phase is {execution.Status} and must be reset before execution.");

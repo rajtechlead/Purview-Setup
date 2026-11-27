@@ -192,6 +192,10 @@ public sealed class GovernanceWorkspace
         return History;
     }
 
+    /// <summary>Read-only collection with no assessment saved, used for the pre-execution drift recheck.</summary>
+    public Task<TenantSnapshot> CollectAsync(AuthConfiguration auth, CancellationToken cancellationToken = default) =>
+        _collector.CollectAsync(auth, cancellationToken);
+
     public async Task<AssessmentResult> AssessAsync(
         AuthConfiguration auth,
         DeploymentMode mode,

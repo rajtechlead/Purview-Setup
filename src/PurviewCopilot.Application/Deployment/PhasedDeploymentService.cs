@@ -66,8 +66,11 @@ public sealed class PhasedDeploymentService
             snapshot, plan, DeploymentPhases.For(execution.Phase), operations, actor, cancellationToken)
             .ConfigureAwait(false);
 
-        var updated = Append(execution with { Status = PhaseStatus.Simulated }, simulation.Log)
+        var fingerprint = TenantSnapshotFingerprint.Compute(snapshot);
+
+        var updated = Append(execution with { Status = PhaseStatus.Simulated, BaselineFingerprint = fingerprint }, simulation.Log)
             .Log.Append($"Backup {backup.Id} captured ({backup.Label}).")
+            .Append($"Approval baseline fingerprint: {fingerprint}.")
             .ToList();
 
         await _audit.WriteAsync(new AuditEntry(
@@ -75,7 +78,13 @@ public sealed class PhasedDeploymentService
             $"Phase={execution.Phase}; Operations={operations.Count}; Backup={backup.Id}", null), cancellationToken)
             .ConfigureAwait(false);
 
-        return (execution with { Status = PhaseStatus.Simulated, UpdatedUtc = _clock.UtcNow, Log = updated }, simulation);
+        return (execution with
+        {
+            Status = PhaseStatus.Simulated,
+            BaselineFingerprint = fingerprint,
+            UpdatedUtc = _clock.UtcNow,
+            Log = updated
+        }, simulation);
     }
 
     public async Task<PhaseExecution> ApproveAsync(

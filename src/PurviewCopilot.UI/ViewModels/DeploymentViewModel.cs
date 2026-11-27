@@ -352,6 +352,17 @@ public sealed class DeploymentViewModel : PageViewModel
             var settings = await _settings.LoadAsync().ConfigureAwait(true);
             var (verified, message) = await _verifier.VerifyAsync(settings.Auth).ConfigureAwait(true);
 
+            // Re-read the tenant immediately before execution. A change since simulation makes the
+            // approval stale, so the operator must simulate, back up and approve again.
+            var fresh = await _workspace.CollectAsync(settings.Auth).ConfigureAwait(true);
+            var drift = DeploymentDriftRecheck.Evaluate(tenant, fresh);
+
+            if (!drift.Cleared)
+            {
+                PhaseStatusText = $"Execution blocked. {drift.Summary} Simulate, back up and approve again.";
+                return;
+            }
+
             var authorization = new DeploymentAuthorization(
                 _phaseSimulated,
                 _phaseExecution.Status == PhaseStatus.Approved,
@@ -360,7 +371,9 @@ public sealed class DeploymentViewModel : PageViewModel
                 verified,
                 verified,
                 PhaseRiskAccepted || Plan.DestructiveOperationCount == 0,
-                PhaseWhatIfAcknowledged);
+                PhaseWhatIfAcknowledged,
+                DriftRecheckPerformed: true,
+                CurrentFingerprint: drift.CurrentFingerprint);
 
             var result = await _liveExecutor.ExecuteAsync(Plan, _phaseExecution, settings.Auth, tenant, authorization)
                 .ConfigureAwait(true);

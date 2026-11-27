@@ -391,7 +391,8 @@ public sealed record PhaseExecution(
     string ApprovedBy,
     string ApproverRole,
     DateTimeOffset UpdatedUtc,
-    IReadOnlyList<string> Log);
+    IReadOnlyList<string> Log,
+    string BaselineFingerprint = "");
 
 public sealed record AuthConfiguration(
     AuthMode Mode,

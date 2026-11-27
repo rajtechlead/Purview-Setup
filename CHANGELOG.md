@@ -12,6 +12,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Durable approvals and shared audit**: approvals survive restarts, bind to the plan hash, expire after seven days and refuse self-approval; the audit is a per-tenant SHA-256 chain with a verification endpoint.
 - **Service operations**: `installer/Install-CollaborationService.ps1` registers the Windows service with restart-on-failure and `-WhatIf`; CI now runs the service test suite.
 
+### Added (change safety)
+
+- **Pre-execution drift recheck**: a phase records a deterministic fingerprint of the governance signals it was simulated against. Immediately before execution the desktop client re-collects the tenant and refuses when anything changed, and `DeploymentGate` blocks unless the recheck ran and the fingerprint still matches. A changed tenant therefore invalidates the approval instead of silently applying it to a different state.
+
 ### Changed
 
 - **Canonical tracker suite**: requirements, deliverables and traceability status were spread across three documents that could disagree. They are replaced by `docs/project/trackers/` (dashboard, requirements, Purview capabilities, Entra permissions, test evidence, risks and decisions, platform support, release gates), with all 135 legacy requirement ids migrated and 21 requirements added for the current master prompt. The superseded `docs/07`, `docs/08` and `docs/09` are removed and every inbound link now points at the dashboard.
