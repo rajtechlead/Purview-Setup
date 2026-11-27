@@ -21,15 +21,19 @@ public sealed class CollaborationStore
     private readonly IDbContextFactory<CollaborationDbContext> _factory;
     private readonly IClock _clock;
     private readonly CollaborationLimits _limits;
+    private readonly ApprovalPolicy _approvalPolicy;
 
     public CollaborationStore(
         IDbContextFactory<CollaborationDbContext> factory,
         IClock clock,
-        CollaborationLimits? limits = null)
+        CollaborationLimits? limits = null,
+        ApprovalPolicy? approvalPolicy = null)
     {
         _factory = factory;
         _clock = clock;
         _limits = limits ?? new CollaborationLimits();
+        _approvalPolicy = approvalPolicy ?? ApprovalPolicy.Default;
+        _approvalPolicy.Validate();
     }
 
     /// <summary>
@@ -442,7 +446,7 @@ public sealed class CollaborationStore
         try
         {
             updated = ApprovalWorkflow.Decide(
-                request, decision, actor, comment, _clock, ChangePlanHasher.Compute(plan));
+                request, decision, actor, comment, _clock, ChangePlanHasher.Compute(plan), _approvalPolicy);
         }
         catch (InvalidOperationException exception)
         {

@@ -12,6 +12,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Durable approvals and shared audit**: approvals survive restarts, bind to the plan hash, expire after seven days and refuse self-approval; the audit is a per-tenant SHA-256 chain with a verification endpoint.
 - **Service operations**: `installer/Install-CollaborationService.ps1` registers the Windows service with restart-on-failure and `-WhatIf`; CI now runs the service test suite.
 
+### Changed (service quorum)
+
+- **The service enforces its own approval quorum.** `Collaboration:Approval:{Security,Compliance,Cab}` sets distinct approvers per stage; values outside 1-9 stop startup, and three tests prove a staged two-person decision over HTTP, invalid-configuration rejection and the single-approver default.
+
 ### Added (versioned schema)
 
 - **The shared store is migration-managed.** A committed EF Core `InitialCreate` migration replaces `EnsureCreated`, so the schema is versioned and startup applies pending migrations. Three tests prove a fresh file is created by the migration, initialization is idempotent and the migrated schema serves the store; all 43 service tests now run against the migrated schema. SQL Server uses the same migration but is still unverified against a real instance.

@@ -37,7 +37,8 @@ builder.Services.AddSingleton<IClock, SystemClock>();
 builder.Services.AddSingleton(serviceProvider => new CollaborationStore(
     serviceProvider.GetRequiredService<IDbContextFactory<CollaborationDbContext>>(),
     serviceProvider.GetRequiredService<IClock>(),
-    ServiceDefaults.ReadLimits(builder.Configuration)));
+    ServiceDefaults.ReadLimits(builder.Configuration),
+    ServiceDefaults.ReadApprovalPolicy(builder.Configuration)));
 builder.Services.AddSingleton<TenantAuthorizationService>();
 
 var authority = builder.Configuration["AzureAd:Authority"];

@@ -1,3 +1,4 @@
+using PurviewCopilot.Application.Approvals;
 using PurviewCopilot.Collaboration;
 
 namespace PurviewCopilot.Service;
@@ -35,6 +36,21 @@ public static class ServiceDefaults
             Math.Clamp(maxPayload, 1_024, 16 * 1_048_576),
             Math.Clamp(maxOperations, 1, 5_000),
             Math.Clamp(maxPage, 1, 1_000));
+    }
+
+    /// <summary>
+    /// Distinct approvers required at each stage. Invalid values fail startup rather than silently
+    /// falling back to a weaker rule.
+    /// </summary>
+    public static ApprovalPolicy ReadApprovalPolicy(IConfiguration configuration)
+    {
+        var policy = new ApprovalPolicy(
+            configuration.GetValue("Collaboration:Approval:Security", 1),
+            configuration.GetValue("Collaboration:Approval:Compliance", 1),
+            configuration.GetValue("Collaboration:Approval:Cab", 1));
+
+        policy.Validate();
+        return policy;
     }
 
     /// <summary>

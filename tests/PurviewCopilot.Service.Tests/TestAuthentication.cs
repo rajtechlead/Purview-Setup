@@ -59,6 +59,9 @@ public class ServiceFactory : WebApplicationFactory<Program>
 {
     private readonly string _databasePath =
         Path.Combine(Path.GetTempPath(), $"pgc-service-{Guid.NewGuid():N}.db");
+    private readonly (string Key, string Value)[] _settings;
+
+    public ServiceFactory(params (string Key, string Value)[] settings) => _settings = settings;
 
     public CollaborationStore Store => Services.GetRequiredService<CollaborationStore>();
 
@@ -72,6 +75,11 @@ public class ServiceFactory : WebApplicationFactory<Program>
         builder.UseSetting("Service:RequireHttps", "false");
         builder.UseSetting("Service:BootstrapTenant", "");
         builder.UseSetting("Service:BootstrapAdmin", "");
+
+        foreach (var (key, value) in _settings)
+        {
+            builder.UseSetting(key, value);
+        }
 
         builder.ConfigureTestServices(services =>
         {

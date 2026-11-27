@@ -5,6 +5,19 @@
 > screens are not bound to it yet, so shared mode is currently available to the CLI and tests only;
 > desktop sign-in still requires `IDN-01`.
 
+## Approval quorum
+
+The service enforces distinct approvers per stage from configuration, validated at startup:
+
+```json
+"Collaboration": {
+  "Approval": { "Security": 2, "Compliance": 2, "Cab": 1 }
+}
+```
+
+A value outside 1-9 stops the service instead of weakening the rule. The desktop app keeps the same
+policy in its own settings, so local and shared approvals behave identically.
+
 ## Schema management
 
 The store ships a committed EF Core migration (`InitialCreate`) and applies it at startup with
