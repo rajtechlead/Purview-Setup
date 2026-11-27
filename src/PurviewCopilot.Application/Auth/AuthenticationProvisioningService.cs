@@ -35,6 +35,7 @@ public sealed class AuthenticationProvisioningService
         CancellationToken cancellationToken = default)
     {
         var steps = new List<ProvisioningStep>();
+        string? createdApplicationId = null;
 
         try
         {
@@ -67,6 +68,7 @@ public sealed class AuthenticationProvisioningService
 
             var application = await _gateway.CreateApplicationAsync(request.DisplayName, request.BootstrapAuth, cancellationToken)
                 .ConfigureAwait(false);
+            createdApplicationId = application.ApplicationId;
             steps.Add(new ProvisioningStep("Create application", "done", $"Application {application.ApplicationId}."));
 
             var servicePrincipalId = await _gateway.CreateServicePrincipalAsync(application.ApplicationId, request.BootstrapAuth, cancellationToken)
@@ -106,6 +108,8 @@ public sealed class AuthenticationProvisioningService
             await _gateway.GrantGraphAdminConsentAsync(servicePrincipalId, request.BootstrapAuth, cancellationToken)
                 .ConfigureAwait(false);
             steps.Add(new ProvisioningStep("Grant Graph permissions", "done", "Least-privilege Graph roles assigned and admin consent granted."));
+            steps.Add(new ProvisioningStep("Admin consent hand-off", "done",
+                $"Consent was granted programmatically. If a re-grant is ever needed, an administrator can open {ConsentLink(request, application.ApplicationId)}."));
 
             var auth = new AuthConfiguration(
                 request.Mode,
@@ -138,6 +142,12 @@ public sealed class AuthenticationProvisioningService
         {
             steps.Add(new ProvisioningStep("Provisioning", "failed", ex.Message));
 
+            if (createdApplicationId is not null)
+            {
+                steps.Add(new ProvisioningStep("Grant admin consent manually", "action required",
+                    $"An administrator with Privileged Role Administrator or Global Administrator can open {ConsentLink(request, createdApplicationId)} to grant consent, then validate the connection."));
+            }
+
             await SafeAuditAsync(request.Operator, "AuthProvisioningFailed", request.TenantId,
                 ex.GetType().Name, cancellationToken).ConfigureAwait(false);
 
@@ -149,6 +159,9 @@ public sealed class AuthenticationProvisioningService
                 steps);
         }
     }
+
+    private static string ConsentLink(ProvisioningRequest request, string applicationId) =>
+        AdminConsentLink.Build(request.BootstrapAuth.Cloud, request.TenantId, applicationId);
 
     public string BuildRollbackScript(
         ProvisioningRequest request,

@@ -12,6 +12,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Durable approvals and shared audit**: approvals survive restarts, bind to the plan hash, expire after seven days and refuse self-approval; the audit is a per-tenant SHA-256 chain with a verification endpoint.
 - **Service operations**: `installer/Install-CollaborationService.ps1` registers the Windows service with restart-on-failure and `-WhatIf`; CI now runs the service test suite.
 
+### Added (admin consent hand-off)
+
+- **A consent link the operator can act on.** When programmatic admin consent fails, provisioning now returns a tenant-specific admin-consent URL and the exact administrator role needed, and a successful grant records a re-grant link. The link carries only the tenant and application id — never a secret — and respects the GCC High/DoD authority.
+
 ### Added (certificate lifecycle)
 
 - **Overlap rotation policy.** Certificates remain the default credential with a 12-month default, but rotation is now a tested policy rather than an instruction: a 30-day expiry warning, explicit acknowledgement for lifetimes over 24 months, and an ordered plan that adds and validates the replacement before retiring the old key after a 7-day overlap. The settings rotation action reports the overlap deadline.

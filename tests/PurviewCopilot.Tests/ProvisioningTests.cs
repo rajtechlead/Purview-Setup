@@ -34,7 +34,7 @@ public class ProvisioningTests
         var result = await service.ProvisionAsync(Request());
 
         Assert.True(result.Succeeded);
-        Assert.Equal("app-id", result.ApplicationId);
+        Assert.Equal(FakeGateway.AppId, result.ApplicationId);
         Assert.Equal("sp-id", result.ServicePrincipalId);
         Assert.Equal("THUMB", result.Thumbprint);
         Assert.Equal(AuthMode.Certificate, result.Auth!.Mode);
@@ -94,6 +94,32 @@ public class ProvisioningTests
     }
 
     [Fact]
+    public async Task FailedConsent_ProvidesAnAdminConsentHandOffStep()
+    {
+        var service = new AuthenticationProvisioningService(
+            new FakeGateway(failConsent: true), new FakeCertificates(), new FakeAudit(), new FakeClock());
+
+        var result = await service.ProvisionAsync(Request());
+
+        Assert.False(result.Succeeded);
+        var step = Assert.Single(result.Steps, s => s.Name == "Grant admin consent manually");
+        Assert.Contains($"client_id={FakeGateway.AppId}", step.Detail, StringComparison.Ordinal);
+        Assert.Contains("/v2.0/adminconsent?", step.Detail, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task SuccessfulConsent_RecordsAReGrantLink()
+    {
+        var service = new AuthenticationProvisioningService(
+            new FakeGateway(), new FakeCertificates(), new FakeAudit(), new FakeClock());
+
+        var result = await service.ProvisionAsync(Request());
+
+        Assert.True(result.Succeeded);
+        Assert.Contains(result.Steps, s => s.Name == "Admin consent hand-off" && s.Detail.Contains(FakeGateway.AppId, StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void RealCertificateCreation_SupportsRsaAndEcc()
     {
         var certificates = new Infrastructure.Auth.WindowsCertificateService();
@@ -132,6 +158,11 @@ public class ProvisioningTests
 
     private sealed class FakeGateway : IAuthenticationProvisioningGateway
     {
+        public const string AppId = "11111111-2222-3333-4444-555555555555";
+        private readonly bool _failConsent;
+
+        public FakeGateway(bool failConsent = false) => _failConsent = failConsent;
+
         public int Calls { get; private set; }
         public int CertificatesAdded { get; private set; }
         public int ConsentsGranted { get; private set; }
@@ -139,7 +170,7 @@ public class ProvisioningTests
         public Task<(string ApplicationId, string ObjectId)> CreateApplicationAsync(string displayName, AuthConfiguration bootstrap, CancellationToken cancellationToken = default)
         {
             Calls++;
-            return Task.FromResult(("app-id", "object-id"));
+            return Task.FromResult((AppId, "object-id"));
         }
 
         public Task<string> CreateServicePrincipalAsync(string applicationId, AuthConfiguration bootstrap, CancellationToken cancellationToken = default)
@@ -169,7 +200,9 @@ public class ProvisioningTests
         public Task GrantGraphAdminConsentAsync(string servicePrincipalId, AuthConfiguration bootstrap, CancellationToken cancellationToken = default)
         {
             ConsentsGranted++;
-            return Task.CompletedTask;
+            return _failConsent
+                ? Task.FromException(new InvalidOperationException("Graph consent requires Privileged Role Administrator."))
+                : Task.CompletedTask;
         }
 
         public Task<(bool Ok, string Message)> ValidateAsync(AuthConfiguration auth, CancellationToken cancellationToken = default) =>
