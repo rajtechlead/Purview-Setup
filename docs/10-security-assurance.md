@@ -7,7 +7,7 @@ This record maps the project's security development lifecycle (Microsoft SDL) an
 | SDL phase | Practice | Evidence in this repository |
 | --- | --- | --- |
 | Training | Security and privacy awareness | Security expectations, the bug bar and the disclosure route are in `SECURITY.md`; the privacy guardrail has its own test suite (`PrivacyTests`). |
-| Requirements | Security and privacy requirements | `docs/03-security-architecture.md` defines certificate-first authentication, DPAPI at rest, the fail-closed live-execution gate and the AI privacy guard. `docs/08-requirements-tracker.md` tracks each with a proof code. |
+| Requirements | Security and privacy requirements | `docs/03-security-architecture.md` defines certificate-first authentication, DPAPI at rest, the fail-closed live-execution gate and the AI privacy guard. `docs/project/trackers/01-requirements.csv` tracks each with a status and proof. |
 | Design | Threat modelling and attack-surface review | `docs/03-security-architecture.md` §Trust boundaries and `docs/01-solution-architecture.md` record the local store, token provider, Graph/PowerShell collectors, AI providers, plugins and the update channel. |
 | Implementation | Approved patterns, no secrets in code | Two runtime NuGet dependencies (`Azure.Identity`, `Microsoft.Data.Sqlite`); Graph over REST; secrets arrive through process environment, DPAPI or Key Vault. `ScrubForLog` and the privacy detector cover log/prompt egress. |
 | Verification | Static analysis, dependency and secret checks | `.github/workflows/codeql.yml` runs CodeQL for C#; `.github/workflows/ci.yml` builds, runs 155 tests, scans NuGet packages for known vulnerabilities and publishes without symbols. |
@@ -19,7 +19,7 @@ This record maps the project's security development lifecycle (Microsoft SDL) an
 
 | Practice | Implementation | Evidence |
 | --- | --- | --- |
-| PO.1 — Security requirements | Requirements tracked with status and proof | `docs/08-requirements-tracker.md` |
+| PO.1 — Security requirements | Requirements tracked with status and proof | `docs/project/trackers/01-requirements.csv` |
 | PO.2 — Roles and responsibilities | Separation of duties, approver roles and per-customer RBAC | `SeparationOfDuties`, `TenantAccessPolicy`, approval stages |
 | PO.3 — Toolchain | Pinned .NET 10 SDK, deterministic build settings, NuGet audit warnings promoted to errors, CI on `windows-latest` | `global.json`, `Directory.Build.props`, `.github/workflows/ci.yml` |
 | PO.5 — Secure environments | Local-first store, DPAPI, no hosted tenant data | `DpapiSecretProtector`, `SqliteStore`, `docs/03` |

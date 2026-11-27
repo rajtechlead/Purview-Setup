@@ -4,8 +4,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **Canonical tracker suite**: requirements, deliverables and traceability status were spread across three documents that could disagree. They are replaced by `docs/project/trackers/` (dashboard, requirements, Purview capabilities, Entra permissions, test evidence, risks and decisions, platform support, release gates), with all 135 legacy requirement ids migrated and 21 requirements added for the current master prompt. The superseded `docs/07`, `docs/08` and `docs/09` are removed and every inbound link now points at the dashboard.
+- **.NET 10 LTS**: all projects target .NET 10 and the SDK is pinned in `global.json`; CI and CodeQL use the .NET 10 SDK. The About page, installer metadata, admin guide and README state .NET 10.
+
+### Added
+
+- **Windows lifecycle gate**: `PlatformSupport` now validates build, edition, servicing branch and ESU against an 11-release matrix, refuses end-of-life releases and Windows 10 Home/Pro, and warns inside 90 days of end of support. The WPF shell reads the real build and edition from the registry. Covered by 14 tests.
+- **Dependency audit gate**: NuGet audit advisories (`NU1901`–`NU1904`) are build errors, so a known-vulnerable package cannot be merged silently.
+
 ### Fixed
 
+- **High-severity SQLite advisory**: `Microsoft.Data.Sqlite` 10.0.15 pulled `SQLitePCLRaw.lib.e_sqlite3` 2.1.11, which is affected by GHSA-2m69-gcr7-jv3q. `SQLitePCLRaw.bundle_e_sqlite3` 2.1.14 is pinned and the vulnerability scan is clean.
+- **DPAPI test portability**: the six tests that exercise Windows DPAPI are marked with a Windows-only fact, so a non-Windows audit host reports them as skipped with a reason instead of failing them.
 - **Duplicate compliance control id**: two Compliance Manager controls both used `CPM-07`, so findings from "Service principals avoid client secrets" and "Secure score is actively managed" collided when remediation actions were keyed by finding id. The client-secret controls are now `CPM-06` (service principals) and `CPM-07` (app registrations), the secure-score control is `CPM-08`, and `Catalog_CoversEveryModule_WithAtLeastTwoControls` fails if a control id is ever duplicated again.
 
 ### Changed
