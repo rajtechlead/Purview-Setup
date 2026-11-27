@@ -3,8 +3,8 @@
     Builds the publish output and the MSI for Purview Governance Copilot.
 
 .DESCRIPTION
-    Requires the .NET 9 SDK and WiX 5.0.2 (`dotnet tool install --global wix --version 5.0.2`).
-    The install is framework-dependent, so targets need the .NET 9 Desktop Runtime.
+    Requires the .NET 10 SDK and WiX 5.0.2 (`dotnet tool install --global wix --version 5.0.2`).
+    The install is framework-dependent, so targets need the .NET 10 Desktop Runtime.
     The MSI and SHA-256 are copied to dist/. Build the optional MSIX separately with
     installer/msix/Build-Msix.ps1 (it does not require a signing certificate).
 

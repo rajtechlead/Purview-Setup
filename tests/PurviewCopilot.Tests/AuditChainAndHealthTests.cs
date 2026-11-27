@@ -150,7 +150,7 @@ public class AuditChainAndHealthTests
         }
     }
 
-    [Fact]
+    [WindowsFact]
     public async Task Settings_ProtectsClientSecretAtRest()
     {
         var directory = Path.Combine(Path.GetTempPath(), "pgc-settings-" + Guid.NewGuid().ToString("N"));

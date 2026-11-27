@@ -8,7 +8,7 @@ namespace PurviewCopilot.Tests;
 
 public class FindingActionTests
 {
-    [Fact]
+    [WindowsFact]
     public async Task Actions_RoundTripPerTenant_AndEncryptNotes()
     {
         var directory = Path.Combine(Path.GetTempPath(), "pgc-actions-" + Guid.NewGuid().ToString("N"));
@@ -55,7 +55,7 @@ public class FindingActionTests
         }
     }
 
-    [Fact]
+    [WindowsFact]
     public async Task SavingTheSameFindingTwice_UpdatesInsteadOfDuplicating()
     {
         var directory = Path.Combine(Path.GetTempPath(), "pgc-actions-" + Guid.NewGuid().ToString("N"));

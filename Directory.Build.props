@@ -12,5 +12,16 @@
     <AnalysisLevel>latest</AnalysisLevel>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);CA1416</NoWarn>
+    <!-- A known-vulnerable dependency must break the build, not just warn (NIST SSDF RV.1). -->
+    <WarningsAsErrors>$(WarningsAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsAsErrors>
+  </PropertyGroup>
+
+  <!--
+    The Windows-targeted libraries and tests compile on non-Windows build agents for audit and
+    CI verification. The WPF shell still requires Windows to build, because the XAML markup
+    compiler is Windows-only. This flag is inert on Windows.
+  -->
+  <PropertyGroup Condition="'$(OS)' != 'Windows_NT'">
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
   </PropertyGroup>
 </Project>

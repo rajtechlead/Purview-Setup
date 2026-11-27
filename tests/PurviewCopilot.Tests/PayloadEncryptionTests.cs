@@ -8,7 +8,7 @@ namespace PurviewCopilot.Tests;
 
 public class PayloadEncryptionTests
 {
-    [Fact]
+    [WindowsFact]
     public async Task AssessmentEvidence_IsEncryptedAtRest_AndStillLoads()
     {
         var directory = Path.Combine(Path.GetTempPath(), "pgc-enc-" + Guid.NewGuid().ToString("N"));

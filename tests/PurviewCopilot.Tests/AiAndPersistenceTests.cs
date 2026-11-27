@@ -132,7 +132,7 @@ public class AiAndPersistenceTests
         Assert.Equal(0.0002, response.EstimatedCostUsd, 6);
     }
 
-    [Fact]
+    [WindowsFact]
     public void Sqlite_RoundTripsAssessment_ApprovalAndSettings()
     {
         var directory = Path.Combine(Path.GetTempPath(), "pgc-tests-" + Guid.NewGuid().ToString("N"));

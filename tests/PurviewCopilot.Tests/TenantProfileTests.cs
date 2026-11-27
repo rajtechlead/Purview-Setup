@@ -35,7 +35,7 @@ public class TenantProfileTests
                 Array.Empty<ModuleScore>()),
             Array.Empty<Finding>(), Array.Empty<Recommendation>(), 49);
 
-    [Fact]
+    [WindowsFact]
     public async Task TenantProfiles_RoundTrip_WithProtectedSecrets()
     {
         var directory = Path.Combine(Path.GetTempPath(), "pgc-tenants-" + Guid.NewGuid().ToString("N"));

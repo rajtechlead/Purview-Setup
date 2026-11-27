@@ -12,7 +12,7 @@ public sealed class AboutViewModel : PageViewModel
     public string DesignedBy => "Raj Raja";
     public string Owner => "Belle-RajaCorp";
     public string Contact => "contact@belle-rajacorp.com";
-    public string Platform => ".NET 9 · WPF · Microsoft Graph · Security & Compliance PowerShell · SQLite";
+    public string Platform => ".NET 10 LTS · WPF · Microsoft Graph · Security & Compliance PowerShell · SQLite";
     public string SupportNote =>
         "Assessment and reporting are read-only. Tenant changes require a generated change plan, simulation and a completed approval workflow. AI prompts are sanitized locally and audited.";
 

@@ -2,11 +2,11 @@
 
 ## 1. Supported platforms
 
-Windows 10 1809+ / Windows 11 / Windows Server 2019, 2022, 2025. The application refuses to start below build 17763 and states why. No administrator rights are required: certificates go to `CurrentUser\My`, data to `%LOCALAPPDATA%\PurviewGovernanceCopilot`.
+Windows 11 24H2 Enterprise/Education or 25H2+, Windows Server 2019/2022/2025, or Windows 10 Enterprise LTSC with active ESU. The application refuses to start below build 17763, on an end-of-life release or on a Windows 10 Home/Pro edition, and states why. The authoritative matrix is `docs/project/trackers/06-platform-support.csv`. No administrator rights are required: certificates go to `CurrentUser\My`, data to `%LOCALAPPDATA%\PurviewGovernanceCopilot`.
 
 Prerequisites:
 
-- .NET 9 Desktop Runtime (x64) for the framework-dependent build; the self-contained publish needs nothing installed.
+- .NET 10 Desktop Runtime (x64) for the framework-dependent build; the self-contained publish needs nothing installed.
 - Windows PowerShell 5.1 with `ExchangeOnlineManagement` (`Install-Module ExchangeOnlineManagement -Scope AllUsers`) for Purview configuration reads.
 - Outbound HTTPS to `graph.microsoft.com`, `*.ps.compliance.protection.outlook.com`, and any AI endpoint you enable.
 
@@ -111,7 +111,7 @@ Create an MSI application from the WiX output; use the same detection method. De
 
 ### MSIX sideload
 
-Build the package with `powershell -File installer/msix/Build-Msix.ps1 -PublishDir artifacts/publish -Version 1.0.0.0`. The output is `dist/PurviewGovernanceCopilot-<version>.msix` plus a SHA-256 file. The package is framework-dependent, so install the .NET 9 Desktop Runtime first.
+Build the package with `powershell -File installer/msix/Build-Msix.ps1 -PublishDir artifacts/publish -Version 1.0.0.0`. The output is `dist/PurviewGovernanceCopilot-<version>.msix` plus a SHA-256 file. The package is framework-dependent, so install the .NET 10 Desktop Runtime first.
 
 Install with `Add-AppxPackage .\dist\PurviewGovernanceCopilot-1.0.0.0.msix`. Unsigned packages require developer mode or a trusted signing certificate whose subject matches `CN=Belle-RajaCorp`; supply `-CertificatePath` and set `PGC_MSIX_CERT_PASSWORD` to sign during the build. Remove with `Remove-AppxPackage BelleRajaCorp.PurviewGovernanceCopilot_<version>_x64__*`.
 
@@ -193,7 +193,7 @@ Use `--data-dir` to point at a service account's evidence store. The CLI never a
 | AI: 429/quota | Free tier exhausted | Failover should continue automatically; check the usage panel and provider priority |
 | Prompt blocked | Block mode and a secret/tenant identifier detected | Remove the value, or switch to Tokenize for a reviewable sanitized prompt |
 | PFX export fails | Certificate has no exportable private key | Recreate the certificate from the app (created exportable) |
-| App will not start | OS below build 17763, or .NET runtime missing | Use a supported OS; install the .NET 9 Desktop Runtime or the self-contained build |
+| App will not start | OS below build 17763, an end-of-life Windows release, an unsupported edition, or .NET runtime missing | Use a supported OS from `docs/project/trackers/06-platform-support.csv`; install the .NET 10 Desktop Runtime or the self-contained build |
 | Report looks stale | Assessment not re-run | Reports are generated from the current assessment only |
 
 ## 8. Logs and diagnostics

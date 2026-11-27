@@ -21,7 +21,7 @@ This record maps the project's security development lifecycle (Microsoft SDL) an
 | --- | --- | --- |
 | PO.1 — Security requirements | Requirements tracked with status and proof | `docs/08-requirements-tracker.md` |
 | PO.2 — Roles and responsibilities | Separation of duties, approver roles and per-customer RBAC | `SeparationOfDuties`, `TenantAccessPolicy`, approval stages |
-| PO.3 — Toolchain | Pinned .NET 9 SDK, deterministic build settings, CI on `windows-latest` | `global.json`, `.github/workflows/ci.yml` |
+| PO.3 — Toolchain | Pinned .NET 10 SDK, deterministic build settings, NuGet audit warnings promoted to errors, CI on `windows-latest` | `global.json`, `Directory.Build.props`, `.github/workflows/ci.yml` |
 | PO.5 — Secure environments | Local-first store, DPAPI, no hosted tenant data | `DpapiSecretProtector`, `SqliteStore`, `docs/03` |
 | PS.1 — Protect code | Branch protection and review are repository settings; changes are committed with reviewable diffs | Git history |
 | PS.2 — Verify third-party components | Only two runtime packages; vulnerability scan in CI | `ci.yml` vulnerability step |

@@ -11,7 +11,7 @@ The application must assess and govern Microsoft Purview without becoming a new 
 | Privacy | AI traffic passes a local guard port; providers receive sanitized text only |
 | Extensibility | Modules are data-driven rules registered in one catalog; providers are factory-created |
 | Offline/regulated use | No cloud dependency for assessment or reporting; local AI providers supported; SQLite only |
-| Windows-only, commercial | WPF on .NET 9, per-user install, MSI/MSIX packaging, code-signing hooks in CI |
+| Windows-only, commercial | WPF on .NET 10 LTS, per-user install, MSI/MSIX packaging, code-signing hooks in CI |
 
 WinUI 3 was considered (and remains the preferred future shell), but the verified build target in this environment is WPF: it ships in-box with the Windows Desktop runtime, needs no Windows App SDK deployment step, and keeps the solution buildable with the .NET SDK alone. The UI-agnostic Domain/Application/Infrastructure layers mean a WinUI shell can be added without touching business logic.
 

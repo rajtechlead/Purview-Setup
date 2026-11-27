@@ -25,7 +25,7 @@ Designed and built by **Raj Raja** · Owned by **Belle-RajaCorp** · contact@bel
 
 ## Quick start
 
-Requirements: **Windows 10/11 or Windows Server 2019/2022/2025**, .NET 9 Desktop Runtime (or the self-contained build), and PowerShell 5.1+ with `ExchangeOnlineManagement` for Purview configuration reads.
+Requirements: a Windows release inside the [supported platform matrix](docs/project/trackers/06-platform-support.csv) (Windows 11 24H2 Enterprise+ or 25H2+, Windows Server 2019/2022/2025, or Windows 10 Enterprise LTSC with ESU), the **.NET 10 Desktop Runtime** (or the self-contained build), and PowerShell 5.1+ with `ExchangeOnlineManagement` for Purview configuration reads. End-of-life releases are refused at startup.
 
 ```powershell
 # Build and run from source
@@ -64,7 +64,7 @@ src/
   PurviewCopilot.UI/              # WPF shell, dashboards, pages (MVVM)
   PurviewCopilot.Cli/             # headless `pgc assess` / `pgc verify-audit`
 tests/
-  PurviewCopilot.Tests/           # 157 automated tests
+  PurviewCopilot.Tests/           # 171 tests (165 cross-platform, 6 Windows-only DPAPI tests skipped elsewhere)
 docs/                             # architecture, design, security, guides, trackers
 installer/                        # WiX MSI project + MSIX build script and assets
 dist/                             # built MSI and MSIX + SHA-256 (framework-dependent, unsigned)

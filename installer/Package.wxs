@@ -7,7 +7,7 @@
     Build:
       dotnet publish src/PurviewCopilot.UI -c Release -r win-x64 -o artifacts/publish
       dotnet build installer/PurviewGovernanceCopilot.wixproj -c Release -p:PublishDir=..\artifacts\publish\
-    Requires the .NET 9 Desktop Runtime on the target machine. Built with WiX 5 (MS-RL);
+    Requires the .NET 10 Desktop Runtime on the target machine. Built with WiX 5 (MS-RL);
     WiX 7 requires accepting the OSMF EULA.
     Silent install:  msiexec /i PurviewGovernanceCopilot.msi /qn
     Uninstall:       msiexec /x PurviewGovernanceCopilot.msi /qn

@@ -14,15 +14,23 @@ public partial class App : System.Windows.Application
         DispatcherUnhandledException += OnUnhandledException;
         AppDomain.CurrentDomain.UnhandledException += (_, args) => ShowFatal(args.ExceptionObject as Exception);
 
-        // Windows Server 2019 / Windows 10 1809 (build 17763) is the supported floor.
-        // Older, end-of-life builds are refused rather than allowed to fail unpredictably.
-        if (!PlatformSupport.IsSupported(Environment.OSVersion.Version))
+        // Windows Server 2019 / Windows 10 1809 (build 17763) is the supported floor. The gate also
+        // refuses end-of-life releases and editions the .NET 10 desktop runtime does not support.
+        var platform = PlatformSupport.Evaluate(WindowsHostInfo.Read());
+        if (!platform.IsSupported)
         {
             MessageBox.Show(
-                $"Purview Governance Copilot requires {PlatformSupport.Describe()}",
+                $"{platform.Title}.\n\n{platform.Detail}\n\nPurview Governance Copilot requires {PlatformSupport.Describe()}",
                 "Unsupported operating system", MessageBoxButton.OK, MessageBoxImage.Stop);
             Shutdown(1);
             return;
+        }
+
+        if (platform.Status == PlatformStatus.Warning)
+        {
+            MessageBox.Show(
+                $"{platform.Title}.\n\n{platform.Detail}",
+                "Platform support warning", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
 
         try
