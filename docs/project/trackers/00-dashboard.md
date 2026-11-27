@@ -8,8 +8,8 @@ here; no requirement count or status is duplicated elsewhere. Last verified **27
 | Version | 1.0.0 |
 | Production target | .NET 10 LTS (supported to 2028-11-14) |
 | Branch state | `main` |
-| Requirements tracked | 156 (135 migrated, 21 added for the current master prompt) |
-| Automated tests | 176 total: 170 pass, 6 Windows-only DPAPI tests skipped on non-Windows hosts |
+| Requirements tracked | 157 (135 migrated, 22 added for the current master prompt) |
+| Automated tests | 208 total: 202 pass, 6 Windows-only DPAPI tests skipped on non-Windows hosts |
 | Release decision | **Not releasable.** Gates G5, G6, G12 and G13 in [07](07-release-gates.md) fail; G4, G10 and G11 are open. |
 
 ## Baseline audit — 27 November 2026
@@ -45,11 +45,14 @@ here; no requirement count or status is duplicated elsewhere. Last verified **27
 
 ### Gaps and duplication found
 
-- **Genuine multi-user collaboration is absent.** Collaboration is per-user SQLite. There is no
-  service, no shared store, no server-side RBAC, no concurrency control and no shared approvals
-  (`SRV-01`–`SRV-05`). This is the largest gap against the product mission.
-- **No interactive Entra SSO.** MSAL/WAM sign-in, claim-to-role mapping and the seven required
-  application roles are missing (`IDN-01`, `IDN-02`).
+- **Multi-user collaboration is partially delivered.** The customer-hosted service, shared store,
+  seven-role server-side RBAC, tenant isolation, concurrency stamps, durable approvals and shared
+  audit are implemented and tested over HTTP ([service doc](../../11-collaboration-service.md)).
+  The desktop client is not wired to it yet (`SRV-07`), SQL Server has not been run against a real
+  instance, and there are no versioned migrations.
+- **No interactive Entra SSO.** MSAL/WAM sign-in and claim-to-role mapping are missing; the service
+  enforces all seven roles from its membership store, but the desktop app still has four local
+  roles (`IDN-01`, `IDN-02`).
 - **Provisioned permissions do not match collector needs.** The provisioning wizard requests six
   Graph permissions, while role-management, Conditional Access and application-inventory reads
   need more. Captured in [03](03-entra-permissions.csv) and `R-07`.
@@ -87,7 +90,7 @@ simulations. They are recorded as `Simulated`, never as `Live-verified`.
 | M1 | .NET 10 LTS, dependency advisory, lifecycle platform gate | Complete | Commit `a879e87`; `PLT-05`, `PLT-07` |
 | M2 | Canonical tracker suite and documentation reset | Complete | This directory; `PLT-06` |
 | M2.1 | Approval hardening: plan hash, expiry, self-approval block | Complete | `ChangePlanHasher`, `WorkflowTests`; quorum remains open under `CHG-03` |
-| M3 | Self-hosted multi-user service, central store, server RBAC | Not started | `SRV-01`–`SRV-05` |
+| M3 | Self-hosted multi-user service, central store, server RBAC | In progress — service delivered and tested; SQL Server and desktop wiring pending | `SRV-01`–`SRV-05`, `SRV-07`; [service doc](../../11-collaboration-service.md) |
 | M4 | Entra SSO (WAM), seven app roles, provisioning hand-off | Not started | `IDN-01`–`IDN-07` |
 | M5 | Approval hardening: plan hash, expiry, quorum, drift recheck | Not started | `CHG-03`, `CHG-04` |
 | M6 | Data Map / Unified Catalog and missing workload coverage | Not started | `DSC-15`, `DSC-16` |
@@ -97,13 +100,13 @@ simulations. They are recorded as `Simulated`, never as `Live-verified`.
 
 | Status | Count | Share |
 | --- | --- | --- |
-| Tested | 58 | 37% |
-| Implemented (build-verified or documented) | 46 | 29% |
+| Tested | 62 | 39% |
+| Implemented (build-verified or documented) | 47 | 30% |
 | Simulated (code + tests, no live verification) | 19 | 12% |
 | Partial | 16 | 10% |
-| Unsupported | 16 | 10% |
+| Unsupported | 12 | 8% |
 | Blocked | 1 | 1% |
-| **Total** | **156** | |
+| **Total** | **157** | |
 
 "Done" means working behaviour plus reproducible proof. Only **Tested** meets that bar; the
 dashboard does not count Implemented, Simulated or Partial as complete.
@@ -113,10 +116,10 @@ dashboard does not count Implemented, Simulated or Partial as complete.
 | Area | Health | Note |
 | --- | --- | --- |
 | Build | Green | Domain, Application and Infrastructure build in Release on .NET 10; WPF requires Windows |
-| Tests | Green | 170 pass, 6 skipped on non-Windows, 0 fail |
+| Tests | Green | 202 pass, 6 skipped on non-Windows, 0 fail |
 | Dependencies | Green | No vulnerable packages; audit advisories are build errors |
 | Security | Amber | Strong local controls; unsigned binaries, no SBOM, no live verification |
-| Coverage | Red | Multi-user service, SSO and Data Map are absent |
+| Coverage | Amber | Shared service delivered; SSO, desktop wiring and Data Map are absent |
 | Documentation | Amber | Canonical trackers now exist; user-facing gaps are labelled |
 
 ## Trackers

@@ -20,6 +20,7 @@ Designed and built by **Raj Raja** · Owned by **Belle-RajaCorp** · contact@bel
 | Multi-tenant | Customer tenant registry with per-customer Viewer/Operator/Approver/Administrator access with per-tenant credentials, tenant activation, a cross-tenant portfolio of latest scores and CSV export |
 | Updates | HTTPS manifest check with version comparison and SHA-256-verified MSI download; installing stays manual |
 | Action centre | Owner, due date, status and DPAPI-encrypted notes for every open finding, stored per tenant |
+| Collaboration | Optional customer-hosted Windows service/API with a shared SQL Server or SQLite store, seven server-enforced roles, tenant isolation, concurrency control, durable approvals and a per-tenant hash-chained audit ([guide](docs/11-collaboration-service.md)) |
 | Reporting | PDF, DOCX, XLSX, HTML, JSON, CSV and Markdown executive/framework reports (ISO 27001, NIST CSF, CIS v8, SOC 2, HIPAA, GDPR, PCI-DSS, ISO 42001, NIST AI RMF), generated with no external report library |
 | AI | OpenAI, Azure OpenAI, Anthropic, Gemini, DeepSeek, Grok, OpenRouter, Ollama, LM Studio, Open WebUI, custom endpoints — with quota-aware failover, token/cost tracking and offline mode |
 
@@ -61,10 +62,13 @@ src/
   PurviewCopilot.Domain/          # models, scoring, privacy detection (no I/O)
   PurviewCopilot.Application/     # modules, assessment, planning, approvals, AI orchestration, reports
   PurviewCopilot.Infrastructure/  # Graph, PowerShell, SQLite, certificates, Key Vault, AI providers
+  PurviewCopilot.Collaboration/   # shared EF Core store, seven-role RBAC, tenant isolation, audit chain
+  PurviewCopilot.Service/         # optional customer-hosted ASP.NET Core collaboration API
   PurviewCopilot.UI/              # WPF shell, dashboards, pages (MVVM)
   PurviewCopilot.Cli/             # headless `pgc assess` / `pgc verify-audit`
 tests/
-  PurviewCopilot.Tests/           # 176 tests (170 cross-platform, 6 Windows-only DPAPI tests skipped elsewhere)
+  PurviewCopilot.Tests/           # desktop tests (6 Windows-only DPAPI tests skipped elsewhere)
+  PurviewCopilot.Service.Tests/   # store and HTTP API tests (208 tests in total)
 docs/                             # architecture, design, security, guides, trackers
 installer/                        # WiX MSI project + MSIX build script and assets
 dist/                             # built MSI and MSIX + SHA-256 (framework-dependent, unsigned)
@@ -95,6 +99,7 @@ dotnet run --project src/PurviewCopilot.Cli -c Release -- verify-audit
 | [06 Roadmap](docs/06-roadmap.md) | Completed phases and the remaining work with reasons |
 | [Project trackers](docs/project/trackers/00-dashboard.md) | Canonical dashboard, requirements, Purview capabilities, Entra permissions, test evidence, risks, platform support and release gates |
 | [10 Security assurance](docs/10-security-assurance.md) | SDL/SSDF mapping, threat model and release security sign-off |
+| [11 Collaboration service](docs/11-collaboration-service.md) | Customer-hosted service: deployment, Entra setup, roles, endpoints, database and limits |
 | [SECURITY.md](SECURITY.md) | Vulnerability disclosure and the severity bug bar |
 
 ## Status

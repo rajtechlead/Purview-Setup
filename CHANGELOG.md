@@ -4,6 +4,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added (collaboration service)
+
+- **Customer-hosted collaboration service**: `PurviewCopilot.Service` (ASP.NET Core, optional Windows service) with JWT validation, fail-closed startup, tenant-scoped endpoints for assessments, plans, approvals, audit and membership, and a `/health` probe. HTTPS and Entra authority/audience are mandatory outside the test environment.
+- **Shared store**: `PurviewCopilot.Collaboration` uses EF Core 10 against SQLite (single node) or SQL Server (team), with optimistic concurrency stamps, payload and operation limits, and a schema marker. Versioned migrations are still to come.
+- **Seven-role server-side RBAC**: Viewer, Analyst, Designer, Operator, Approver, Auditor and Application Administrator, each with an explicit permission set. Authorisation is resolved from the membership table on every request, so a path parameter cannot cross tenants and an Entra role alone grants nothing.
+- **Durable approvals and shared audit**: approvals survive restarts, bind to the plan hash, expire after seven days and refuse self-approval; the audit is a per-tenant SHA-256 chain with a verification endpoint.
+- **Service operations**: `installer/Install-CollaborationService.ps1` registers the Windows service with restart-on-failure and `-WhatIf`; CI now runs the service test suite.
+
 ### Changed
 
 - **Canonical tracker suite**: requirements, deliverables and traceability status were spread across three documents that could disagree. They are replaced by `docs/project/trackers/` (dashboard, requirements, Purview capabilities, Entra permissions, test evidence, risks and decisions, platform support, release gates), with all 135 legacy requirement ids migrated and 21 requirements added for the current master prompt. The superseded `docs/07`, `docs/08` and `docs/09` are removed and every inbound link now points at the dashboard.

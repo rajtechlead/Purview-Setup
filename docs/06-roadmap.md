@@ -2,7 +2,7 @@
 
 Status source of truth: [00 — Project dashboard](project/trackers/00-dashboard.md). This page explains sequencing and why anything is still open.
 
-**Current position (27 November 2026):** 156 tracked requirements — 58 tested, 46 implemented, 19 simulated, 16 partial, 16 unsupported, 1 blocked. Build succeeds on .NET 10; 176 tests (170 pass, 6 Windows-only skipped); MSI and unsigned MSIX are produced. No live tenant, signing certificate, Key Vault, webhook or AI key was available, so tenant-dependent paths remain unverified rather than claimed.
+**Current position (27 November 2026):** 157 tracked requirements — 62 tested, 47 implemented, 19 simulated, 16 partial, 12 unsupported, 1 blocked. Build succeeds on .NET 10; 208 tests (202 pass, 6 Windows-only skipped); MSI and unsigned MSIX are produced. No live tenant, signing certificate, Key Vault, webhook or AI key was available, so tenant-dependent paths remain unverified rather than claimed.
 
 ## Completed phases
 
@@ -43,7 +43,7 @@ Complete.
 
 Ordered by risk to a commercial claim.
 
-0. **Multi-user service and Entra SSO (SRV-01–SRV-05, IDN-01–IDN-07).** The product cannot claim genuine multi-user collaboration while each workstation owns a local SQLite file, and there is no interactive sign-in. This is the top architectural gap: a customer-hosted Windows service/API with server-side RBAC, a shared relational store, durable approvals and claim-mapped app roles.
+0. **Desktop wiring and Entra SSO (SRV-07, IDN-01–IDN-07).** The customer-hosted service now exists and is tested: shared store, seven-role server RBAC, tenant isolation, concurrency, durable approvals and a per-tenant audit chain ([service guide](11-collaboration-service.md)). Remaining: wire the WPF client to it, add MSAL/WAM sign-in and claim mapping, verify SQL Server against a real instance, and ship versioned migrations.
 1. **Code signing and update trust (SEC-11, SEC-16).** Owner supplies an Authenticode certificate; CI signs the EXE/MSI/MSIX; publish a hosted HTTPS manifest and decide whether automatic install is allowed. The hash-verified download path already exists. Owner action, not code-complete here.
 2. **Automated rollback restore (DEP-03, SAF-02).** Implement a reviewed restore of the exported object backup against a live tenant, execute it through the fail-closed executor, validate post-restore state and record the result. Blocked without a tenant; must not be faked.
 3. **DSPM and AI-governance discovery (DSC-08) and Defender/Compliance Manager ingestion (DSC-11).** DSPM enablement and Compliance Manager scores have no stable public API used here; Defender alerts/incidents can be added, but the compliance-score half remains blocked. Keep these reporting as warnings, not false passes.

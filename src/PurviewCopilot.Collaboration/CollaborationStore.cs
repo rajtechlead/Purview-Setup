@@ -74,6 +74,31 @@ public sealed class CollaborationStore
         return RolePermissions.TryParse(stored, out var role) ? role : null;
     }
 
+    /// <summary>Tenants the caller can see, used by the desktop client to pick a workspace.</summary>
+    public async Task<IReadOnlyList<TenantMemberView>> ListMembershipsAsync(
+        string userId, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return Array.Empty<TenantMemberView>();
+        }
+
+        await using var db = await _factory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
+        var rows = await db.Memberships
+            .AsNoTracking()
+            .Where(m => m.UserId == userId)
+            .OrderBy(m => m.TenantId)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        return rows
+            .Select(m => new TenantMemberView(
+                m.TenantId, m.UserId,
+                RolePermissions.TryParse(m.Role, out var role) ? role : CollaborationRole.Viewer,
+                m.CreatedUtc))
+            .ToList();
+    }
+
     public async Task<IReadOnlyList<TenantMemberView>> ListMembersAsync(
         string tenantId, CancellationToken cancellationToken = default)
     {

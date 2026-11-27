@@ -39,6 +39,9 @@ jobs:
       - name: Vulnerability scan
         run: dotnet list PurviewGovernanceCopilot.sln package --vulnerable --include-transitive
 
+      - name: Collaboration service tests
+        run: dotnet test tests/PurviewCopilot.Service.Tests/PurviewCopilot.Service.Tests.csproj -c Release --logger "trx;LogFileName=service-test-results.trx"
+
       - name: Publish
         run: >
           dotnet publish src/PurviewCopilot.UI/PurviewCopilot.UI.csproj
@@ -53,7 +56,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: test-results
-          path: tests/PurviewCopilot.Tests/TestResults/*.trx
+          path: |
+            tests/PurviewCopilot.Tests/TestResults/*.trx
+            tests/PurviewCopilot.Service.Tests/TestResults/*.trx
           if-no-files-found: ignore
 
       - name: Upload application

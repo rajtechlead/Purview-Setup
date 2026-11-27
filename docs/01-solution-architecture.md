@@ -165,3 +165,17 @@ SQLite in `%LOCALAPPDATA%\PurviewGovernanceCopilot\purviewcopilot.db`, WAL mode,
 - **Failure isolation**: a missing Graph permission degrades one fact and records a warning; a missing cmdlet adds a note; neither aborts the assessment.
 - **Determinism**: no randomness in scoring; report output for the same assessment is byte-stable except timestamps.
 - **Memory**: snapshots and findings are small; report generation streams into a string builder.
+
+## Collaboration service
+
+Multi-user work is optional and customer-hosted. Two projects extend the desktop solution without
+changing the core:
+
+- `PurviewCopilot.Collaboration` holds the EF Core model (memberships, assessments, plans, approvals,
+  per-tenant audit), the seven-role permission matrix, the tenant authorisation gate and the SHA-256
+  audit chain.
+- `PurviewCopilot.Service` is an ASP.NET Core host that validates Entra JWTs, resolves the caller,
+  authorises each tenant operation against the membership store and exposes tenant-scoped endpoints.
+
+SQLite remains the local, offline single-user store. SQL Server is the shared store for a team.
+Per-user SQLite is never described as collaboration. See `docs/11-collaboration-service.md`.

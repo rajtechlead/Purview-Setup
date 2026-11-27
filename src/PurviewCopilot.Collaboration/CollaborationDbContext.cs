@@ -134,20 +134,30 @@ public static class CollaborationStoreFactory
     /// <summary>Provider names accepted from configuration. Anything else fails fast.</summary>
     public static DbContextOptions<CollaborationDbContext> FromConfiguration(string provider, string connectionString)
     {
+        var builder = new DbContextOptionsBuilder<CollaborationDbContext>();
+        Configure(builder, provider, connectionString);
+        return builder.Options;
+    }
+
+    public static void Configure(DbContextOptionsBuilder builder, string provider, string connectionString)
+    {
         if (string.IsNullOrWhiteSpace(connectionString))
         {
             throw new ArgumentException("A collaboration database connection string is required.", nameof(connectionString));
         }
 
-        var builder = new DbContextOptionsBuilder<CollaborationDbContext>();
-
-        return provider?.Trim().ToLowerInvariant() switch
+        switch (provider?.Trim().ToLowerInvariant())
         {
-            "sqlite" => builder.UseSqlite(connectionString).Options,
-            "sqlserver" => builder.UseSqlServer(connectionString).Options,
-            _ => throw new ArgumentException(
-                $"Unsupported collaboration provider '{provider}'. Use Sqlite for a single-node install or SqlServer for a shared central database.",
-                nameof(provider))
-        };
+            case "sqlite":
+                builder.UseSqlite(connectionString);
+                break;
+            case "sqlserver":
+                builder.UseSqlServer(connectionString);
+                break;
+            default:
+                throw new ArgumentException(
+                    $"Unsupported collaboration provider '{provider}'. Use Sqlite for a single-node install or SqlServer for a shared central database.",
+                    nameof(provider));
+        }
     }
 }
