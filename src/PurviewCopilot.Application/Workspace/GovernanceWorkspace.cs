@@ -268,7 +268,9 @@ public sealed class GovernanceWorkspace
         }
 
         var currentHash = plan is null ? null : ChangePlanHasher.Compute(plan);
-        var updated = ApprovalWorkflow.Decide(request, decision, actor, comment, _clock, currentHash);
+        var settings = await LoadSettingsAsync(cancellationToken).ConfigureAwait(false);
+        var updated = ApprovalWorkflow.Decide(
+            request, decision, actor, comment, _clock, currentHash, settings.ApprovalPolicy);
         await _approvalStore.SaveAsync(updated, cancellationToken).ConfigureAwait(false);
 
         await _audit.WriteAsync(new AuditEntry(

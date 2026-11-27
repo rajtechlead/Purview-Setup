@@ -4,8 +4,44 @@ using PurviewCopilot.Domain;
 namespace PurviewCopilot.Application.Approvals;
 
 /// <summary>
+/// Per-stage quorum. Each stage needs this many approvals from distinct people before the request
+/// moves on; the default of one preserves the single-approver-per-stage flow.
+/// </summary>
+public sealed record ApprovalPolicy(int SecurityApprovals = 1, int ComplianceApprovals = 1, int CabApprovals = 1)
+{
+    public const int MaxApprovalsPerStage = 9;
+
+    public static ApprovalPolicy Default { get; } = new();
+
+    public int For(ApprovalStage stage) => stage switch
+    {
+        ApprovalStage.Security => SecurityApprovals,
+        ApprovalStage.Compliance => ComplianceApprovals,
+        _ => CabApprovals
+    };
+
+    public void Validate()
+    {
+        foreach (var (stage, count) in new[]
+                 {
+                     (ApprovalStage.Security, SecurityApprovals),
+                     (ApprovalStage.Compliance, ComplianceApprovals),
+                     (ApprovalStage.Cab, CabApprovals)
+                 })
+        {
+            if (count is < 1 or > MaxApprovalsPerStage)
+            {
+                throw new InvalidOperationException(
+                    $"{stage} quorum must be between 1 and {MaxApprovalsPerStage} approvers (configured: {count}).");
+            }
+        }
+    }
+}
+
+/// <summary>
 /// Pure state machine for change approval: Draft → Security → Compliance → CAB → Approved.
-/// Any rejection ends the request; a change request returns it to Draft for rework.
+/// Any rejection ends the request; a change request returns it to Draft for rework. A stage may
+/// require several distinct approvers before it advances.
 /// Keeping transitions pure makes them fully unit-testable and auditable.
 /// </summary>
 public static class ApprovalWorkflow
@@ -54,7 +90,8 @@ public static class ApprovalWorkflow
         string actor,
         string comment,
         IClock clock,
-        string? currentPlanHash = null)
+        string? currentPlanHash = null,
+        ApprovalPolicy? policy = null)
     {
         if (request.State is ApprovalState.Approved or ApprovalState.Rejected or ApprovalState.RolledBack)
         {
@@ -91,6 +128,17 @@ public static class ApprovalWorkflow
         }
 
         var stage = Stages[Math.Clamp(request.CurrentStageIndex, 0, Stages.Length - 1)];
+        var quorum = policy ?? ApprovalPolicy.Default;
+        quorum.Validate();
+
+        var earlierApprovals = ApprovalsInCurrentRound(request, stage);
+
+        if (decision == ApprovalDecision.Approve &&
+            earlierApprovals.Any(a => string.Equals(a.Actor, actorName, StringComparison.OrdinalIgnoreCase)))
+        {
+            throw new InvalidOperationException(
+                $"{actorName} already approved the {stage} stage; quorum requires distinct approvers.");
+        }
 
         var approvalEvent = new ApprovalEvent(
             Guid.NewGuid(), request.PlanId, stage, decision,
@@ -116,8 +164,27 @@ public static class ApprovalWorkflow
                 UpdatedUtc = clock.UtcNow
             },
 
-            _ => Advance(request, history, clock)
+            _ => AdvanceOrHold(request, history, clock, stage, earlierApprovals.Count, quorum.For(stage))
         };
+    }
+
+    /// <summary>
+    /// Approvals counted from the tail of the history for the current stage, stopping at the previous
+    /// stage or at any non-approval. A change request therefore resets the round instead of reusing
+    /// approvals from before the rework.
+    /// </summary>
+    private static IReadOnlyList<ApprovalEvent> ApprovalsInCurrentRound(ApprovalRequest request, ApprovalStage stage)
+    {
+        var approvals = new List<ApprovalEvent>();
+
+        for (var i = request.History.Count - 1; i >= 0; i--)
+        {
+            var entry = request.History[i];
+            if (entry.Stage != stage || entry.Decision != ApprovalDecision.Approve) break;
+            approvals.Add(entry);
+        }
+
+        return approvals;
     }
 
     public static ApprovalRequest MarkApplied(ApprovalRequest request, IClock clock)
@@ -137,6 +204,22 @@ public static class ApprovalWorkflow
         Stages[Math.Clamp(request.CurrentStageIndex, 0, Stages.Length - 1)];
 
     public static bool RequiresCab(Guid planId, int destructiveOperations) => planId != Guid.Empty && destructiveOperations > 0;
+
+    private static ApprovalRequest AdvanceOrHold(
+        ApprovalRequest request,
+        List<ApprovalEvent> history,
+        IClock clock,
+        ApprovalStage stage,
+        int earlierApprovals,
+        int required)
+    {
+        if (earlierApprovals + 1 < required)
+        {
+            return request with { History = history, UpdatedUtc = clock.UtcNow };
+        }
+
+        return Advance(request, history, clock);
+    }
 
     private static ApprovalRequest Advance(ApprovalRequest request, List<ApprovalEvent> history, IClock clock)
     {

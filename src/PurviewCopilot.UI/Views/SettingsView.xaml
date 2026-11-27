@@ -173,6 +173,22 @@
 
                 <Border Style="{StaticResource Card}" Margin="0,0,0,14">
                     <StackPanel>
+                        <TextBlock Text="Approval quorum" Style="{StaticResource SectionHeader}" />
+                        <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,8"
+                                   Text="Distinct approvers required at each stage (1-9). The requester can never approve their own change, and one person cannot satisfy a stage twice." />
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Security" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                            <TextBox Width="40" Text="{Binding SecurityApprovals}" Margin="0,0,14,0" />
+                            <TextBlock Text="Compliance" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                            <TextBox Width="40" Text="{Binding ComplianceApprovals}" Margin="0,0,14,0" />
+                            <TextBlock Text="CAB" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                            <TextBox Width="40" Text="{Binding CabApprovals}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}" Margin="0,0,0,14">
+                    <StackPanel>
                         <TextBlock Text="Azure Key Vault (optional)" Style="{StaticResource SectionHeader}" />
                         <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,8"
                                    Text="Store the app certificate PFX as a vault secret for portability and central rotation. Uses the connection credentials above and the PFX password field; the app needs Key Vault secret get/set permission." />

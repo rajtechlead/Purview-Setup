@@ -1,3 +1,4 @@
+using PurviewCopilot.Application.Approvals;
 using PurviewCopilot.Application.Deployment;
 using PurviewCopilot.Domain;
 
@@ -234,6 +235,9 @@ public sealed record AppSettings
     /// <summary>HTTPS manifest used by the update check; empty disables it.</summary>
     public string? UpdateManifestUrl { get; set; }
     public DeploymentMode DefaultMode { get; set; } = DeploymentMode.AssessmentOnly;
+
+    /// <summary>Distinct approvals required at each stage; defaults to one per stage.</summary>
+    public ApprovalPolicy ApprovalPolicy { get; set; } = ApprovalPolicy.Default;
 
     /// <summary>Minutes between automatic checks while the app is open; 0 disables them.</summary>
     public int MonitoringIntervalMinutes { get; set; }

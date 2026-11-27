@@ -5,6 +5,7 @@ using System.Windows.Input;
 using Microsoft.Win32;
 using PurviewCopilot.Application.Abstractions;
 using PurviewCopilot.Application.Ai;
+using PurviewCopilot.Application.Approvals;
 using PurviewCopilot.Application.Auth;
 using PurviewCopilot.Application.Updates;
 using PurviewCopilot.Application.Workspace;
@@ -69,6 +70,9 @@ public sealed class SettingsViewModel : PageViewModel
     private bool _cloudAiEnabled = true;
     private bool _offlineMode;
     private bool _requirePromptReview = true;
+    private int _securityApprovals = 1;
+    private int _complianceApprovals = 1;
+    private int _cabApprovals = 1;
     private string _certSubject = WindowsCertificateService.DefaultSubject;
     private int _certMonths = 12;
     private string _pfxPassword = string.Empty;
@@ -163,6 +167,10 @@ public sealed class SettingsViewModel : PageViewModel
     public bool CloudAiEnabled { get => _cloudAiEnabled; set => SetProperty(ref _cloudAiEnabled, value); }
     public bool OfflineMode { get => _offlineMode; set => SetProperty(ref _offlineMode, value); }
     public bool RequirePromptReview { get => _requirePromptReview; set => SetProperty(ref _requirePromptReview, value); }
+
+    public int SecurityApprovals { get => _securityApprovals; set => SetProperty(ref _securityApprovals, value); }
+    public int ComplianceApprovals { get => _complianceApprovals; set => SetProperty(ref _complianceApprovals, value); }
+    public int CabApprovals { get => _cabApprovals; set => SetProperty(ref _cabApprovals, value); }
     public string CertificateSubject { get => _certSubject; set => SetProperty(ref _certSubject, value); }
     public int CertificateMonths { get => _certMonths; set => SetProperty(ref _certMonths, value); }
     public string PfxPassword { get => _pfxPassword; set => SetProperty(ref _pfxPassword, value); }
@@ -252,6 +260,9 @@ public sealed class SettingsViewModel : PageViewModel
         CloudAiEnabled = _settings.CloudAiEnabled;
         OfflineMode = _settings.OfflineMode;
         RequirePromptReview = _settings.RequirePromptReview;
+        SecurityApprovals = _settings.ApprovalPolicy.SecurityApprovals;
+        ComplianceApprovals = _settings.ApprovalPolicy.ComplianceApprovals;
+        CabApprovals = _settings.ApprovalPolicy.CabApprovals;
         UpdateManifestUrl = _settings.UpdateManifestUrl ?? string.Empty;
         LicensePricesText = string.Join("; ", _settings.LicensePrices.Select(p => $"{p.Key}={p.Value.ToString(CultureInfo.InvariantCulture)}"));
         KeyVaultUri = _settings.KeyVaultUri ?? string.Empty;
@@ -297,6 +308,11 @@ public sealed class SettingsViewModel : PageViewModel
             _settings.CloudAiEnabled = CloudAiEnabled;
             _settings.OfflineMode = OfflineMode;
             _settings.RequirePromptReview = RequirePromptReview;
+
+            var policy = new ApprovalPolicy(SecurityApprovals, ComplianceApprovals, CabApprovals);
+            policy.Validate();
+            _settings.ApprovalPolicy = policy;
+
             _settings.UpdateManifestUrl = string.IsNullOrWhiteSpace(UpdateManifestUrl) ? null : UpdateManifestUrl.Trim();
             _settings.LicensePrices = ParseLicensePrices(LicensePricesText);
             _settings.KeyVaultUri = string.IsNullOrWhiteSpace(KeyVaultUri) ? null : KeyVaultUri.Trim();

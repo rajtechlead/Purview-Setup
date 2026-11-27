@@ -12,6 +12,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Durable approvals and shared audit**: approvals survive restarts, bind to the plan hash, expire after seven days and refuse self-approval; the audit is a per-tenant SHA-256 chain with a verification endpoint.
 - **Service operations**: `installer/Install-CollaborationService.ps1` registers the Windows service with restart-on-failure and `-WhatIf`; CI now runs the service test suite.
 
+### Added (approval quorum)
+
+- **Per-stage approver quorum.** Security, Compliance and CAB can each require 1-9 distinct approvers, configured in Settings and enforced inside the shared approval workflow. One person cannot satisfy a stage twice, a change request resets the round so earlier approvals cannot be reused, and invalid configuration is rejected rather than silently ignored. The service host still uses the default single approver per stage.
+
 ### Added (release provenance)
 
 - **SBOM and a release manifest.** `New-ReleaseProvenance.ps1` produces a CycloneDX 1.7 SBOM for the solution and `pgc provenance` writes a manifest with the product, version, commit, SBOM digest and SHA-256 of every shipped artefact. CI publishes both. Missing artefacts fail the manifest instead of producing incomplete provenance; signing and build-service attestation remain open.
