@@ -117,9 +117,25 @@ Install with `Add-AppxPackage .\dist\PurviewGovernanceCopilot-1.0.0.0.msix`. Uns
 
 ### Module plugins
 
-Put compiled plugin assemblies in `%LOCALAPPDATA%\PurviewGovernanceCopilot\plugins` and restart the app. A plugin is a public class with a parameterless constructor that implements `PurviewCopilot.Application.Modules.IModule`; it must return a descriptor whose `Key` matches its `Key` property and is registered as `ModuleKey.Custom`. Broken assemblies are skipped and listed in the load result rather than stopping the assessment.
+Put a compiled plugin assembly and its signed manifest in `%LOCALAPPDATA%\PurviewGovernanceCopilot\plugins` and restart the app. A plugin is a public class with a parameterless constructor that implements `PurviewCopilot.Application.Modules.IModule`; it must return a descriptor whose `Key` matches its `Key` property and is registered as `ModuleKey.Custom`. Broken assemblies are skipped and listed in the load result rather than stopping the assessment.
 
-**Trust boundary:** loading a plugin executes its code as the signed-in user. Install only assemblies you built or reviewed, keep the folder out of shared profiles, and remove the DLL to disable it.
+Each `<name>.dll` must ship `<name>.plugin.json`:
+
+```json
+{
+  "name": "contoso.module",
+  "version": "1.2.0",
+  "publisher": "Contoso",
+  "permissions": ["assessment:read"],
+  "sha256": "<lowercase SHA-256 of the dll>",
+  "publicKeyPem": "-----BEGIN PUBLIC KEY-----\n...",
+  "signature": "<base64 RSA PKCS#1 SHA-256 signature over the raw hash bytes>"
+}
+```
+
+`assessment:read` is the only permission a module may request. A missing manifest, a hash mismatch, an unknown permission or an invalid/absent signature causes the assembly to be skipped before any code runs — unsigned plugins are not loaded.
+
+**Trust boundary:** loading a plugin executes its code as the signed-in user, so the signature proves integrity and publisher identity, not safety. Install only packages you trust, keep the folder out of shared profiles, and remove the DLL to disable it.
 
 ## 6. Operations runbook
 

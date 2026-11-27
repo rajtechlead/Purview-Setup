@@ -48,7 +48,7 @@ This record maps the project's security development lifecycle (Microsoft SDL) an
 | Change execution | Accidental or malicious destructive change | Six-phase plan, simulation, per-phase backup, SoD approval, opt-in session-only live execution, post-validation, rollback package |
 | AI prompt | PII, secret or customer data leaving the machine | Local deterministic detection, four redaction modes, optional prompt review, cloud AI switch, offline local-only mode, audit without values |
 | Update channel | Tampered MSI | HTTPS-only manifest, version and URL validation, mandatory SHA-256 over the downloaded bytes, explicit operator install; signing pending |
-| Plugins | Malicious local assembly | Only the signed-in user's own plugins folder; isolated load contexts; plugins cannot impersonate built-ins; documented trust boundary |
+| Plugins | Malicious local assembly | A `<name>.plugin.json` manifest must be signed by the declared publisher key, match the DLL's SHA-256, declare a version and request only `assessment:read`; unsigned, tampered or over-permissioned plugins are rejected before any code loads, and each assembly still loads in isolation |
 | Reports | Formula or HTML injection | CSV quoting, HTML escaping, formula-prefix neutralisation where data is tabular |
 
 ## 4. Release security sign-off
@@ -58,7 +58,7 @@ Complete for each release and keep the record with the build.
 | Check | Result for this build |
 | --- | --- |
 | Release build succeeds | Pass — 0 errors |
-| Full test suite | Pass — 264 tests (258 pass, 6 Windows-only skipped) |
+| Full test suite | Pass — 286 tests (280 pass, 6 Windows-only skipped) |
 | Dependency vulnerability scan | Pass — no known vulnerable direct or transitive package at build time |
 | CodeQL workflow present and green | Configured (`.github/workflows/codeql.yml`); first run happens on push to GitHub |
 | Secrets or private keys in the tree | None found; `.gitignore` excludes local data and environment files |
@@ -67,7 +67,7 @@ Complete for each release and keep the record with the build.
 | Privacy guard tests | Pass |
 | Software bill of materials | Pass — CycloneDX 1.7 SBOM generated for the solution (106 components) and published with the release manifest |
 | Release provenance | Pass — `pgc provenance` records version, commit, SBOM digest and the SHA-256 of every shipped artefact; CI uploads both |
-| Signing | Not signed — no certificate available (SEC-11 partial) |
+| Signing | Application signing not performed — no certificate available (SEC-11 partial). Plugin assemblies require a signed manifest (SEC-18). |
 | Independent penetration test | Not performed — owner action before an enterprise GA claim |
 
 Engineering owner: Belle-RajaCorp. Product owner sign-off is recorded outside this repository when a release is approved.

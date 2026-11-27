@@ -12,6 +12,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Durable approvals and shared audit**: approvals survive restarts, bind to the plan hash, expire after seven days and refuse self-approval; the audit is a per-tenant SHA-256 chain with a verification endpoint.
 - **Service operations**: `installer/Install-CollaborationService.ps1` registers the Windows service with restart-on-failure and `-WhatIf`; CI now runs the service test suite.
 
+### Security (plugin trust)
+
+- **Plugins must be signed and declare their permissions.** The loader now requires a `<name>.plugin.json` manifest whose publisher key verifies the DLL's SHA-256, whose name and version match, and whose permissions stay inside the `assessment:read` allowlist. Unsigned, tampered or over-permissioned assemblies are rejected before any code runs; eight tests cover the rejection paths.
+
 ### Changed (service quorum)
 
 - **The service enforces its own approval quorum.** `Collaboration:Approval:{Security,Compliance,Cab}` sets distinct approvers per stage; values outside 1-9 stop startup, and three tests prove a staged two-person decision over HTTP, invalid-configuration rejection and the single-approver default.
