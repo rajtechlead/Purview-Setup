@@ -58,13 +58,15 @@ Complete for each release and keep the record with the build.
 | Check | Result for this build |
 | --- | --- |
 | Release build succeeds | Pass — 0 errors |
-| Full test suite | Pass — 155 tests |
+| Full test suite | Pass — 264 tests (258 pass, 6 Windows-only skipped) |
 | Dependency vulnerability scan | Pass — no known vulnerable direct or transitive package at build time |
 | CodeQL workflow present and green | Configured (`.github/workflows/codeql.yml`); first run happens on push to GitHub |
 | Secrets or private keys in the tree | None found; `.gitignore` excludes local data and environment files |
 | Live execution defaults | Fail-closed and opt-in per session |
 | Rollback package and script | Generated for every plan; MSI rollback script shipped |
 | Privacy guard tests | Pass |
+| Software bill of materials | Pass — CycloneDX 1.7 SBOM generated for the solution (106 components) and published with the release manifest |
+| Release provenance | Pass — `pgc provenance` records version, commit, SBOM digest and the SHA-256 of every shipped artefact; CI uploads both |
 | Signing | Not signed — no certificate available (SEC-11 partial) |
 | Independent penetration test | Not performed — owner action before an enterprise GA claim |
 

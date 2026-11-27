@@ -35,6 +35,10 @@ dotnet run --project src/PurviewCopilot.UI
 
 # Tests
 dotnet test tests/PurviewCopilot.Tests
+dotnet test tests/PurviewCopilot.Service.Tests
+
+# SBOM and release provenance (after building the installers)
+./scripts/New-ReleaseProvenance.ps1 -Version 1.0.0 -Files dist/PurviewGovernanceCopilot-1.0.0.0.msix
 ```
 
 No tenant yet? Open **Assessment → Load sample tenant**: the entire workspace (scores, findings, plan, reports) runs against clearly-labelled demo data.
@@ -43,7 +47,7 @@ No tenant yet? Open **Assessment → Load sample tenant**: the entire workspace 
 
 1. **Settings → Certificate lifecycle → Create** — generates a 4096-bit RSA self-signed certificate in `CurrentUser\My` and fills in the thumbprint.
 2. Register the certificate on an Entra app registration and grant:
-   - `Organization.Read.All`, `User.Read.All`, `Group.Read.All`, `Application.Read.All`, `RoleManagement.Read.Directory`, `Policy.Read.All`, `SecurityEvents.Read.All`, `Reports.Read.All` (Graph application permissions)
+   - The read-only Graph permissions in [`GraphPermissionManifest`](src/PurviewCopilot.Application/Auth/GraphPermissionManifest.cs): `Organization.Read.All`, `User.Read.All`, `Group.Read.All`, `Application.Read.All`, `Domain.Read.All`, `Policy.Read.All`, `RoleManagement.Read.Directory`, `SecurityEvents.Read.All`, `AuditLog.Read.All`, `Reports.Read.All`, `DeviceManagementManagedDevices.Read.All`, `Sites.Read.All`, `Team.ReadBasic.All`. Provisioning resolves the role ids from the tenant's Graph service principal, so the list cannot drift from the code.
    - `Exchange.ManageAsApp` (Office 365 Exchange Online) with the service principal added to the **Compliance Administrator** role.
 3. Grant admin consent, then **Test connection**.
 4. **Assessment → Discover tenant**.

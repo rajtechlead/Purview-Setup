@@ -71,6 +71,28 @@ jobs:
       - name: Build MSIX (unsigned)
         run: powershell -NoProfile -ExecutionPolicy Bypass -File installer/msix/Build-Msix.ps1 -PublishDir artifacts/publish -Version 1.0.0.0
 
+      - name: SBOM and release provenance
+        shell: pwsh
+        run: |
+          dotnet tool install --global CycloneDX --version 6.3.2
+          dotnet CycloneDX PurviewGovernanceCopilot.sln -o artifacts/sbom -F json
+          if ($LASTEXITCODE -ne 0) { throw "SBOM generation failed ($LASTEXITCODE)." }
+          $artefacts = @(Get-ChildItem -Path artifacts/publish/PurviewGovernanceCopilot.exe, dist/*.msix | ForEach-Object FullName)
+          dotnet run --project src/PurviewCopilot.Cli -c Release --no-build -- provenance `
+            --version 1.0.0 --commit ${{ github.sha }} `
+            --files ($artefacts -join ';') --sbom artifacts/sbom/bom.json `
+            --output artifacts/release-manifest.json
+          if ($LASTEXITCODE -ne 0) { throw "Provenance generation failed ($LASTEXITCODE)." }
+
+      - name: Upload SBOM and provenance
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-provenance
+          path: |
+            artifacts/sbom/bom.json
+            artifacts/release-manifest.json
+          retention-days: 90
+
       - name: Upload MSIX
         uses: actions/upload-artifact@v4
         with:

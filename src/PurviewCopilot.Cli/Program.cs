@@ -3,6 +3,7 @@ using PurviewCopilot.Application.Abstractions;
 using PurviewCopilot.Application.Assessment;
 using PurviewCopilot.Application.Deployment;
 using PurviewCopilot.Application.Modules;
+using PurviewCopilot.Application.Release;
 using PurviewCopilot.Application.Reporting;
 using PurviewCopilot.Application.Workspace;
 using PurviewCopilot.Domain;
@@ -38,6 +39,7 @@ internal static class Program
             return command switch
             {
                 "assess" => await AssessAsync(options),
+                "provenance" => Provenance(options),
                 "verify-audit" => await VerifyAuditAsync(options),
                 _ => Unknown(command)
             };
@@ -52,6 +54,30 @@ internal static class Program
             Console.Error.WriteLine($"error: {ex.Message}");
             return 1;
         }
+    }
+
+    private static int Provenance(Dictionary<string, string?> options)
+    {
+        var output = options.GetValueOrDefault("output") ?? "artifacts/release-manifest.json";
+        var artefacts = (options.GetValueOrDefault("files") ?? string.Empty)
+            .Split(new[] { ';', ',' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var commit = options.GetValueOrDefault("commit")
+            ?? Environment.GetEnvironmentVariable("GITHUB_SHA")
+            ?? string.Empty;
+
+        var manifest = ReleaseManifest.Create(
+            options.GetValueOrDefault("version") ?? "1.0.0",
+            commit,
+            DateTimeOffset.UtcNow,
+            artefacts,
+            options.GetValueOrDefault("sbom"));
+
+        var full = Path.GetFullPath(output);
+        Directory.CreateDirectory(Path.GetDirectoryName(full)!);
+        File.WriteAllText(full, manifest.ToJson());
+
+        Console.WriteLine($"Wrote {full}: {manifest.Files.Count} artefact(s), SBOM {(manifest.Sbom is null ? "absent" : manifest.Sbom)}.");
+        return 0;
     }
 
     private static async Task<int> AssessAsync(Dictionary<string, string?> options)
@@ -256,6 +282,7 @@ internal static class Program
               pgc assess --demo [--format json] [--out report.json]
               pgc assess --tenant <id> --client <app-id> --thumbprint <thumb> [--mode AssessmentOnly] [--format pdf] [--out path]
               pgc assess --tenant <id> --client <app-id> --client-secret <secret>   (lab only)
+              pgc provenance --version <v> --files "dist/a.msi;dist/b.msix" [--sbom bom.json] [--output manifest.json] [--commit <sha>]
               pgc verify-audit [--data-dir <path>]
 
             Options:

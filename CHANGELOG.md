@@ -12,6 +12,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Durable approvals and shared audit**: approvals survive restarts, bind to the plan hash, expire after seven days and refuse self-approval; the audit is a per-tenant SHA-256 chain with a verification endpoint.
 - **Service operations**: `installer/Install-CollaborationService.ps1` registers the Windows service with restart-on-failure and `-WhatIf`; CI now runs the service test suite.
 
+### Added (release provenance)
+
+- **SBOM and a release manifest.** `New-ReleaseProvenance.ps1` produces a CycloneDX 1.7 SBOM for the solution and `pgc provenance` writes a manifest with the product, version, commit, SBOM digest and SHA-256 of every shipped artefact. CI publishes both. Missing artefacts fail the manifest instead of producing incomplete provenance; signing and build-service attestation remain open.
+
 ### Added (collaboration client)
 
 - **Typed client for the collaboration service.** `CollaborationClient` covers identity, assessments, plans, staged approvals with an `If-Match` stamp, audit verification and member management, with errors mapped to actionable 401/403/404/409 messages. A bearer handler keeps token acquisition out of the UI, and an already-set `Authorization` header is preserved. Eight end-to-end tests run against the real host, covering role enforcement and tenant-scoped round trips. The desktop screens still use local storage and are the remaining binding work.

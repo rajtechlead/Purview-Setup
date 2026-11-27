@@ -9,7 +9,7 @@ here; no requirement count or status is duplicated elsewhere. Last verified **27
 | Production target | .NET 10 LTS (supported to 2028-11-14) |
 | Branch state | `main` |
 | Requirements tracked | 157 (135 migrated, 22 added for the current master prompt) |
-| Automated tests | 259 total: 253 pass, 6 Windows-only DPAPI tests skipped on non-Windows hosts |
+| Automated tests | 264 total: 258 pass, 6 Windows-only DPAPI tests skipped on non-Windows hosts |
 | Release decision | **Not releasable.** Gates G5, G6, G12 and G13 in [07](07-release-gates.md) fail; G4, G10 and G11 are open. |
 
 ## Baseline audit — 27 November 2026
@@ -62,8 +62,9 @@ here; no requirement count or status is duplicated elsewhere. Last verified **27
 - **Approval hardening.** Plan-hash binding, a 7-day expiry, self-approval refusal and a
   pre-execution drift recheck are enforced and tested (`CHG-04`). Configurable multi-approver
   quorum remains open under `CHG-03`.
-- **Release engineering.** No Authenticode signing, no SBOM, no provenance, no plugin signing
-  (`SEC-11`, `SEC-17`, `SEC-18`). Installers in `dist/` are unsigned and framework-dependent.
+- **Release engineering.** CycloneDX SBOM and a hash/commit provenance manifest are generated
+  and published by CI (`SEC-17`). Authenticode signing, attested provenance and plugin signing
+  remain open (`SEC-11`, `SEC-18`); installers in `dist/` are unsigned and framework-dependent.
 - **Documentation drift corrected.** README claimed Windows 10/11 blanket support and .NET 9; the
   permission list did not match the provisioner; three trackers restated status independently.
 
@@ -104,8 +105,8 @@ simulations. They are recorded as `Simulated`, never as `Live-verified`.
 | Tested | 66 | 42% |
 | Implemented (build-verified or documented) | 47 | 30% |
 | Simulated (code + tests, no live verification) | 19 | 12% |
-| Partial | 15 | 10% |
-| Unsupported | 9 | 6% |
+| Partial | 16 | 10% |
+| Unsupported | 8 | 5% |
 | Blocked | 1 | 1% |
 | **Total** | **157** | |
 
@@ -117,7 +118,7 @@ dashboard does not count Implemented, Simulated or Partial as complete.
 | Area | Health | Note |
 | --- | --- | --- |
 | Build | Green | Domain, Application and Infrastructure build in Release on .NET 10; WPF requires Windows |
-| Tests | Green | 253 pass, 6 skipped on non-Windows, 0 fail |
+| Tests | Green | 258 pass, 6 skipped on non-Windows, 0 fail |
 | Dependencies | Green | No vulnerable packages; audit advisories are build errors |
 | Security | Amber | Strong local controls; unsigned binaries, no SBOM, no live verification |
 | Coverage | Amber | Shared service delivered; SSO, desktop wiring and Data Map are absent |
