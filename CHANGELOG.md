@@ -12,6 +12,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Durable approvals and shared audit**: approvals survive restarts, bind to the plan hash, expire after seven days and refuse self-approval; the audit is a per-tenant SHA-256 chain with a verification endpoint.
 - **Service operations**: `installer/Install-CollaborationService.ps1` registers the Windows service with restart-on-failure and `-WhatIf`; CI now runs the service test suite.
 
+### Added (collaboration client)
+
+- **Typed client for the collaboration service.** `CollaborationClient` covers identity, assessments, plans, staged approvals with an `If-Match` stamp, audit verification and member management, with errors mapped to actionable 401/403/404/409 messages. A bearer handler keeps token acquisition out of the UI, and an already-set `Authorization` header is preserved. Eight end-to-end tests run against the real host, covering role enforcement and tenant-scoped round trips. The desktop screens still use local storage and are the remaining binding work.
+
 ### Added (admin consent hand-off)
 
 - **A consent link the operator can act on.** When programmatic admin consent fails, provisioning now returns a tenant-specific admin-consent URL and the exact administrator role needed, and a successful grant records a re-grant link. The link carries only the tenant and application id — never a secret — and respects the GCC High/DoD authority.

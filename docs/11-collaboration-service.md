@@ -1,5 +1,10 @@
 # 11 — Collaboration service
 
+> **Client status.** `PurviewCopilot.Collaboration.CollaborationClient` is the supported typed client
+> for this API and is verified against the running service by `CollaborationClientTests`. The WPF
+> screens are not bound to it yet, so shared mode is currently available to the CLI and tests only;
+> desktop sign-in still requires `IDN-01`.
+
 A customer-hosted Windows service/API that lets several operators share assessments, change plans,
 approvals and audit for the same tenant. It is optional: the desktop app still runs fully offline on
 local SQLite. The service is never a SaaS and contains no vendor-hosted component.
