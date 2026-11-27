@@ -7,11 +7,11 @@ claim or a successful compile alone. Reviewed 27 November 2026.
 | Gate | Requirement | Evidence | Status |
 | --- | --- | --- | --- |
 | G1 | Clean Release build | Domain, Application, Infrastructure build on .NET 10; WPF/MSI require a Windows agent | **Pass** (Windows WPF build not run here) |
-| G2 | All tests pass | 217 pass, 6 Windows-only skipped, 0 fail (191 desktop + 32 service) | **Pass** |
+| G2 | All tests pass | 239 pass, 6 Windows-only skipped, 0 fail (207 desktop + 32 service) | **Pass** |
 | G3 | No unresolved critical or high security issue | `dotnet list package --vulnerable` clean; NuGet advisories fail the build | **Pass** |
-| G4 | Every requirement maps to code and reproducible proof | 157 tracked; 64 Tested, 47 Implemented, 19 Simulated, 15 Partial, 11 Unsupported, 1 Blocked | **Open** — Simulated/Partial cannot be counted as done |
+| G4 | Every requirement maps to code and reproducible proof | 157 tracked; 65 Tested, 47 Implemented, 19 Simulated, 14 Partial, 11 Unsupported, 1 Blocked | **Open** — Simulated/Partial cannot be counted as done |
 | G5 | Entra SSO and multi-client tenant-isolated approvals | Service, shared store, server RBAC, tenant-isolated approvals and audit are tested over HTTP; Entra SSO and desktop client wiring are absent | **Open** (`SRV-07`, `IDN-01`) |
-| G6 | Certificate-first provisioning, 12-month defaults, rotation and consent hand-off | Certificate default exists; default lifetime, overlap rotation and admin-consent hand-off do not | **Fail** (`IDN-04`, `IDN-07`) |
+| G6 | Certificate-first provisioning, 12-month defaults, rotation and consent hand-off | Certificate-first with a 12-month default, 30-day warning and an ordered overlap rotation plan is tested; the admin-consent hand-off link is still missing | **Fail** (`IDN-07`) |
 | G7 | Production writes cannot bypass approval, backup, simulation and revalidation | Fail-closed executor plus gate tests; approvals bind to the plan hash, expire after seven days, refuse self-approval, and execution is blocked unless a fresh drift recheck matches the approved fingerprint | **Pass, simulated only** |
 | G8 | Privacy tests prove secrets/PII are blocked before egress and Local-only makes zero cloud calls | `PrivacyTests`, `ProviderSequenceTests` | **Pass** |
 | G9 | AI failover, dashboards and advertised exports work | `AuditChainAndHealthTests`, `DashboardAnalyticsTests`, `OfficeReportTests`, `ReportTypeTests` | **Pass** |

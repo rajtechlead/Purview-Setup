@@ -495,10 +495,17 @@ public sealed class SettingsViewModel : PageViewModel
     {
         try
         {
+            var previous = _certificates.FindByThumbprint(Thumbprint);
             var info = _certificates.Rotate(CertificateSubject, CertificateMonths, true);
+            var plan = previous is null
+                ? null
+                : CertificateLifecyclePolicy.PlanRotation(CertificateSubject, previous, DateTimeOffset.UtcNow);
+
             Thumbprint = info.Thumbprint;
             LoadCertificates();
-            Status = $"Rotated. New thumbprint {info.Thumbprint}. Upload it to the app registration, then remove the old certificate.";
+            Status = plan is null
+                ? $"Rotated. New thumbprint {info.Thumbprint}. Upload it to the app registration, then remove the old certificate."
+                : $"Rotated. New thumbprint {info.Thumbprint}. Keep the old key for overlap until {plan.RetireOldAfterUtc:u}: upload the new key, validate, then retire the old credential.";
         }
         catch (Exception ex)
         {

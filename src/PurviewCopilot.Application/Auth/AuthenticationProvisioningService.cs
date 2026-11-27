@@ -10,7 +10,7 @@ namespace PurviewCopilot.Application.Auth;
 /// </summary>
 public sealed class AuthenticationProvisioningService
 {
-    public static readonly int[] SupportedValidityMonths = { 6, 12, 24, 36, 60, 120 };
+    public static readonly int[] SupportedValidityMonths = CertificateLifecyclePolicy.SupportedValidityMonths;
     public static readonly int[] SupportedSecretMonths = { 3, 6, 12, 24 };
 
     private readonly IAuthenticationProvisioningGateway _gateway;
@@ -194,11 +194,7 @@ public sealed class AuthenticationProvisioningService
         }
         else
         {
-            if (!SupportedValidityMonths.Contains(request.CertificateMonths))
-                throw new InvalidOperationException("Certificate lifetime must be 6, 12, 24, 36, 60 or 120 months.");
-
-            if (request.CertificateMonths >= 120 && !request.AcknowledgeLongLivedCertificate)
-                throw new InvalidOperationException("A 10-year certificate requires explicit acknowledgement.");
+            CertificateLifecyclePolicy.ValidateLifetime(request.CertificateMonths, request.AcknowledgeLongLivedCertificate);
         }
 
         if (!Guid.TryParse(request.BootstrapAuth.ClientId, out _) ||
