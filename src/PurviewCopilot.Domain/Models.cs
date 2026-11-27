@@ -82,8 +82,14 @@ public sealed record ApprovalEvent(
     ApprovalDecision Decision,
     string Actor,
     string Comment,
-    DateTimeOffset AtUtc);
+    DateTimeOffset AtUtc,
+    string PlanHash = "");
 
+/// <summary>
+/// Approval state for one change plan. <paramref name="PlanHash"/> binds a decision to the exact
+/// plan content, <paramref name="RequestedBy"/> blocks self-approval and <paramref name="ExpiresUtc"/>,
+/// stops a stale approval from being reused. Older stored payloads decode with empty defaults.
+/// </summary>
 public sealed record ApprovalRequest(
     Guid Id,
     Guid PlanId,
@@ -91,7 +97,10 @@ public sealed record ApprovalRequest(
     int CurrentStageIndex,
     IReadOnlyList<ApprovalEvent> History,
     DateTimeOffset CreatedUtc,
-    DateTimeOffset UpdatedUtc);
+    DateTimeOffset UpdatedUtc,
+    string PlanHash = "",
+    string RequestedBy = "",
+    DateTimeOffset? ExpiresUtc = null);
 
 /// <summary>Scoring outcome for one module.</summary>
 public sealed record ModuleScore(

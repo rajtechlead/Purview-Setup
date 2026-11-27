@@ -10,6 +10,9 @@ namespace PurviewCopilot.Application.Approvals;
 /// </summary>
 public static class ApprovalWorkflow
 {
+    /// <summary>How long a submitted approval stays valid. A stale approval must be re-submitted.</summary>
+    public static readonly TimeSpan DefaultApprovalLifetime = TimeSpan.FromDays(7);
+
     private static readonly ApprovalStage[] Stages =
     {
         ApprovalStage.Security,
@@ -20,17 +23,27 @@ public static class ApprovalWorkflow
     public static ApprovalRequest Start(Guid planId, IClock clock) =>
         new(Guid.NewGuid(), planId, ApprovalState.Draft, 0, Array.Empty<ApprovalEvent>(), clock.UtcNow, clock.UtcNow);
 
-    public static ApprovalRequest Submit(ApprovalRequest request, string actor, IClock clock)
+    public static ApprovalRequest Submit(
+        ApprovalRequest request,
+        string actor,
+        IClock clock,
+        string? planHash = null,
+        TimeSpan? lifetime = null)
     {
         if (request.State != ApprovalState.Draft)
         {
             throw new InvalidOperationException($"Only a draft request can be submitted (current state: {request.State}).");
         }
 
+        var requester = string.IsNullOrWhiteSpace(actor) ? "unknown" : actor.Trim();
+
         return request with
         {
             State = ApprovalState.PendingSecurity,
             CurrentStageIndex = 0,
+            PlanHash = planHash ?? request.PlanHash,
+            RequestedBy = requester,
+            ExpiresUtc = clock.UtcNow + (lifetime ?? DefaultApprovalLifetime),
             UpdatedUtc = clock.UtcNow
         };
     }
@@ -40,7 +53,8 @@ public static class ApprovalWorkflow
         ApprovalDecision decision,
         string actor,
         string comment,
-        IClock clock)
+        IClock clock,
+        string? currentPlanHash = null)
     {
         if (request.State is ApprovalState.Approved or ApprovalState.Rejected or ApprovalState.RolledBack)
         {
@@ -52,12 +66,36 @@ public static class ApprovalWorkflow
             throw new InvalidOperationException($"Request cannot be decided in state {request.State}.");
         }
 
+        if (request.ExpiresUtc is { } expires && clock.UtcNow > expires)
+        {
+            throw new InvalidOperationException(
+                $"The approval request expired at {expires:u}. Submit the plan again for a fresh approval.");
+        }
+
+        var actorName = string.IsNullOrWhiteSpace(actor) ? "unknown" : actor.Trim();
+
+        if (!string.IsNullOrEmpty(currentPlanHash) &&
+            !string.IsNullOrEmpty(request.PlanHash) &&
+            !string.Equals(request.PlanHash, currentPlanHash, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException(
+                "The change plan changed after approval started, so the earlier decisions were invalidated. Submit the plan again.");
+        }
+
+        if (decision == ApprovalDecision.Approve &&
+            !string.IsNullOrEmpty(request.RequestedBy) &&
+            string.Equals(actorName, request.RequestedBy, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException(
+                "Self-approval is not allowed: the person who requested the change cannot approve it.");
+        }
+
         var stage = Stages[Math.Clamp(request.CurrentStageIndex, 0, Stages.Length - 1)];
 
         var approvalEvent = new ApprovalEvent(
             Guid.NewGuid(), request.PlanId, stage, decision,
-            string.IsNullOrWhiteSpace(actor) ? "unknown" : actor,
-            comment ?? string.Empty, clock.UtcNow);
+            actorName,
+            comment ?? string.Empty, clock.UtcNow, request.PlanHash);
 
         var history = request.History.Concat(new[] { approvalEvent }).ToList();
 

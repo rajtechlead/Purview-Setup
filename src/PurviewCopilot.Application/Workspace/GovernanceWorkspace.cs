@@ -244,7 +244,7 @@ public sealed class GovernanceWorkspace
     public async Task<ApprovalRequest> StartApprovalAsync(ChangePlan plan, string actor, CancellationToken cancellationToken = default)
     {
         var request = ApprovalWorkflow.Start(plan.Id, _clock);
-        request = ApprovalWorkflow.Submit(request, actor, _clock);
+        request = ApprovalWorkflow.Submit(request, actor, _clock, ChangePlanHasher.Compute(plan));
         await _approvalStore.SaveAsync(request, cancellationToken).ConfigureAwait(false);
         return request;
     }
@@ -256,7 +256,15 @@ public sealed class GovernanceWorkspace
         string comment,
         CancellationToken cancellationToken = default)
     {
-        var updated = ApprovalWorkflow.Decide(request, decision, actor, comment, _clock);
+        // Re-read the stored plan so a decision is always checked against the current content.
+        var plan = await _planStore.GetAsync(request.PlanId, cancellationToken).ConfigureAwait(false);
+        if (plan is null && !string.IsNullOrEmpty(request.PlanHash))
+        {
+            throw new InvalidOperationException("The change plan could not be loaded for approval validation.");
+        }
+
+        var currentHash = plan is null ? null : ChangePlanHasher.Compute(plan);
+        var updated = ApprovalWorkflow.Decide(request, decision, actor, comment, _clock, currentHash);
         await _approvalStore.SaveAsync(updated, cancellationToken).ConfigureAwait(false);
 
         await _audit.WriteAsync(new AuditEntry(

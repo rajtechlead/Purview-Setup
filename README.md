@@ -64,7 +64,7 @@ src/
   PurviewCopilot.UI/              # WPF shell, dashboards, pages (MVVM)
   PurviewCopilot.Cli/             # headless `pgc assess` / `pgc verify-audit`
 tests/
-  PurviewCopilot.Tests/           # 171 tests (165 cross-platform, 6 Windows-only DPAPI tests skipped elsewhere)
+  PurviewCopilot.Tests/           # 176 tests (170 cross-platform, 6 Windows-only DPAPI tests skipped elsewhere)
 docs/                             # architecture, design, security, guides, trackers
 installer/                        # WiX MSI project + MSIX build script and assets
 dist/                             # built MSI and MSIX + SHA-256 (framework-dependent, unsigned)

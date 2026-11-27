@@ -7,12 +7,12 @@ claim or a successful compile alone. Reviewed 27 November 2026.
 | Gate | Requirement | Evidence | Status |
 | --- | --- | --- | --- |
 | G1 | Clean Release build | Domain, Application, Infrastructure build on .NET 10; WPF/MSI require a Windows agent | **Pass** (Windows WPF build not run here) |
-| G2 | All tests pass | 165 pass, 6 Windows-only skipped, 0 fail | **Pass** |
+| G2 | All tests pass | 170 pass, 6 Windows-only skipped, 0 fail | **Pass** |
 | G3 | No unresolved critical or high security issue | `dotnet list package --vulnerable` clean; NuGet advisories fail the build | **Pass** |
 | G4 | Every requirement maps to code and reproducible proof | 156 tracked; 58 Tested, 46 Implemented, 19 Simulated, 16 Partial, 16 Unsupported, 1 Blocked | **Open** — Simulated/Partial cannot be counted as done |
 | G5 | Entra SSO and multi-client tenant-isolated approvals | No service, no SSO, no shared approvals | **Fail** (`SRV-01`–`SRV-05`, `IDN-01`) |
 | G6 | Certificate-first provisioning, 12-month defaults, rotation and consent hand-off | Certificate default exists; default lifetime, overlap rotation and admin-consent hand-off do not | **Fail** (`IDN-04`, `IDN-07`) |
-| G7 | Production writes cannot bypass approval, backup, simulation and revalidation | Fail-closed executor plus gate tests | **Pass, simulated only** |
+| G7 | Production writes cannot bypass approval, backup, simulation and revalidation | Fail-closed executor plus gate tests; approvals bind to the plan hash, expire after seven days and refuse self-approval | **Pass, simulated only** |
 | G8 | Privacy tests prove secrets/PII are blocked before egress and Local-only makes zero cloud calls | `PrivacyTests`, `ProviderSequenceTests` | **Pass** |
 | G9 | AI failover, dashboards and advertised exports work | `AuditChainAndHealthTests`, `DashboardAnalyticsTests`, `OfficeReportTests`, `ReportTypeTests` | **Pass** |
 | G10 | Current Windows matrix and a self-contained installer that builds, validates, upgrades and uninstalls | Matrix implemented and tested; MSI/MSIX unsigned and framework-dependent; upgrade/uninstall not executed here | **Open** |

@@ -11,6 +11,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Plan-bound approvals**: every approval now records a SHA-256 fingerprint of the plan's tenant, mode and operations. A decision against a changed plan is refused and the earlier decisions are invalidated, a submitted request expires after seven days, and the requester cannot approve their own change. `GovernanceWorkspace` re-reads the stored plan before each decision, so the check cannot be bypassed by the UI. Five new tests cover hash stability, expiry, self-approval and the recorded evidence.
 - **Windows lifecycle gate**: `PlatformSupport` now validates build, edition, servicing branch and ESU against an 11-release matrix, refuses end-of-life releases and Windows 10 Home/Pro, and warns inside 90 days of end of support. The WPF shell reads the real build and edition from the registry. Covered by 14 tests.
 - **Dependency audit gate**: NuGet audit advisories (`NU1901`–`NU1904`) are build errors, so a known-vulnerable package cannot be merged silently.
 
