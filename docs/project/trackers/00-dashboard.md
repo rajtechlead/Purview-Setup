@@ -10,7 +10,7 @@ here; no requirement count or status is duplicated elsewhere. Last verified **27
 | Branch state | `main` |
 | Requirements tracked | 157 (135 migrated, 22 added for the current master prompt) |
 | Automated tests | 315 total: 309 pass, 6 Windows-only DPAPI tests skipped on non-Windows hosts |
-| Release decision | **Not releasable.** Gates G5, G6, G12 and G13 in [07](07-release-gates.md) fail; G4, G10 and G11 are open. |
+| Release decision | **Not releasable.** Gates G5, G12 and G13 in [07](07-release-gates.md) fail; G4, G10 and G11 are open. |
 
 ## Baseline audit — 27 November 2026
 
@@ -53,9 +53,9 @@ here; no requirement count or status is duplicated elsewhere. Last verified **27
 - **No interactive Entra SSO.** MSAL/WAM sign-in and claim-to-role mapping are missing; the service
   enforces all seven roles from its membership store, but the desktop app still has four local
   roles (`IDN-01`, `IDN-02`).
-- **Provisioned permissions do not match collector needs.** The provisioning wizard requests six
-  Graph permissions, while role-management, Conditional Access and application-inventory reads
-  need more. Captured in [03](03-entra-permissions.csv) and `R-07`.
+- **Permissions, rotation and consent are aligned.** One read-only manifest covers every collector
+  API and is resolved against the tenant's Graph service principal; certificate rotation and the
+  admin-consent hand-off are policy-tested. Captured in [03](03-entra-permissions.csv) and `IDN-06`.
 - **No Data Map / Unified Catalog, Adaptive Protection, Information Barriers, PAM or Data Security
   Investigations** (`DSC-15`, `DSC-16`). DSPM and DSPM for AI evidence is unavailable from a stable
   API used here (`R-06`).
@@ -88,7 +88,7 @@ simulations. They are recorded as `Simulated`, never as `Live-verified`.
 
 | ID | Milestone | Status | Evidence |
 | --- | --- | --- | --- |
-| M0 | Baseline audit and verification | Complete | This page; Release build; 171 tests |
+| M0 | Baseline audit and verification | Complete | This page; Release build; 171 tests at the time of the baseline audit |
 | M1 | .NET 10 LTS, dependency advisory, lifecycle platform gate | Complete | Commit `a879e87`; `PLT-05`, `PLT-07` |
 | M2 | Canonical tracker suite and documentation reset | Complete | This directory; `PLT-06` |
 | M2.1 | Approval hardening: plan hash, expiry, self-approval block | Complete | `ChangePlanHasher`, `WorkflowTests` |
@@ -121,7 +121,7 @@ dashboard does not count Implemented, Simulated or Partial as complete.
 | Build | Green | Domain, Application and Infrastructure build in Release on .NET 10; WPF requires Windows |
 | Tests | Green | 309 pass, 6 skipped on non-Windows, 0 fail |
 | Dependencies | Green | No vulnerable packages; audit advisories are build errors |
-| Security | Amber | Strong local controls; unsigned binaries, no SBOM, no live verification |
+| Security | Amber | Strong local controls and a published SBOM/provenance manifest; unsigned binaries and no live verification |
 | Coverage | Amber | Shared service delivered; SSO, desktop wiring and Data Map are absent |
 | Documentation | Amber | Canonical trackers now exist; user-facing gaps are labelled |
 
