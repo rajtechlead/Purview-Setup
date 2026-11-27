@@ -33,13 +33,13 @@ public sealed class CollaborationStore
     }
 
     /// <summary>
-    /// Creates the schema on first use. Versioned migrations are not shipped yet, so an existing
-    /// database is left untouched and the schema row records the version it was created with.
+    /// Applies the versioned EF Core migrations on first use and records the store version. A database
+    /// created by a pre-migration build must be recreated; no such build has shipped.
     /// </summary>
     public async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
         await using var db = await _factory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
-        await db.Database.EnsureCreatedAsync(cancellationToken).ConfigureAwait(false);
+        await db.Database.MigrateAsync(cancellationToken).ConfigureAwait(false);
 
         if (!await db.Schema.AnyAsync(cancellationToken).ConfigureAwait(false))
         {

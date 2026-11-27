@@ -5,6 +5,14 @@
 > screens are not bound to it yet, so shared mode is currently available to the CLI and tests only;
 > desktop sign-in still requires `IDN-01`.
 
+## Schema management
+
+The store ships a committed EF Core migration (`InitialCreate`) and applies it at startup with
+`MigrateAsync`; a fresh SQLite file is created entirely by migrations, which the 43 service tests
+exercise. A database created by a pre-migration build must be recreated — no such build has shipped.
+SQL Server uses the same migration, but has not been run against a real instance, and there is no
+tooling to copy data from an existing SQLite file into SQL Server.
+
 A customer-hosted Windows service/API that lets several operators share assessments, change plans,
 approvals and audit for the same tenant. It is optional: the desktop app still runs fully offline on
 local SQLite. The service is never a SaaS and contains no vendor-hosted component.
