@@ -59,6 +59,19 @@ public class ProvisioningTests
     }
 
     [Fact]
+    public async Task SecretBeyondEntrasMaximum_IsRejected()
+    {
+        var service = new AuthenticationProvisioningService(
+            new FakeGateway(), new FakeCertificates(), new FakeAudit(), new FakeClock());
+
+        var refused = await service.ProvisionAsync(Request(
+            mode: AuthMode.ClientSecret, environment: ProvisioningEnvironment.Lab, secretMonths: 36));
+
+        Assert.False(refused.Succeeded);
+        Assert.Contains("24-month maximum", refused.Summary, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task TenYearCertificate_RequiresAcknowledgement()
     {
         var service = new AuthenticationProvisioningService(new FakeGateway(), new FakeCertificates(), new FakeAudit(), new FakeClock());
@@ -139,14 +152,15 @@ public class ProvisioningTests
         bool acknowledge = true,
         string approver = "bob",
         string approverRole = "Change Manager",
-        ProvisioningEnvironment environment = ProvisioningEnvironment.Production) =>
+        ProvisioningEnvironment environment = ProvisioningEnvironment.Production,
+        int secretMonths = 12) =>
         new(
             Tenant,
             "Purview Governance Copilot",
             mode,
             CertificateAlgorithm.Rsa4096,
             months,
-            12,
+            secretMonths,
             environment,
             new[] { "owner@contoso.com" },
             dryRun,

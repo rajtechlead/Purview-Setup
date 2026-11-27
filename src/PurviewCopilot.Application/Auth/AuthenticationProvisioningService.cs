@@ -11,7 +11,7 @@ namespace PurviewCopilot.Application.Auth;
 public sealed class AuthenticationProvisioningService
 {
     public static readonly int[] SupportedValidityMonths = CertificateLifecyclePolicy.SupportedValidityMonths;
-    public static readonly int[] SupportedSecretMonths = { 3, 6, 12, 24 };
+    public static readonly int[] SupportedSecretMonths = ClientSecretPolicy.SupportedMonths;
 
     private readonly IAuthenticationProvisioningGateway _gateway;
     private readonly ICertificateService _certificates;
@@ -202,8 +202,7 @@ public sealed class AuthenticationProvisioningService
             if (request.Environment != ProvisioningEnvironment.Lab)
                 throw new InvalidOperationException("Client secret authentication is permitted only for lab, test or development environments.");
 
-            if (!SupportedSecretMonths.Contains(request.SecretMonths))
-                throw new InvalidOperationException("Secret lifetime must be 3, 6, 12 or 24 months.");
+            ClientSecretPolicy.ValidateLifetime(request.SecretMonths);
         }
         else
         {

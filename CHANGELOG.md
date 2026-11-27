@@ -12,6 +12,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Durable approvals and shared audit**: approvals survive restarts, bind to the plan hash, expire after seven days and refuse self-approval; the audit is a per-tenant SHA-256 chain with a verification endpoint.
 - **Service operations**: `installer/Install-CollaborationService.ps1` registers the Windows service with restart-on-failure and `-WhatIf`; CI now runs the service test suite.
 
+### Security (lab secrets)
+
+- **Client secrets are lab-only, capped and rotated.** A new policy defaults lab secrets to 12 months, refuses anything beyond Entra's 24-month maximum, warns 14 days before expiry and treats a missing expiry as expired. Provisioning enforces it; certificates remain the only production credential.
+
 ### Security (plugin trust)
 
 - **Plugins must be signed and declare their permissions.** The loader now requires a `<name>.plugin.json` manifest whose publisher key verifies the DLL's SHA-256, whose name and version match, and whose permissions stay inside the `assessment:read` allowlist. Unsigned, tampered or over-permissioned assemblies are rejected before any code runs; eight tests cover the rejection paths.
