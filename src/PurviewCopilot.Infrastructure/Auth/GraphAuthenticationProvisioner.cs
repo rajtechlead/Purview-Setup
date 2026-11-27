@@ -14,17 +14,7 @@ namespace PurviewCopilot.Infrastructure.Auth;
 /// </summary>
 public sealed class GraphAuthenticationProvisioner : IAuthenticationProvisioningGateway
 {
-    public const string MicrosoftGraphAppId = "00000003-0000-0000-c000-000000000000";
-
-    private static readonly (string Name, string Id)[] GraphRoles =
-    {
-        ("User.Read.All", "df021288-bdef-4463-88db-98f22de89214"),
-        ("Directory.Read.All", "7ab1d382-f21e-4acd-a863-ba3e13f7da61"),
-        ("Organization.Read.All", "498476ce-e0fe-48b0-b801-37ba7e2685c6"),
-        ("SecurityEvents.Read.All", "64733abd-851e-478a-bffb-e47a14b18235"),
-        ("AuditLog.Read.All", "b0afded3-3588-46d8-8b3d-9842eff778da"),
-        ("Reports.Read.All", "230c1aed-a721-4c5d-9cb4-a90514e508ef")
-    };
+    public const string MicrosoftGraphAppId = GraphPermissionManifest.MicrosoftGraphAppId;
 
     private readonly EntraTokenProvider _tokens;
     private readonly ConnectionVerifier _verifier;
@@ -40,6 +30,11 @@ public sealed class GraphAuthenticationProvisioner : IAuthenticationProvisioning
     public async Task<(string ApplicationId, string ObjectId)> CreateApplicationAsync(
         string displayName, AuthConfiguration bootstrap, CancellationToken cancellationToken = default)
     {
+        var graphServicePrincipalId = await ResolveGraphServicePrincipalIdAsync(bootstrap, cancellationToken)
+            .ConfigureAwait(false);
+        var roles = await ResolveGraphRolesAsync(graphServicePrincipalId, bootstrap, cancellationToken)
+            .ConfigureAwait(false);
+
         var body = new
         {
             displayName,
@@ -49,7 +44,7 @@ public sealed class GraphAuthenticationProvisioner : IAuthenticationProvisioning
                 new
                 {
                     resourceAppId = MicrosoftGraphAppId,
-                    resourceAccess = GraphRoles.Select(r => new { id = r.Id, type = "Role" }).ToArray()
+                    resourceAccess = roles.Select(r => new { id = r.Id, type = "Role" }).ToArray()
                 }
             }
         };
@@ -123,34 +118,24 @@ public sealed class GraphAuthenticationProvisioner : IAuthenticationProvisioning
     {
         var graphServicePrincipalId = await ResolveGraphServicePrincipalIdAsync(bootstrap, cancellationToken)
             .ConfigureAwait(false);
+        var roles = await ResolveGraphRolesAsync(graphServicePrincipalId, bootstrap, cancellationToken)
+            .ConfigureAwait(false);
 
-        foreach (var (_, roleId) in GraphRoles)
+        // An app-only registration is consented through app role assignments. Delegated scope grants
+        // do not apply here, and asking for them would widen the consent beyond what the app uses.
+        foreach (var role in roles)
         {
             try
             {
                 using var assignment = await SendAsync(HttpMethod.Post,
                     $"/servicePrincipals/{servicePrincipalId}/appRoleAssignments", bootstrap,
-                    new { principalId = servicePrincipalId, resourceId = graphServicePrincipalId, appRoleId = roleId },
+                    new { principalId = servicePrincipalId, resourceId = graphServicePrincipalId, appRoleId = role.Id },
                     cancellationToken).ConfigureAwait(false);
             }
             catch (InvalidOperationException ex) when (ex.Message.Contains("already exists", StringComparison.OrdinalIgnoreCase))
             {
                 // Consent is idempotent; an existing assignment is the desired state.
             }
-        }
-
-        try
-        {
-            using var grant = await SendAsync(HttpMethod.Post, "/oauth2PermissionGrants", bootstrap, new
-            {
-                clientId = servicePrincipalId,
-                consentType = "AllPrincipals",
-                resourceId = graphServicePrincipalId,
-                scope = string.Join(' ', GraphRoles.Select(r => r.Name))
-            }, cancellationToken).ConfigureAwait(false);
-        }
-        catch (InvalidOperationException ex) when (ex.Message.Contains("already exists", StringComparison.OrdinalIgnoreCase))
-        {
         }
     }
 
@@ -165,6 +150,24 @@ public sealed class GraphAuthenticationProvisioner : IAuthenticationProvisioning
             .ConfigureAwait(false);
         using var __ = await SendAsync(HttpMethod.Delete, $"/applications/{objectId}", bootstrap, null, cancellationToken)
             .ConfigureAwait(false);
+    }
+
+    private async Task<IReadOnlyList<GraphAppRole>> ResolveGraphRolesAsync(
+        string graphServicePrincipalId, AuthConfiguration bootstrap, CancellationToken cancellationToken)
+    {
+        using var document = await SendAsync(HttpMethod.Get,
+            $"/servicePrincipals/{graphServicePrincipalId}?$select=appRoles", bootstrap, null, cancellationToken)
+            .ConfigureAwait(false);
+
+        var (resolved, missing) = GraphAppRoleCatalog.Resolve(document.RootElement, GraphPermissionManifest.Names);
+        if (missing.Count > 0)
+        {
+            throw new InvalidOperationException(
+                "The Microsoft Graph service principal does not publish these app roles: " +
+                $"{string.Join(", ", missing)}. Update the permission manifest before provisioning.");
+        }
+
+        return resolved;
     }
 
     private async Task<string> ResolveUserIdAsync(string userPrincipalName, AuthConfiguration bootstrap, CancellationToken cancellationToken)

@@ -12,6 +12,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Durable approvals and shared audit**: approvals survive restarts, bind to the plan hash, expire after seven days and refuse self-approval; the audit is a per-tenant SHA-256 chain with a verification endpoint.
 - **Service operations**: `installer/Install-CollaborationService.ps1` registers the Windows service with restart-on-failure and `-WhatIf`; CI now runs the service test suite.
 
+### Added (Entra permissions)
+
+- **One permission manifest, resolved at runtime.** The provisioner previously requested a fixed six-permission set that did not match what the collectors call, including the broad `Directory.Read.All`. A single read-only manifest now declares every permission, covers Conditional Access, roles/PIM, apps, devices, sites and teams, and provisioning resolves the role ids from the tenant's Microsoft Graph service principal, failing loudly on an unknown permission instead of requesting an invented id. The erroneous delegated-scope consent call was removed; app-only consent is app role assignments only.
+
 ### Added (change safety)
 
 - **Pre-execution drift recheck**: a phase records a deterministic fingerprint of the governance signals it was simulated against. Immediately before execution the desktop client re-collects the tenant and refuses when anything changed, and `DeploymentGate` blocks unless the recheck ran and the fingerprint still matches. A changed tenant therefore invalidates the approval instead of silently applying it to a different state.

@@ -49,7 +49,8 @@ public sealed class AuthenticationProvisioningService
                     ? new ProvisioningStep("Create client secret", "planned", $"{request.SecretMonths}-month secret; lab only; DPAPI at rest.")
                     : new ProvisioningStep("Create certificate", "planned", $"{request.Algorithm}, {request.CertificateMonths} months, CurrentUser\\My, uploaded as keyCredentials."));
                 steps.Add(new ProvisioningStep("Assign owners", "planned", request.Owners.Count == 0 ? "No additional owners." : string.Join(", ", request.Owners)));
-                steps.Add(new ProvisioningStep("Grant Graph permissions", "planned", "User.Read.All, Directory.Read.All, Organization.Read.All, SecurityEvents.Read.All, AuditLog.Read.All, Reports.Read.All with admin consent."));
+                steps.Add(new ProvisioningStep("Grant Graph permissions", "planned",
+                    $"{string.Join(", ", GraphPermissionManifest.Names)} with admin consent (app roles resolved against the tenant's Graph service principal)."));
                 steps.Add(new ProvisioningStep("Validate authentication", "planned", "Acquire a token and read the organization object."));
 
                 await SafeAuditAsync(request.Operator, "AuthProvisioningDryRun", request.TenantId,
