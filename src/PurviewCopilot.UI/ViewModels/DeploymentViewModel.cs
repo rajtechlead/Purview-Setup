@@ -67,6 +67,8 @@ public sealed class DeploymentViewModel : PageViewModel
     private string _approvalState = "No approval request.";
     private bool _busy;
     private bool _refreshing;
+    private bool _brownfieldVisible;
+    private string _brownfieldSummary = string.Empty;
 
     public DeploymentViewModel(
         GovernanceWorkspace workspace,
@@ -106,12 +108,26 @@ public sealed class DeploymentViewModel : PageViewModel
         ExportObjectsCommand = new AsyncRelayCommand(ExportObjectsAsync);
         SaveIaCTemplatesCommand = new AsyncRelayCommand(SaveInfrastructureTemplatesAsync);
         ApplyCommand = new AsyncRelayCommand(ApplyAsync, () => !Busy && Plan is not null);
+        ExportDecisionPackCommand = new AsyncRelayCommand(ExportDecisionPackAsync, () => !Busy && Plan is not null);
     }
 
     public override string Title => "Deployment";
     public override string Subtitle => "Review, simulate, approve and apply — with a rollback package for every plan.";
 
     public ObservableCollection<SelectableRecommendation> Candidates { get; } = new();
+    public ObservableCollection<ConfigurationDebt> BrownfieldDebt { get; } = new();
+
+    public bool BrownfieldVisible
+    {
+        get => _brownfieldVisible;
+        private set => SetProperty(ref _brownfieldVisible, value);
+    }
+
+    public string BrownfieldSummary
+    {
+        get => _brownfieldSummary;
+        private set => SetProperty(ref _brownfieldSummary, value);
+    }
 
     public IReadOnlyList<DeploymentMode> Modes { get; } = Enum.GetValues<DeploymentMode>();
     public IReadOnlyList<DeploymentPhaseDefinition> PhaseDefinitions => DeploymentPhases.All;
@@ -186,6 +202,7 @@ public sealed class DeploymentViewModel : PageViewModel
     public ICommand ExportObjectsCommand { get; }
     public ICommand SaveIaCTemplatesCommand { get; }
     public ICommand ApplyCommand { get; }
+    public ICommand ExportDecisionPackCommand { get; }
 
     public override async Task RefreshAsync()
     {
@@ -216,6 +233,7 @@ public sealed class DeploymentViewModel : PageViewModel
     {
         var tenant = _workspace.Tenant;
         var greenfield = Mode == DeploymentMode.Greenfield && tenant is not null && GreenfieldBaseline.IsGreenfield(tenant);
+        RefreshBrownfield(tenant);
 
         foreach (var candidate in Candidates)
         {
@@ -229,6 +247,59 @@ public sealed class DeploymentViewModel : PageViewModel
         }
 
         Status = DeploymentModePolicy.Describe(Mode, greenfield);
+    }
+
+    private void RefreshBrownfield(TenantSnapshot? tenant)
+    {
+        BrownfieldDebt.Clear();
+
+        if (Mode != DeploymentMode.Brownfield)
+        {
+            BrownfieldVisible = false;
+            BrownfieldSummary = string.Empty;
+            return;
+        }
+
+        if (tenant is null)
+        {
+            BrownfieldVisible = true;
+            BrownfieldSummary = "Collect a tenant first; debt is read from its configuration.";
+            return;
+        }
+
+        var analysis = BrownfieldAssessmentBuilder.Build(tenant);
+        foreach (var debt in analysis.Debt)
+        {
+            BrownfieldDebt.Add(debt);
+        }
+
+        BrownfieldVisible = true;
+        BrownfieldSummary = analysis.IsBrownfield
+            ? $"{analysis.ConfiguredAreas.Count} configured area(s), {analysis.Debt.Count} debt item(s) across {analysis.Waves.Count} incremental wave(s)."
+            : "No Purview configuration found — use the Greenfield mode for a first-run baseline instead.";
+    }
+
+    private async Task ExportDecisionPackAsync()
+    {
+        if (Plan is null) return;
+
+        var dialog = new SaveFileDialog
+        {
+            Filter = "Markdown (*.md)|*.md",
+            FileName = $"pgc-decision-pack-{Plan.Id:N}.md"
+        };
+
+        if (dialog.ShowDialog() != true) return;
+
+        try
+        {
+            await _workspace.ExportDecisionPackAsync(Plan, dialog.FileName, Actor).ConfigureAwait(true);
+            Status = $"Decision pack exported to {dialog.FileName}. It records options, owners, acceptance and rollback limits.";
+        }
+        catch (Exception ex)
+        {
+            Status = $"Decision pack export failed: {ex.Message}";
+        }
     }
 
     private async Task BackupObjectsAsync()
