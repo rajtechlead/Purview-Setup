@@ -57,7 +57,8 @@ public enum DeploymentMode
     OneClickRecommended,
     Custom,
     Expert,
-    Greenfield
+    Greenfield,
+    Brownfield
 }
 
 /// <summary>

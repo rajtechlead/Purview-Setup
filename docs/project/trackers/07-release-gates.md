@@ -7,7 +7,7 @@ claim or a successful compile alone. Reviewed 27 November 2026.
 | Gate | Requirement | Evidence | Status |
 | --- | --- | --- | --- |
 | G1 | Clean Release build | Domain, Application, Infrastructure build on .NET 10; WPF/MSI require a Windows agent | **Pass** (Windows WPF build not run here) |
-| G2 | All tests pass | 317 pass, 6 Windows-only skipped, 0 fail (271 desktop + 46 service) | **Pass** |
+| G2 | All tests pass | 323 pass, 6 Windows-only skipped, 0 fail (277 desktop + 46 service) | **Pass** |
 | G3 | No unresolved critical or high security issue | `dotnet list package --vulnerable` clean; NuGet advisories fail the build | **Pass** |
 | G4 | Every requirement maps to code and reproducible proof | 157 tracked; 69 Tested, 46 Implemented, 20 Simulated, 14 Partial, 7 Unsupported, 1 Blocked | **Open** — Simulated/Partial cannot be counted as done |
 | G5 | Entra SSO and multi-client tenant-isolated approvals | Service, migration-created store, server RBAC, tenant-isolated approvals, audit and a typed client are tested over HTTP; the WPF screens are not bound to the client and Entra SSO is absent | **Open** (`SRV-07`, `IDN-01`) |

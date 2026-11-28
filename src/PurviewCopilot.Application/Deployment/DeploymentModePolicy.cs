@@ -22,6 +22,7 @@ public static class DeploymentModePolicy
         DeploymentMode.Custom => false,
         DeploymentMode.Expert => true,
         DeploymentMode.Greenfield => greenfield && GreenfieldBaseline.IsFoundation(recommendationId),
+        DeploymentMode.Brownfield => priority >= Severity.High,
         _ => false
     };
 
@@ -34,6 +35,8 @@ public static class DeploymentModePolicy
         DeploymentMode.Greenfield => greenfield
             ? "Greenfield tenant detected. The first-run baseline preselects labels, label policy, auto-labelling, DLP, retention and audit retention in a safe starting order."
             : "Greenfield expects an empty tenant; existing labels or policies were found, so nothing is preselected as a first-run baseline.",
+        DeploymentMode.Brownfield =>
+            "Brownfield: existing configuration is assessed for debt and fixed in three incremental waves; critical and high items are preselected so nothing new starts before exposure is closed.",
         _ => "Guided: high and critical recommendations are preselected; adjust the selection before building the plan."
     };
 }

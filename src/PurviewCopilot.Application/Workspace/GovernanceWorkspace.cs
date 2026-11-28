@@ -300,6 +300,15 @@ public sealed class GovernanceWorkspace
     /// <summary>Configuration-as-code import. Returns a new plan that must be simulated and approved again.</summary>
     public ChangePlan ImportPlan(string json) => ConfigurationPackage.Import(json, _clock.UtcNow);
 
+    /// <summary>Assesses existing configuration for debt and incremental remediation waves.</summary>
+    public BrownfieldAssessment BuildBrownfieldAssessment()
+    {
+        if (_lastCollected is null)
+            throw new InvalidOperationException("Collect or load a tenant before assessing brownfield debt.");
+
+        return BrownfieldAssessmentBuilder.Build(_lastCollected);
+    }
+
     /// <summary>Builds the pre-change decision pack for a plan from the latest assessment.</summary>
     public DecisionPack BuildDecisionPack(ChangePlan plan, IReadOnlyDictionary<string, decimal>? licencePrices = null)
     {

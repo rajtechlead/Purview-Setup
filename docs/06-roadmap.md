@@ -2,7 +2,7 @@
 
 Status source of truth: [00 — Project dashboard](project/trackers/00-dashboard.md). This page explains sequencing and why anything is still open.
 
-**Current position (27 November 2026):** 157 tracked requirements — 69 tested, 46 implemented, 20 simulated, 14 partial, 7 unsupported, 1 blocked. Build succeeds on .NET 10; 323 tests (317 pass, 6 Windows-only skipped); MSI and unsigned MSIX are produced. No live tenant, signing certificate, Key Vault, webhook or AI key was available, so tenant-dependent paths remain unverified rather than claimed.
+**Current position (27 November 2026):** 157 tracked requirements — 69 tested, 46 implemented, 20 simulated, 14 partial, 7 unsupported, 1 blocked. Build succeeds on .NET 10; 329 tests (323 pass, 6 Windows-only skipped); MSI and unsigned MSIX are produced. No live tenant, signing certificate, Key Vault, webhook or AI key was available, so tenant-dependent paths remain unverified rather than claimed.
 
 ## Completed phases
 

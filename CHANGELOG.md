@@ -12,6 +12,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Durable approvals and shared audit**: approvals survive restarts, bind to the plan hash, expire after seven days and refuse self-approval; the audit is a per-tenant SHA-256 chain with a verification endpoint.
 - **Service operations**: `installer/Install-CollaborationService.ps1` registers the Windows service with restart-on-failure and `-WhatIf`; CI now runs the service test suite.
 
+### Added (brownfield onboarding)
+
+- **Existing tenants get a debt list and three incremental waves.** A new Brownfield deployment mode preselects only critical and high work, and `BrownfieldAssessmentBuilder` names nine kinds of debt with the evidence that triggered them — audit off while Purview is configured, all-test DLP, labels nothing publishes, partial retention coverage, a cloud-only DLP boundary — then schedules fixes in increasing-severity waves. Six tests. The WPF deployment view does not display it yet, and conflicts are inferred from configuration counts rather than object-level overlaps.
+
 ### Added (decision-pack export path)
 
 - **`pgc decision-pack --demo`** builds the sample assessment and plan, then writes the Markdown decision pack through `GovernanceWorkspace.ExportDecisionPackAsync`, which records the export in the audit log. Offline commands no longer construct the Windows certificate stack, so the command compiles and runs on the same host as the rest of the CLI. It was not executed in the Linux build environment because every stored payload is DPAPI-encrypted.

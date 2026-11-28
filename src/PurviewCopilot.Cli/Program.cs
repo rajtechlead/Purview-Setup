@@ -354,7 +354,7 @@ internal static class Program
 
             Options:
               --format   Html, Json, Csv, Markdown, Pdf, Docx or Xlsx (default Json)
-              --mode     AssessmentOnly, GuidedDeployment, OneClickRecommended, Custom, Expert, Greenfield
+              --mode     AssessmentOnly, GuidedDeployment, OneClickRecommended, Custom, Expert, Greenfield, Brownfield
               --org      Organisation name printed on the report
               --by       Author printed on the report (default: current user)
               --data-dir Evidence directory (default: %LOCALAPPDATA%\PurviewGovernanceCopilot)
