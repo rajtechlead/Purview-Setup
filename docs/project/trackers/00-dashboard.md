@@ -43,6 +43,25 @@ here; no requirement count or status is duplicated elsewhere. Last verified **27
 | DPAPI tests no longer fail the suite on non-Windows agents | `WindowsFact`, 6 skipped with a stated reason |
 | Canonical tracker suite replaces three overlapping trackers | this directory; old 07/08/09 deleted |
 
+### Delivered after the baseline audit
+
+| Milestone | Evidence |
+| --- | --- |
+| Collaboration service with HTTPS/Entra JWT fail-closed host and installer | `SRV-01`, service tests |
+| Recheck drift and snapshot fingerprint before apply | `CHG-04`, `DeploymentDriftRecheckTests` |
+| One read-only Graph permission manifest resolved against the tenant service principal | `IDN-06`, `GraphPermissionManifestTests` |
+| Certificate and client-secret lifecycle policies (12-month default, 24-month cap, rotation warnings) | `IDN-04`, `IDN-05` |
+| Admin-consent hand-off links for commercial, GCC High and DoD | `IDN-07` |
+| Typed collaboration client with bearer handler | `SRV-07`, 8 HTTP tests |
+| CycloneDX SBOM and release provenance with SHA-256 per artefact | `SEC-17`, `ReleaseManifestTests` |
+| Per-stage approval quorum in the desktop flow and the service | `CHG-03`, `ServiceQuorumTests` |
+| EF Core initial migration replaces `EnsureCreated` for the shared store | `SRV-02`, `MigrationTests` |
+| Signed plugin manifests with hash and allowlist | `SEC-18`, `PluginTrustTests` |
+| Reversibility model and irreversible-change gate | `CHG-05`, `IrreversibilityGateTests` |
+| Three-option decision pack with Markdown export (UI button and CLI) | `REP-07`, `DecisionPackTests` |
+| Checked, fail-closed restore executor | `SAF-02`, `RollbackTests` |
+| Brownfield debt assessment with three remediation waves and deployment-view card | `GOV-02`, `BrownfieldAssessmentTests` |
+
 ### Gaps and duplication found
 
 - **Multi-user collaboration is partially delivered.** The customer-hosted service, shared store,
