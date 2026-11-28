@@ -6,11 +6,13 @@ using PurviewCopilot.Application.Modules;
 using PurviewCopilot.Application.Release;
 using PurviewCopilot.Application.Reporting;
 using PurviewCopilot.Application.Workspace;
+using PurviewCopilot.Collaboration;
 using PurviewCopilot.Domain;
 using PurviewCopilot.Infrastructure.Auth;
 using PurviewCopilot.Infrastructure.Data;
 using PurviewCopilot.Infrastructure.Deployment;
 using PurviewCopilot.Infrastructure.Discovery;
+using Microsoft.EntityFrameworkCore;
 
 namespace PurviewCopilot.Cli;
 
@@ -40,6 +42,7 @@ internal static class Program
             {
                 "assess" => await AssessAsync(options),
                 "decision-pack" => await DecisionPackAsync(options),
+                "store-copy" => await StoreCopyAsync(options),
                 "provenance" => Provenance(options),
                 "verify-audit" => await VerifyAuditAsync(options),
                 _ => Unknown(command)
@@ -200,6 +203,40 @@ internal static class Program
         return prices;
     }
 
+    private static async Task<int> StoreCopyAsync(Dictionary<string, string?> options)
+    {
+        var sourcePath = Path.GetFullPath(Require(options, "source"));
+        if (!File.Exists(sourcePath))
+        {
+            throw new ArgumentException($"Source database '{sourcePath}' does not exist.");
+        }
+
+        var targetConnection = Require(options, "target");
+        var provider = options.GetValueOrDefault("target-provider") ?? "SqlServer";
+
+        if (provider.Equals("Sqlite", StringComparison.OrdinalIgnoreCase) &&
+            Path.GetFullPath(targetConnection.Replace("Data Source=", string.Empty).Trim()) == sourcePath)
+        {
+            throw new ArgumentException("Source and target must be different databases.");
+        }
+
+        await using var source = new CollaborationDbContext(
+            CollaborationStoreFactory.FromConfiguration("Sqlite", $"Data Source={sourcePath}"));
+        await using var target = new CollaborationDbContext(
+            CollaborationStoreFactory.FromConfiguration(provider, targetConnection));
+
+        await source.Database.MigrateAsync();
+        await target.Database.MigrateAsync();
+
+        var report = await StoreCopier.CopyAsync(source, target);
+
+        Console.WriteLine($"Source      : {sourcePath}");
+        Console.WriteLine($"Target      : {provider}");
+        Console.WriteLine($"Copied      : {report.Total} row(s) — memberships {report.Memberships}, assessments {report.Assessments}, plans {report.Plans}, approvals {report.Approvals}, audit {report.AuditEntries}, schema {report.SchemaMarkers}");
+        Console.WriteLine("Point the service at the target with Collaboration:Provider and Collaboration:ConnectionString, then stop using the single-node database.");
+        return 0;
+    }
+
     private static async Task<int> VerifyAuditAsync(Dictionary<string, string?> options)
     {
         var (_, store) = CreateWorkspace(options);
@@ -351,6 +388,7 @@ internal static class Program
               pgc decision-pack --demo [--prices "E5=57;E3=36"] [--out decision-pack.md] [--by <author>]   (Windows: evidence store is DPAPI-protected)
               pgc provenance --version <v> --files "dist/a.msi;dist/b.msix" [--sbom bom.json] [--output manifest.json] [--commit <sha>]
               pgc verify-audit [--data-dir <path>]
+              pgc store-copy --source <sqlite.db> --target "<connection string>" [--target-provider SqlServer|Sqlite]
 
             Options:
               --format   Html, Json, Csv, Markdown, Pdf, Docx or Xlsx (default Json)

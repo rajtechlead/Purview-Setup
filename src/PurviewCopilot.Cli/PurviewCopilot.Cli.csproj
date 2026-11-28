@@ -10,5 +10,6 @@
   <ItemGroup>
     <ProjectReference Include="..\PurviewCopilot.Application\PurviewCopilot.Application.csproj" />
     <ProjectReference Include="..\PurviewCopilot.Infrastructure\PurviewCopilot.Infrastructure.csproj" />
+    <ProjectReference Include="..\PurviewCopilot.Collaboration\PurviewCopilot.Collaboration.csproj" />
   </ItemGroup>
 </Project>

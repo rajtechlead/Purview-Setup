@@ -9,7 +9,7 @@ here; no requirement count or status is duplicated elsewhere. Last verified **27
 | Production target | .NET 10 LTS (supported to 2028-11-14) |
 | Branch state | `main` |
 | Requirements tracked | 157 (135 migrated, 22 added for the current master prompt) |
-| Automated tests | 329 total: 323 pass, 6 Windows-only DPAPI tests skipped on non-Windows hosts |
+| Automated tests | 332 total: 326 pass, 6 Windows-only DPAPI tests skipped on non-Windows hosts |
 | Release decision | **Not releasable.** Gates G5, G12 and G13 in [07](07-release-gates.md) fail; G4, G10 and G11 are open. |
 
 ## Baseline audit — 27 November 2026
@@ -68,7 +68,7 @@ here; no requirement count or status is duplicated elsewhere. Last verified **27
   seven-role server-side RBAC, tenant isolation, concurrency stamps, durable approvals and shared
   audit are implemented and tested over HTTP ([service doc](../../11-collaboration-service.md)).
   The desktop client is not wired to it yet (`SRV-07`), SQL Server has not been run against a real
-  instance, and the schema is migration-created but has no SQLite-to-SQL Server data copy tool.
+  instance, and `pgc store-copy` has only been run between SQLite files.
 - **No interactive Entra SSO.** MSAL/WAM sign-in and claim-to-role mapping are missing; the service
   enforces all seven roles from its membership store, but the desktop app still has four local
   roles (`IDN-01`, `IDN-02`).
@@ -124,8 +124,8 @@ simulations. They are recorded as `Simulated`, never as `Live-verified`.
 | --- | --- | --- |
 | Tested | 69 | 44% |
 | Implemented (build-verified or documented) | 46 | 29% |
-| Simulated (code + tests, no live verification) | 20 | 13% |
-| Partial | 14 | 9% |
+| Simulated (code + tests, no live verification) | 21 | 13% |
+| Partial | 13 | 8% |
 | Unsupported | 7 | 4% |
 | Blocked | 1 | 1% |
 | **Total** | **157** | |
@@ -138,7 +138,7 @@ dashboard does not count Implemented, Simulated or Partial as complete.
 | Area | Health | Note |
 | --- | --- | --- |
 | Build | Green | Domain, Application and Infrastructure build in Release on .NET 10; WPF requires Windows |
-| Tests | Green | 323 pass, 6 skipped on non-Windows, 0 fail |
+| Tests | Green | 326 pass, 6 skipped on non-Windows, 0 fail |
 | Dependencies | Green | No vulnerable packages; audit advisories are build errors |
 | Security | Amber | Strong local controls and a published SBOM/provenance manifest; unsigned binaries and no live verification |
 | Coverage | Amber | Shared service delivered; SSO, desktop wiring and Data Map are absent |

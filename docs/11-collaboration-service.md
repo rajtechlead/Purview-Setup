@@ -23,8 +23,8 @@ policy in its own settings, so local and shared approvals behave identically.
 The store ships a committed EF Core migration (`InitialCreate`) and applies it at startup with
 `MigrateAsync`; a fresh SQLite file is created entirely by migrations, which the 43 service tests
 exercise. A database created by a pre-migration build must be recreated — no such build has shipped.
-SQL Server uses the same migration, but has not been run against a real instance, and there is no
-tooling to copy data from an existing SQLite file into SQL Server.
+SQL Server uses the same migration, but has not been run against a real instance. An existing
+single-node SQLite database is moved with `pgc store-copy` (see [Migrating an existing store](#migrating-an-existing-store)).
 
 A customer-hosted Windows service/API that lets several operators share assessments, change plans,
 approvals and audit for the same tenant. It is optional: the desktop app still runs fully offline on
@@ -153,8 +153,21 @@ $env:Collaboration__Provider = 'SqlServer'
 $env:ConnectionStrings__Collaboration = 'Server=sql01;Database=PurviewCopilot;Encrypt=True;TrustServerCertificate=False;Authentication=Active Directory Default'
 ```
 
-The schema is created on first start. **Versioned migrations are not shipped yet**, so upgrading an
-existing database with schema changes is a manual step; this is recorded as an open gap.
+The schema is created on first start from the committed `InitialCreate` migration. Add a new
+migration for later schema changes and apply it with `MigrateAsync`; do not edit the shipped one.
+
+## Migrating an existing store
+
+```powershell
+pgc store-copy --source "$env:LOCALAPPDATA\PurviewGovernanceCopilot\collaboration.db" `
+               --target "Server=sql01;Database=PurviewCopilot;Encrypt=True;Authentication=Active Directory Default" `
+               --target-provider SqlServer
+```
+
+The tool migrates both stores, then copies memberships, assessments, plans, approvals and the
+audit chain in order, preserving GUID identifiers, plan/approval links and audit sequence numbers.
+It refuses a non-empty target or the same database: merging stores would drop memberships or fork
+the audit chain. Point the service at the target afterwards and stop using the single-node file.
 
 ## Windows service installation
 
@@ -177,16 +190,17 @@ enabled. The script never installs a certificate for you.
 
 | Check | Result |
 | --- | --- |
-| Store tests (SQLite) | 16 pass: role matrix, tenant isolation, durable approvals, expiry, tamper invalidation, concurrency, audit chain, provider fail-fast |
+| Store tests (SQLite) | Role matrix, tenant isolation, durable approvals, expiry, tamper invalidation, concurrency, audit chain, provider fail-fast |
+| Migration and copy tests | `MigrationTests`, `StoreCopyTests`: migrated schema, cross-store copy, link preservation, empty-target and same-store guards |
 | API tests (`WebApplicationFactory`) | 16 pass: 401/403, cross-tenant denial, body tenant spoofing, role denial, full approval journey, self-approval, stale `If-Match`, audit verification, membership rules, `/api/me`, bootstrap admin, fail-closed startup |
 | SQL Server | Not run — no instance available |
 | Live Entra token | Not run — no tenant available |
-| Desktop client integration | Not implemented (SRV-07) |
+| Desktop client integration | Typed client implemented and HTTP-tested; the WPF app does not call it yet (SRV-07) |
 | Windows service install | Script provided; not executed on a clean Windows host here |
 
 ## Known gaps
 
-- No versioned EF Core migrations; schema changes need a manual migration.
+- No SQL Server instance has been used to validate the provider or the copy tool end to end; both were exercised between SQLite files only.
 - No desktop client wiring: the collaboration API is reachable and tested but the WPF app still
   stores locally.
 - No rate limiting beyond Kestrel request-size limits.

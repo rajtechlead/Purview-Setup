@@ -12,6 +12,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Durable approvals and shared audit**: approvals survive restarts, bind to the plan hash, expire after seven days and refuse self-approval; the audit is a per-tenant SHA-256 chain with a verification endpoint.
 - **Service operations**: `installer/Install-CollaborationService.ps1` registers the Windows service with restart-on-failure and `-WhatIf`; CI now runs the service test suite.
 
+### Added (store migration)
+
+- **`pgc store-copy` moves a single-node collaboration database to a shared one.** It migrates both stores, then copies memberships, assessments, plans, approvals and the audit chain, preserving GUID identifiers, plan/approval links and audit sequence numbers, and refuses a non-empty target or the same database. Three tests cover the copy and both guards; the command ran end to end between two SQLite files. SQL Server remains unverified because no instance is available.
+
 ### Added (deployment view surfaces)
 
 - **The deployment view can export the decision pack and show brownfield debt.** An `Export decision pack (.md)` button writes the pack through the audited workspace export, and the Brownfield mode renders a debt card listing each item's id, severity, evidence and remediation. Both are compile-checked and the XAML is well-formed; the WPF window itself was not run on this host.
