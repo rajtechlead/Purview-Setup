@@ -39,6 +39,7 @@ internal static class Program
             return command switch
             {
                 "assess" => await AssessAsync(options),
+                "decision-pack" => await DecisionPackAsync(options),
                 "provenance" => Provenance(options),
                 "verify-audit" => await VerifyAuditAsync(options),
                 _ => Unknown(command)
@@ -82,7 +83,7 @@ internal static class Program
 
     private static async Task<int> AssessAsync(Dictionary<string, string?> options)
     {
-        var (workspace, _) = CreateWorkspace(options);
+        var (workspace, _) = CreateWorkspace(options, live: !options.ContainsKey("demo"));
 
         AssessmentResult assessment;
 
@@ -148,6 +149,57 @@ internal static class Program
         return 0;
     }
 
+    private static async Task<int> DecisionPackAsync(Dictionary<string, string?> options)
+    {
+        if (!options.ContainsKey("demo"))
+        {
+            throw new ArgumentException("decision-pack only supports --demo until a plan export carries its assessment.");
+        }
+
+        var (workspace, _) = CreateWorkspace(options, live: false);
+        var by = options.GetValueOrDefault("by") ?? Environment.UserName;
+
+        var assessment = await workspace.AssessSampleAsync();
+        var plan = await workspace.CreatePlanAsync(
+            assessment.Recommendations, DeploymentMode.GuidedDeployment, by);
+
+        var prices = ParsePrices(options.GetValueOrDefault("prices"));
+        var pack = workspace.BuildDecisionPack(plan, prices);
+
+        var output = Path.GetFullPath(options.GetValueOrDefault("out") ?? "decision-pack.md");
+        await workspace.ExportDecisionPackAsync(plan, output, by, prices);
+
+        Console.WriteLine($"Plan        : {plan.Id} · {plan.Operations.Count} operation(s)");
+        Console.WriteLine($"Options     : {string.Join(", ", pack.Options.Select(o => $"{o.Key} ({o.Items.Count})"))}");
+        Console.WriteLine($"Phases      : {pack.Phases.Count} · owners {pack.Owners.Count}");
+        Console.WriteLine($"Costs       : {(pack.Costs.Count == 0 ? "no licences" : string.Join(", ", pack.Costs.Select(c => $"{c.Licence}={c.Total?.ToString() ?? "?"}")))}");
+        Console.WriteLine($"Decision pack: {output}");
+
+        return 0;
+    }
+
+    private static IReadOnlyDictionary<string, decimal>? ParsePrices(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+
+        var prices = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
+        foreach (var entry in value.Split(new[] { ';', ',' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            var parts = entry.Split('=', StringSplitOptions.TrimEntries);
+            if (parts.Length != 2 || !decimal.TryParse(parts[1], out var price))
+            {
+                throw new ArgumentException($"Could not read price '{entry}'. Use Licence=Price pairs separated by ';'.");
+            }
+
+            prices[parts[0]] = price;
+        }
+
+        return prices;
+    }
+
     private static async Task<int> VerifyAuditAsync(Dictionary<string, string?> options)
     {
         var (_, store) = CreateWorkspace(options);
@@ -158,7 +210,7 @@ internal static class Program
     }
 
     private static (GovernanceWorkspace Workspace, SqliteStore Store) CreateWorkspace(
-        Dictionary<string, string?> options)
+        Dictionary<string, string?> options, bool live = true)
     {
         var dataDirectory = options.GetValueOrDefault("data-dir")
             ?? Path.Combine(
@@ -169,12 +221,19 @@ internal static class Program
 
         var clock = new SystemClock();
         var store = new SqliteStore(dataDirectory);
-        var certificates = new WindowsCertificateService();
-        var tokens = new EntraTokenProvider(certificates);
 
-        var collector = new CompositeTenantCollector(
-            new GraphTenantCollector(tokens, Http),
-            new CompliancePowerShellCollector(Path.Combine(dataDirectory, "scripts")));
+        ITenantCollector collector;
+        if (live)
+        {
+            var tokens = new EntraTokenProvider(new WindowsCertificateService());
+            collector = new CompositeTenantCollector(
+                new GraphTenantCollector(tokens, Http),
+                new CompliancePowerShellCollector(Path.Combine(dataDirectory, "scripts")));
+        }
+        else
+        {
+            collector = new OfflineTenantCollector();
+        }
 
         var pluginDirectory = Path.Combine(dataDirectory, "plugins");
         Directory.CreateDirectory(pluginDirectory);
@@ -197,6 +256,13 @@ internal static class Program
             clock);
 
         return (workspace, store);
+    }
+
+    /// <summary>Keeps offline commands (demo assessment, decision pack) runnable off Windows.</summary>
+    private sealed class OfflineTenantCollector : ITenantCollector
+    {
+        public Task<TenantSnapshot> CollectAsync(AuthConfiguration auth, CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException("Live tenant collection requires a Windows certificate store.");
     }
 
     private static IReportExporter[] Exporters() =>
@@ -282,6 +348,7 @@ internal static class Program
               pgc assess --demo [--format json] [--out report.json]
               pgc assess --tenant <id> --client <app-id> --thumbprint <thumb> [--mode AssessmentOnly] [--format pdf] [--out path]
               pgc assess --tenant <id> --client <app-id> --client-secret <secret>   (lab only)
+              pgc decision-pack --demo [--prices "E5=57;E3=36"] [--out decision-pack.md] [--by <author>]   (Windows: evidence store is DPAPI-protected)
               pgc provenance --version <v> --files "dist/a.msi;dist/b.msix" [--sbom bom.json] [--output manifest.json] [--commit <sha>]
               pgc verify-audit [--data-dir <path>]
 

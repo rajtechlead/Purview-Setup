@@ -12,6 +12,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Durable approvals and shared audit**: approvals survive restarts, bind to the plan hash, expire after seven days and refuse self-approval; the audit is a per-tenant SHA-256 chain with a verification endpoint.
 - **Service operations**: `installer/Install-CollaborationService.ps1` registers the Windows service with restart-on-failure and `-WhatIf`; CI now runs the service test suite.
 
+### Added (decision-pack export path)
+
+- **`pgc decision-pack --demo`** builds the sample assessment and plan, then writes the Markdown decision pack through `GovernanceWorkspace.ExportDecisionPackAsync`, which records the export in the audit log. Offline commands no longer construct the Windows certificate stack, so the command compiles and runs on the same host as the rest of the CLI. It was not executed in the Linux build environment because every stored payload is DPAPI-encrypted.
+
 ### Added (automated restore)
 
 - **Backups can be turned back into an executable restore.** `RollbackPlanner` checks that a backup belongs to the plan's tenant, uses a supported schema, parses, covers every operation and contains the object export when a deletion must be recreated; missing coverage, irreversible work and absent exports make it unready instead of silently partial. `PowerShellRollbackExecutor` fails closed unless live execution is enabled, certificate auth is present, the tenant matches and the plan is ready. Eight tests cover the paths; execution is proven against a fake runner only.

@@ -69,7 +69,7 @@ src/
   PurviewCopilot.Collaboration/   # shared EF Core store, seven-role RBAC, tenant isolation, audit chain
   PurviewCopilot.Service/         # optional customer-hosted ASP.NET Core collaboration API
   PurviewCopilot.UI/              # WPF shell, dashboards, pages (MVVM)
-  PurviewCopilot.Cli/             # headless `pgc assess` / `pgc verify-audit`
+  PurviewCopilot.Cli/             # headless `pgc assess` / `pgc decision-pack` / `pgc verify-audit`
 tests/
   PurviewCopilot.Tests/           # desktop tests (6 Windows-only DPAPI tests skipped elsewhere)
   PurviewCopilot.Service.Tests/   # store, HTTP API and client tests (323 tests in total)

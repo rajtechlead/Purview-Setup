@@ -79,7 +79,7 @@ src/PurviewCopilot.UI/
   App.xaml(.cs), AppServices.cs, MainWindow.xaml(.cs)
   Mvvm/, ViewModels/, Views/, Converters/, Styles/
 src/PurviewCopilot.Cli/
-  Program.cs                       # headless pgc assess / verify-audit, same workspace and ports
+  Program.cs                       # headless pgc assess / decision-pack / verify-audit, same workspace and ports
 tests/PurviewCopilot.Tests/
 ```
 

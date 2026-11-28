@@ -300,6 +300,35 @@ public sealed class GovernanceWorkspace
     /// <summary>Configuration-as-code import. Returns a new plan that must be simulated and approved again.</summary>
     public ChangePlan ImportPlan(string json) => ConfigurationPackage.Import(json, _clock.UtcNow);
 
+    /// <summary>Builds the pre-change decision pack for a plan from the latest assessment.</summary>
+    public DecisionPack BuildDecisionPack(ChangePlan plan, IReadOnlyDictionary<string, decimal>? licencePrices = null)
+    {
+        if (Assessment is null)
+            throw new InvalidOperationException("Run an assessment before building a decision pack.");
+
+        return DecisionPackBuilder.Build(plan, Assessment.Recommendations, licencePrices);
+    }
+
+    /// <summary>Exports the decision pack as Markdown and records the export in the audit trail.</summary>
+    public async Task<string> ExportDecisionPackAsync(
+        ChangePlan plan,
+        string path,
+        string generatedBy,
+        IReadOnlyDictionary<string, decimal>? licencePrices = null,
+        CancellationToken cancellationToken = default)
+    {
+        var markdown = DecisionPackRenderer.RenderMarkdown(BuildDecisionPack(plan, licencePrices));
+
+        Directory.CreateDirectory(Path.GetDirectoryName(path) ?? ".");
+        await File.WriteAllTextAsync(path, markdown, cancellationToken).ConfigureAwait(false);
+
+        await _audit.WriteAsync(new AuditEntry(
+            Guid.NewGuid(), _clock.UtcNow, generatedBy, "DecisionPackExported", path,
+            $"Plan={plan.Id}; Bytes={new FileInfo(path).Length}", null), cancellationToken).ConfigureAwait(false);
+
+        return path;
+    }
+
     public string RenderReport(ReportFormat format, string organization, string generatedBy, ReportType type = ReportType.Full)
     {
         EnsureReportReady();
